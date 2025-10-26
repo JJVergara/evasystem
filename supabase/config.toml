@@ -1,0 +1,41 @@
+
+project_id = "awpfslcepylnipaolmvv"
+
+[functions.meta-oauth]
+verify_jwt = true
+
+[functions.instagram-webhook]
+verify_jwt = false
+
+[functions.instagram-sync]
+verify_jwt = true
+
+[functions.instagram-profile]
+verify_jwt = true
+
+[functions.instagram-diagnostics]
+verify_jwt = true
+
+[functions.backup-full-database]
+verify_jwt = true
+
+[functions.export-organization-data]
+verify_jwt = true
+
+[functions.restore-organization-data]
+verify_jwt = true
+
+[functions.facebook-data-deletion]
+verify_jwt = false
+
+[functions.secure-webhook-proxy]
+verify_jwt = true
+
+[functions.instagram-token-status]
+verify_jwt = true
+
+[functions.disconnect-instagram]
+verify_jwt = true
+
+[functions.resolve-story-mentions]
+verify_jwt = true
