@@ -1,12 +1,12 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, META_API_BASE, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
+import { SupabaseClient, Organization, Ambassador, InsightsData, MediaData, CommentData, MessageData } from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
+import { safeDecryptToken } from '../shared/crypto.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
-async function getOrganizationWebhookToken(supabaseClient: any, instagramUserId: string) {
+async function getOrganizationWebhookToken(supabaseClient: SupabaseClient, instagramUserId: string): Promise<string | undefined> {
   // Try to find organization by Instagram user ID and get its webhook token using secure function
   const { data: creds, error: credsError } = await supabaseClient
     .rpc('get_organization_credentials_by_instagram_user', {
@@ -21,7 +21,7 @@ async function getOrganizationWebhookToken(supabaseClient: any, instagramUserId:
   return Deno.env.get('WEBHOOK_VERIFY_TOKEN');
 }
 
-async function getWebhookCredentials(supabaseClient: any, instagramUserId: string) {
+async function getWebhookCredentials(supabaseClient: SupabaseClient, instagramUserId: string) {
   // Try to find organization-specific credentials using secure function
   const { data: creds, error: credsError } = await supabaseClient
     .rpc('get_organization_credentials_by_instagram_user', {
@@ -43,7 +43,7 @@ async function getWebhookCredentials(supabaseClient: any, instagramUserId: strin
   };
 }
 
-async function verifyXHubSignature(supabaseClient: any, payload: string, signatureHeader: string | null, instagramUserId: string) {
+async function verifyXHubSignature(supabaseClient: SupabaseClient, payload: string, signatureHeader: string | null, instagramUserId: string): Promise<void> {
   const credentials = await getWebhookCredentials(supabaseClient, instagramUserId);
   const APP_SECRET = credentials.APP_SECRET;
   
@@ -70,17 +70,14 @@ function timingSafeEqual(a: string, b: string) {
   return mismatch === 0;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   const url = new URL(req.url);
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
+  const supabase = createSupabaseClient();
   
   try {
     // Webhook verification (GET request from Meta)
@@ -164,6 +161,9 @@ serve(async (req) => {
                 case 'messages':
                   await handleMessages(supabase, change.value, entry.id);
                   break;
+                case 'story_insights':
+                  await handleStoryInsights(supabase, change.value, entry.id);
+                  break;
                 default:
                   console.log('Unhandled webhook field:', change.field);
               }
@@ -193,16 +193,11 @@ serve(async (req) => {
     return new Response('Method not allowed', { status: 405 });
 
   } catch (error) {
-    console.error('Webhook error:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return handleError(error);
   }
 });
 
-async function handleMediaChange(supabase: any, mediaData: any, instagramUserId: string) {
+async function handleMediaChange(supabase: SupabaseClient, mediaData: MediaData, instagramUserId: string): Promise<void> {
   try {
     console.log('Handling media change:', { mediaId: mediaData?.id, instagramUserId });
 
@@ -219,7 +214,7 @@ async function handleMediaChange(supabase: any, mediaData: any, instagramUserId:
     }
 
     // Try to find ambassador by Instagram user ID first
-    let ambassador = null;
+    let ambassador: Ambassador | null = null;
     
     const { data: ambassadorById, error: ambassadorByIdError } = await supabase
       .from('embassadors')
@@ -304,7 +299,7 @@ async function handleMediaChange(supabase: any, mediaData: any, instagramUserId:
   }
 }
 
-async function handleComments(supabase: any, commentData: any, instagramUserId: string) {
+async function handleComments(supabase: SupabaseClient, commentData: CommentData, instagramUserId: string): Promise<void> {
   try {
     console.log('Handling comment:', { instagramUserId, commentId: commentData?.id });
 
@@ -321,7 +316,7 @@ async function handleComments(supabase: any, commentData: any, instagramUserId: 
     }
 
     // Try to find ambassador by username if available
-    let ambassador = null;
+    let ambassador: Ambassador | null = null;
     if (commentData.from?.username) {
       const { data: ambassadorByUsername, error: ambassadorError } = await supabase
         .from('embassadors')
@@ -393,7 +388,7 @@ async function handleComments(supabase: any, commentData: any, instagramUserId: 
   }
 }
 
-async function handleMessages(supabase: any, messageData: any, instagramUserId: string) {
+async function handleMessages(supabase: SupabaseClient, messageData: MessageData, instagramUserId: string): Promise<void> {
   try {
     console.log('Handling message:', { instagramUserId, messageId: messageData?.id });
 
@@ -410,7 +405,7 @@ async function handleMessages(supabase: any, messageData: any, instagramUserId: 
     }
 
     // Try to find ambassador by user ID if available
-    let ambassador = null;
+    let ambassador: Ambassador | null = null;
     if (messageData.sender?.id) {
       const { data: ambassadorById, error: ambassadorError } = await supabase
         .from('embassadors')
@@ -481,7 +476,7 @@ async function handleMessages(supabase: any, messageData: any, instagramUserId: 
   }
 }
 
-async function handleStoryMentionReferral(supabase: any, messageData: any, instagramBusinessAccountId: string) {
+async function handleStoryMentionReferral(supabase: SupabaseClient, messageData: MessageData, instagramBusinessAccountId: string): Promise<void> {
   try {
     console.log('Handling story mention referral (sanitized):', { 
       instagramBusinessAccountId, 
@@ -505,6 +500,12 @@ async function handleStoryMentionReferral(supabase: any, messageData: any, insta
 
     // Extract mention time from message timestamp or use current time
     const mentionedAt = messageData.timestamp ? new Date(messageData.timestamp * 1000).toISOString() : new Date().toISOString();
+
+    // Ensure sender exists
+    if (!messageData.sender?.id) {
+      console.log('No sender ID in story mention referral');
+      return;
+    }
 
     // Create unique external event ID for idempotency
     const externalEventId = `story_referral_${messageData.mid || messageData.id}_${messageData.sender.id}`;
@@ -530,7 +531,7 @@ async function handleStoryMentionReferral(supabase: any, messageData: any, insta
     }
 
     // Try to find ambassador by Instagram user ID
-    let ambassador = null;
+    let ambassador: Ambassador | null = null;
     if (messageData.sender?.id) {
       const { data: ambassadorById, error: ambassadorError } = await supabase
         .from('embassadors')
@@ -546,7 +547,7 @@ async function handleStoryMentionReferral(supabase: any, messageData: any, insta
 
     // Extract story URL and try to build deep link
     const storyUrl = messageData.referral?.referer_uri || null;
-    let deepLink = null;
+    let deepLink: string | null = null;
     
     // Try to extract story ID from referral for deep link
     if (messageData.referral?.ref) {
@@ -564,7 +565,7 @@ async function handleStoryMentionReferral(supabase: any, messageData: any, insta
 
     // Extract conversation ID and build inbox link
     const conversationId = messageData.mid || messageData.id || null;
-    let inboxLink = null;
+    let inboxLink: string | null = null;
     
     // Build Instagram inbox link if we have conversation ID and page info
     if (conversationId && organization.facebook_page_id) {
@@ -627,5 +628,122 @@ async function handleStoryMentionReferral(supabase: any, messageData: any, insta
 
   } catch (error) {
     console.error('Error handling story mention referral:', error);
+  }
+}
+
+
+
+async function handleStoryInsights(supabase: SupabaseClient, insightsData: InsightsData, instagramBusinessAccountId: string): Promise<void> {
+  try {
+    console.log('Handling story insights webhook:', { 
+      instagramBusinessAccountId,
+      mediaId: insightsData?.media_id,
+      hasMetrics: !!insightsData?.metric_values
+    });
+
+    // Find organization by Instagram business account ID
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('instagram_business_account_id', instagramBusinessAccountId)
+      .maybeSingle();
+
+    if (orgError || !organization) {
+      console.log('Organization not found for Instagram business account:', instagramBusinessAccountId);
+      return;
+    }
+
+    const mediaId = insightsData?.media_id || insightsData?.id;
+    
+    if (!mediaId) {
+      console.log('No media ID in story insights data');
+      return;
+    }
+
+    // Try to find the story in our social_mentions table
+    const { data: storyMention, error: mentionError } = await supabase
+      .from('social_mentions')
+      .select('id, instagram_story_id, instagram_media_id, mentioned_at')
+      .eq('organization_id', organization.id)
+      .or(`instagram_story_id.eq.${mediaId},instagram_media_id.eq.${mediaId}`)
+      .maybeSingle();
+
+    if (mentionError) {
+      console.error('Error finding story mention:', mentionError);
+      return;
+    }
+
+    // Parse insights metrics from webhook data
+    interface MetricsMap {
+      impressions?: number;
+      reach?: number;
+      replies?: number;
+      exits?: number;
+      taps_forward?: number;
+      taps_back?: number;
+      shares?: number;
+      navigation?: Record<string, unknown>;
+      raw?: InsightsData;
+      [key: string]: number | Record<string, unknown> | InsightsData | undefined;
+    }
+    
+    const metrics: MetricsMap = {
+      raw: insightsData
+    };
+
+    // The webhook data structure varies, but typically contains metric_values
+    if (insightsData.metric_values) {
+      for (const metric of insightsData.metric_values) {
+        if (metric.name && metric.value !== undefined) {
+          metrics[metric.name] = metric.value;
+        }
+      }
+    }
+
+    // If we found the story mention, create a snapshot
+    if (storyMention) {
+      // Calculate story age
+      const storyAge = storyMention.mentioned_at 
+        ? (new Date().getTime() - new Date(storyMention.mentioned_at).getTime()) / (1000 * 60 * 60)
+        : null;
+
+      const snapshot = {
+        social_mention_id: storyMention.id,
+        organization_id: organization.id,
+        instagram_story_id: storyMention.instagram_story_id,
+        instagram_media_id: mediaId,
+        snapshot_at: new Date().toISOString(),
+        story_age_hours: storyAge,
+        impressions: metrics.impressions || 0,
+        reach: metrics.reach || 0,
+        replies: metrics.replies || 0,
+        exits: metrics.exits || 0,
+        taps_forward: metrics.taps_forward || 0,
+        taps_back: metrics.taps_back || 0,
+        shares: metrics.shares || 0,
+        navigation: metrics.navigation || {},
+        raw_insights: metrics.raw || {}
+      };
+
+      const { error: insertError } = await supabase
+        .from('story_insights_snapshots')
+        .insert(snapshot);
+
+      if (insertError) {
+        console.error('Error inserting story insights snapshot:', insertError);
+      } else {
+        console.log(`Created story insights snapshot from webhook for story ${mediaId}`);
+      }
+    } else {
+      // Story not found in our database yet - this might be a story we don't track
+      // or it might arrive before the story_mention webhook
+      console.log(`Story insights received for media ${mediaId} but story mention not found yet`);
+      
+      // We could optionally queue this for later processing or create a placeholder
+      // For now, we'll just log it
+    }
+
+  } catch (error) {
+    console.error('Error handling story insights:', error);
   }
 }

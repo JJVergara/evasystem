@@ -1,30 +1,22 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
     // Initialize Supabase client with service role to access token columns
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseClient = createSupabaseClient();
 
     // Get the user from the Authorization header
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       console.log('No authorization header provided');
-      return new Response(
-        JSON.stringify({
+      return jsonResponse({
           success: true,
           data: {
             isConnected: false,
@@ -33,12 +25,7 @@ serve(async (req) => {
             username: null,
             tokenExpiryDate: null
           }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
+        })
     }
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
@@ -47,8 +34,7 @@ serve(async (req) => {
 
     if (authError || !user) {
       console.log('User authentication failed:', authError?.message);
-      return new Response(
-        JSON.stringify({
+      return jsonResponse({
           success: true,
           data: {
             isConnected: false,
@@ -57,12 +43,7 @@ serve(async (req) => {
             username: null,
             tokenExpiryDate: null
           }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
+        })
     }
 
     console.log('Checking token status for user:', user.id);
@@ -76,8 +57,7 @@ serve(async (req) => {
 
     if (userError || !userData) {
       console.log('User data not found:', userError?.message);
-      return new Response(
-        JSON.stringify({
+      return jsonResponse({
           success: true,
           data: {
             isConnected: false,
@@ -86,12 +66,7 @@ serve(async (req) => {
             username: null,
             tokenExpiryDate: null
           }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
+        })
     }
 
     console.log('Checking organization access for user:', user.id, 'org:', userData.organization_id);
@@ -105,8 +80,7 @@ serve(async (req) => {
 
     if (accessError || !hasAccess) {
       console.log('Organization access denied:', accessError?.message, 'hasAccess:', hasAccess);
-      return new Response(
-        JSON.stringify({
+      return jsonResponse({
           success: true,
           data: {
             isConnected: false,
@@ -115,12 +89,7 @@ serve(async (req) => {
             username: null,
             tokenExpiryDate: null
           }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
+        })
     }
 
     // Get organization token status from secure table
@@ -132,17 +101,11 @@ serve(async (req) => {
 
     if (orgError) {
       console.error('Failed to fetch organization data:', orgError);
-      return new Response(
-        JSON.stringify({
+      return jsonResponse({
           success: false,
           error: 'Organization data not found',
           error_type: 'database_error'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
+        })
     }
 
     // Get token info from secure table using service_role
@@ -177,19 +140,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Unexpected token status error:', error)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'Internal server error',
-        error_type: 'server_error',
-        message: errorMessage
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
+    return handleError(error);
   }
-})
+});

@@ -8,17 +8,17 @@ const corsHeaders = {
 
 interface BackupData {
   timestamp: string;
-  organizations: any[];
-  embassadors: any[];
-  fiestas: any[];
-  events: any[];
-  tasks: any[];
-  leaderboards: any[];
-  users: any[];
-  organization_settings: any[];
-  notifications: any[];
-  import_logs: any[];
-  task_logs: any[];
+  organizations: Organization[];
+  embassadors: Ambassador[];
+  fiestas: Fiesta[];
+  events: Event[];
+  tasks: Task[];
+  leaderboards: Leaderboard[];
+  users: User[];
+  organization_settings: OrganizationSetting[];
+  notifications: Notification[];
+  import_logs: ImportLog[];
+  task_logs: TaskLog[];
 }
 
 serve(async (req) => {
@@ -160,10 +160,10 @@ serve(async (req) => {
     backupData.import_logs = importLogs || [];
 
 // Sanitize sensitive fields before returning
-backupData.organizations = (backupData.organizations || []).map((o: any) => {
+backupData.organizations = (backupData.organizations || []).map((o: Organization) => {
   const { meta_token, token_expiry, ...safe } = o; return safe;
 });
-backupData.embassadors = (backupData.embassadors || []).map((a: any) => {
+backupData.embassadors = (backupData.embassadors || []).map((a: Ambassador) => {
   const { instagram_access_token, token_expires_at, ...safe } = a; return safe;
 });
 

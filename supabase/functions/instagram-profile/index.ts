@@ -1,52 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { safeDecryptToken } from '../shared/crypto.ts'
+import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse } from '../shared/responses.ts';
+import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
+import { handleError, validateRequired } from '../shared/error-handler.ts';
+import { safeDecryptToken } from '../shared/crypto.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    // SECURITY: Authenticate user first
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Authenticate user
+    const authResult = await authenticateRequest(req);
+    if (authResult instanceof Response) return authResult;
+    
+    const { user, supabase } = authResult;
 
     const { organization_id, endpoint } = await req.json();
-
-    if (!organization_id) {
-      return new Response(
-        JSON.stringify({ error: 'Organization ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    validateRequired({ organization_id }, ['organization_id']);
 
     // SECURITY: Verify user owns this organization
     const { data: org, error: orgError } = await supabase
@@ -110,12 +81,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in instagram-profile:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return handleError(error);
   }
 });
 

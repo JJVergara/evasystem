@@ -1,47 +1,35 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { MediaItem, SupabaseClient } from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabase = createSupabaseClient();
 
     const { organizationId, mentionId } = await req.json();
     
     // Validate required parameters
     if (!mentionId) {
       console.error('Missing mentionId parameter');
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         success: false, 
         error: 'Missing mentionId parameter' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      }, { status: 400 });
     }
 
     if (!organizationId) {
       console.error('Missing organizationId parameter');
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         success: false, 
         error: 'Missing organizationId parameter' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    }, { status: 400 });
     }
 
     console.log(`Resolving story mention ${mentionId} for organization ${organizationId}`);
@@ -56,13 +44,10 @@ serve(async (req) => {
 
     if (mentionError || !mention) {
       console.error('Mention not found:', mentionError);
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         success: false, 
         error: 'Mention not found' 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      }, { status: 404 });
     }
 
     // Get organization Instagram tokens
@@ -85,13 +70,10 @@ serve(async (req) => {
         })
         .eq('id', mentionId);
 
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         success: false, 
         error: 'No Instagram access token available' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    }, { status: 400 });
     }
 
     // Check if token is expired
@@ -107,13 +89,10 @@ serve(async (req) => {
         })
         .eq('id', mentionId);
 
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         success: false, 
         error: 'Instagram access token expired' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    }, { status: 400 });
     }
 
     // Decrypt token for API calls
@@ -123,7 +102,7 @@ serve(async (req) => {
     if (mention.instagram_user_id) {
       try {
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${mention.instagram_user_id}?fields=mentioned_media.media_type,media_product_type,owner,username,timestamp,permalink&access_token=${decryptedToken}`
+          `${META_API_BASE}/${mention.instagram_user_id}?fields=mentioned_media.media_type,media_product_type,owner,username,timestamp,permalink&access_token=${decryptedToken}`
         );
 
         if (response.ok) {
@@ -134,7 +113,7 @@ serve(async (req) => {
             const mentionTime = new Date(mention.mentioned_at).getTime();
             const timeWindow = 5 * 60 * 1000; // 5 minutes window
             
-            const storyMedia = data.mentioned_media.data.find((media: any) => {
+            const storyMedia = data.mentioned_media.data.find((media: MediaItem) => {
               const mediaTime = new Date(media.timestamp).getTime();
               return (
                 media.media_product_type === 'STORY' &&
@@ -159,14 +138,11 @@ serve(async (req) => {
                 console.log('Successfully resolved story media for mention');
               }
 
-              return new Response(JSON.stringify({ 
+              return jsonResponse({ 
                 success: true,
                 resolved: true,
                 story_url: storyMedia.permalink,
                 story_id: storyMedia.id
-              }), {
-                status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
               });
             }
           }
@@ -193,23 +169,13 @@ serve(async (req) => {
       console.error('Error updating mention with fallback:', updateError);
     }
 
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       success: true,
       resolved: false,
       fallback_link: fallbackLink
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Resolve story mentions error:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error', 
-      details: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return handleError(error);
   }
 });

@@ -1,53 +1,26 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from '../shared/constants.ts';
+import { SupabaseClient } from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse } from '../shared/responses.ts';
+import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
+import { handleError, validateRequired } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
+import { sendInstagramMessage } from '../shared/instagram-api.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Authenticate user
+    const authResult = await authenticateRequest(req);
+    if (authResult instanceof Response) return authResult;
+    
+    const { user, supabase } = authResult;
 
-    // Get user from JWT token
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Parse request body
+    // Parse and validate request body
     const { recipientId, message, organizationId } = await req.json();
-
-    if (!recipientId || !message || !organizationId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: recipientId, message, organizationId' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    validateRequired({ recipientId, message, organizationId }, ['recipientId', 'message', 'organizationId']);
 
     // Verify user owns the organization
     const { data: organization, error: orgError } = await supabase
@@ -58,10 +31,7 @@ serve(async (req) => {
       .single();
 
     if (orgError || !organization) {
-      return new Response(JSON.stringify({ error: 'Organization not found or unauthorized' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return jsonResponse({ error: 'Organization not found or unauthorized'       }, { status: 404 });
     }
 
     // Get organization's Instagram access token
@@ -72,18 +42,12 @@ serve(async (req) => {
       .single();
 
     if (tokenError || !tokenData?.access_token) {
-      return new Response(JSON.stringify({ error: 'Instagram access token not found for organization' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return jsonResponse({ error: 'Instagram access token not found for organization'}, { status: 400 });
     }
 
     // Check if token is expired
     if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-      return new Response(JSON.stringify({ error: 'Instagram access token has expired' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return jsonResponse({ error: 'Instagram access token has expired'       }, { status: 400 });
     }
 
     // Decrypt token for API call
@@ -99,7 +63,7 @@ serve(async (req) => {
       }
     };
 
-    const instagramApiUrl = `https://graph.facebook.com/v18.0/${organization.facebook_page_id}/messages`;
+    const instagramApiUrl = `https://graph.facebook.com/v21.0/${organization.facebook_page_id}/messages`;
     
     const response = await fetch(instagramApiUrl, {
       method: 'POST',
@@ -131,24 +95,13 @@ serve(async (req) => {
       sentBy: user.id
     });
 
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       success: true, 
       messageId: responseData.message_id,
       recipientId 
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Error sending Instagram message:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error', 
-      details: errorMessage
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return handleError(error);
   }
 });
