@@ -1,24 +1,18 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, STORY_INSIGHTS_METRICS, META_API_BASE, VERIFICATION_INTERVALS, STORY_EXPIRATION_MS } from '../shared/constants.ts';
+import { MentionUpdateData, InsightsMap, SupabaseClient } from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabase = createSupabaseClient();
 
     const body = await req.json().catch(() => ({}));
     const { source = 'manual', type = 'expiry' } = body;
@@ -75,7 +69,7 @@ serve(async (req) => {
                 try {
                   const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
                   const response = await fetch(
-                    `https://graph.facebook.com/v18.0/${mention.instagram_story_id}?fields=id&access_token=${decryptedToken}`
+                    `${META_API_BASE}/${mention.instagram_story_id}?fields=id&access_token=${decryptedToken}`
                   );
                   storyExists = response.ok;
                 } catch (error) {
@@ -86,7 +80,7 @@ serve(async (req) => {
 
             // Update checks count and last check time
             const newChecksCount = mention.checks_count + 1;
-            const updateData: any = {
+            const updateData: MentionUpdateData = {
               checks_count: newChecksCount,
               last_check_at: now.toISOString()
             };
@@ -150,6 +144,68 @@ serve(async (req) => {
       // Process each expired mention
       for (const mention of expiredMentions || []) {
         try {
+          // Try to collect final insights snapshot before marking as completed
+          let finalSnapshotCreated = false;
+          
+          // Get organization tokens for final insights collection
+          const { data: tokenInfo } = await supabase
+            .from('organization_instagram_tokens')
+            .select('access_token, token_expiry')
+            .eq('organization_id', mention.organization_id)
+            .single();
+
+          if (tokenInfo?.access_token && mention.instagram_story_id) {
+            try {
+              const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
+              
+              // Try to fetch final insights (story might still be available for a short time after 24h)
+              const insightsUrl = `${META_API_BASE}/${mention.instagram_story_id}/insights?metric=${STORY_INSIGHTS_METRICS}&access_token=${decryptedToken}`;
+              const insightsResponse = await fetch(insightsUrl);
+              
+              if (insightsResponse.ok) {
+                const insightsData = await insightsResponse.json();
+                
+                // Parse insights
+                const insights: InsightsMap = {};
+                for (const metric of insightsData.data || []) {
+                  insights[metric.name] = metric.values?.[0]?.value || 0;
+                }
+                
+                // Create final snapshot
+                const finalSnapshot = {
+                  social_mention_id: mention.id,
+                  organization_id: mention.organization_id,
+                  instagram_story_id: mention.instagram_story_id,
+                  instagram_media_id: mention.instagram_story_id,
+                  snapshot_at: new Date().toISOString(),
+                  story_age_hours: 24, // Final snapshot at 24h
+                  impressions: insights.impressions || 0,
+                  reach: insights.reach || 0,
+                  replies: insights.replies || 0,
+                  exits: insights.exits || 0,
+                  taps_forward: insights.taps_forward || 0,
+                  taps_back: insights.taps_back || 0,
+                  shares: insights.shares || 0,
+                  navigation: {},
+                  raw_insights: insightsData
+                };
+                
+                const { error: snapshotError } = await supabase
+                  .from('story_insights_snapshots')
+                  .insert(finalSnapshot);
+                
+                if (!snapshotError) {
+                  finalSnapshotCreated = true;
+                  console.log(`Created final insights snapshot for story ${mention.instagram_story_id}`);
+                } else {
+                  console.error(`Error creating final snapshot:`, snapshotError);
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching final insights for story ${mention.instagram_story_id}:`, error);
+            }
+          }
+
           // Update state to 'completed' (natural 24h expiration)
           const { error: updateError } = await supabase
             .from('social_mentions')
@@ -168,12 +224,16 @@ serve(async (req) => {
           processedCount++;
 
           // Create notification for completed story mention (low priority)
+          const notificationMessage = finalSnapshotCreated
+            ? `Historia de @${mention.instagram_username || 'usuario desconocido'} completó su ciclo de 24h (insights finales guardados)`
+            : `Historia de @${mention.instagram_username || 'usuario desconocido'} completó su ciclo de 24h naturalmente`;
+            
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
               organization_id: mention.organization_id,
               type: 'story_mention_completed',
-              message: `Historia de @${mention.instagram_username || 'usuario desconocido'} completó su ciclo de 24h naturalmente`,
+              message: notificationMessage,
               target_type: 'story_mention',
               target_id: mention.id,
               priority: 'low'
@@ -191,26 +251,15 @@ serve(async (req) => {
 
     console.log(`Story mentions worker completed. Verified: ${verificationCount}, Expired processed: ${processedCount}, Notifications sent: ${notificationCount}`);
 
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       success: true,
       verified: verificationCount,
       processed: processedCount,
       notifications_sent: notificationCount,
       timestamp: new Date().toISOString()
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Story mentions worker error:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Worker failed', 
-      details: error.message,
-      timestamp: new Date().toISOString()
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return handleError(error);
   }
 });
