@@ -73,19 +73,36 @@ export default function SettingsContent() {
   };
   // Refresh organization after returning from OAuth and on mount
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const refresh = () => {
+      if (isMounted && refreshOrganization) {
+        refreshOrganization();
+      }
+    };
+
     const params = new URLSearchParams(window.location.search);
     if (params.has('status') || params.has('ig') || params.has('instagram')) {
-      refreshOrganization?.();
+      refresh();
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
       url.searchParams.delete('ig');
       url.searchParams.delete('instagram');
       window.history.replaceState({}, '', url.toString());
     } else {
-      // Ensure we have latest data on first load
-      refreshOrganization?.();
+      // Only refresh on initial mount, debounce to prevent multiple calls
+      timeoutId = setTimeout(refresh, 100);
     }
-  }, [refreshOrganization]);
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
 
   if (settingsLoading) {
