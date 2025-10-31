@@ -219,6 +219,64 @@ export function useUserProfile() {
             toast.success(`Organización "${firstOrg.name}" asignada automáticamente`);
             return;
           }
+        } else {
+          // No organizations found - create one automatically (fallback for users created before trigger fix)
+          console.log('No organizations found, creating default organization...');
+          
+          const { data: newOrg, error: createOrgError } = await supabase
+            .from('organizations')
+            .insert({
+              name: 'Mi Organización',
+              description: `Organización de ${data.name}`,
+              created_by: user.id,
+              timezone: 'America/Santiago',
+              plan_type: 'free'
+            })
+            .select()
+            .single();
+
+          if (createOrgError) {
+            console.error('Error creating organization:', createOrgError);
+            setError('Error al crear organización. Por favor, contacta al soporte.');
+          } else if (newOrg) {
+            console.log('Created new organization:', newOrg.id);
+            
+            // Update user with new organization
+            const { data: updatedUser, error: updateError } = await supabase
+              .from('users')
+              .update({ organization_id: newOrg.id })
+              .eq('auth_user_id', user.id)
+              .select(`
+                id, 
+                name, 
+                full_name,
+                email, 
+                role,
+                organization_id, 
+                last_login,
+                created_at
+              `)
+              .single();
+
+            if (!updateError && updatedUser) {
+              const profileData: UserProfile = {
+                ...updatedUser,
+                role: updatedUser.role as 'admin' | 'user' | 'viewer',
+                organization: {
+                  id: newOrg.id,
+                  name: newOrg.name,
+                  description: newOrg.description || '',
+                  timezone: newOrg.timezone || 'America/Santiago',
+                  logo_url: newOrg.logo_url || '',
+                  plan_type: newOrg.plan_type || 'free',
+                  instagram_connected: !!newOrg.meta_token
+                }
+              };
+              setProfile(profileData);
+              toast.success('¡Organización creada exitosamente!');
+              return;
+            }
+          }
         }
       }
 
