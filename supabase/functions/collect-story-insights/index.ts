@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
       results,
       totalStoriesProcessed,
       totalSnapshotsCreated,
-      isCronJob,
+      isCron,
       timestamp: new Date().toISOString()
     });
 
