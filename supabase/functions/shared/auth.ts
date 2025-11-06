@@ -167,4 +167,3 @@ export async function getOrganizationWithCredentials(
     token_expiry: tokenData.token_expiry
   };
 }
-
