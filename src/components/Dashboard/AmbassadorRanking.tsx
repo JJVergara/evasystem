@@ -1,0 +1,251 @@
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Trophy, RefreshCw, TrendingUp, Eye, MessageSquare, Award, Target } from "lucide-react";
+
+interface AmbassadorRankingData {
+  id: string;
+  first_name: string;
+  last_name: string;
+  instagram_user: string | null;
+  rank: number;
+  global_points: number;
+  global_category: string;
+  events_participated: number;
+  completed_tasks: number;
+  failed_tasks: number;
+  completion_rate: number;
+  total_tasks: number;
+}
+
+export function AmbassadorRanking() {
+  const { organization } = useCurrentOrganization();
+  const [ranking, setRanking] = useState<AmbassadorRankingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchRanking = useCallback(async () => {
+    if (!organization?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Fetch ambassadors for the organization, ordered by global_points
+      const { data: ambassadors, error: ambassadorsError } = await supabase
+        .from('embassadors')
+        .select('id, first_name, last_name, instagram_user, global_points, global_category, events_participated, completed_tasks, failed_tasks')
+        .eq('organization_id', organization.id)
+        .eq('status', 'active')
+        .order('global_points', { ascending: false });
+
+      if (ambassadorsError) {
+        throw ambassadorsError;
+      }
+
+      if (!ambassadors || ambassadors.length === 0) {
+        setRanking([]);
+        return;
+      }
+
+      // Process and rank ambassadors
+      const rankedAmbassadors: AmbassadorRankingData[] = ambassadors.map((ambassador, index) => {
+        const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
+        const completionRate = totalTasks > 0
+          ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100)
+          : 0;
+
+        return {
+          id: ambassador.id,
+          first_name: ambassador.first_name,
+          last_name: ambassador.last_name,
+          instagram_user: ambassador.instagram_user,
+          rank: index + 1,
+          global_points: ambassador.global_points || 0,
+          global_category: ambassador.global_category || 'bronze',
+          events_participated: ambassador.events_participated || 0,
+          completed_tasks: ambassador.completed_tasks || 0,
+          failed_tasks: ambassador.failed_tasks || 0,
+          completion_rate: completionRate,
+          total_tasks: totalTasks
+        };
+      });
+
+      setRanking(rankedAmbassadors);
+
+    } catch (error) {
+      console.error('Error fetching ambassador ranking:', error);
+      toast.error('Error al cargar el ranking de embajadores');
+    } finally {
+      setLoading(false);
+    }
+  }, [organization?.id]);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchRanking();
+    }
+  }, [organization?.id, fetchRanking]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchRanking();
+    setRefreshing(false);
+    toast.success('Ranking actualizado');
+  };
+
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) {
+      return <span className="text-3xl">🥇</span>;
+    } else if (rank === 2) {
+      return <span className="text-3xl">🥈</span>;
+    } else if (rank === 3) {
+      return <span className="text-3xl">🥉</span>;
+    }
+    return <span className="text-muted-foreground font-medium">#{rank}</span>;
+  };
+
+  const getCategoryBadge = (category: string) => {
+    const styles = {
+      'bronze': 'bg-amber-100 text-amber-800 border-amber-300',
+      'silver': 'bg-gray-100 text-gray-800 border-gray-300',
+      'gold': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'diamond': 'bg-purple-100 text-purple-800 border-purple-300'
+    };
+    const style = styles[category as keyof typeof styles] || styles.bronze;
+    return (
+      <Badge variant="outline" className={style}>
+        {category.charAt(0).toUpperCase() + category.slice(1)}
+      </Badge>
+    );
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-yellow-500" />
+          <CardTitle>Ranking de Embajadores</CardTitle>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Actualizar
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Cargando ranking...
+          </div>
+        ) : ranking.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No hay embajadores activos en tu organización.</p>
+            <p className="text-sm mt-2">
+              Los embajadores aparecerán aquí cuando se registren y participen en eventos.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Rank</TableHead>
+                  <TableHead>Embajador</TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Award className="h-4 w-4" />
+                      Puntos
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-center">Categoría</TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Target className="h-4 w-4" />
+                      Eventos
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <MessageSquare className="h-4 w-4" />
+                      Tareas
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <TrendingUp className="h-4 w-4" />
+                      Completación
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ranking.map((ambassador) => (
+                  <TableRow key={ambassador.id}>
+                    <TableCell>
+                      {getRankBadge(ambassador.rank)}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">
+                          {ambassador.first_name} {ambassador.last_name}
+                        </div>
+                        {ambassador.instagram_user && (
+                          <div className="text-sm text-muted-foreground">
+                            @{ambassador.instagram_user}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatNumber(ambassador.global_points)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getCategoryBadge(ambassador.global_category)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ambassador.events_participated}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="font-medium">{ambassador.completed_tasks}</span>
+                        <span className="text-xs text-muted-foreground">
+                          / {ambassador.total_tasks} total
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className={ambassador.completion_rate >= 80 ? 'text-green-600 font-medium' : ambassador.completion_rate >= 60 ? 'text-yellow-600' : 'text-red-600'}>
+                          {ambassador.completion_rate}%
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
