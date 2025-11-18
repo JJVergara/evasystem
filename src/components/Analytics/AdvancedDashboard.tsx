@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,12 +42,29 @@ export function AdvancedDashboard() {
   const { analyticsData, loading, error, refreshAnalytics } = useAdvancedAnalytics(selectedFiestaId, selectedEvent, selectedPeriod);
   const { isSyncing, syncInstagramData } = useInstagramSync();
 
+  const fetchEvents = useCallback(async () => {
+    if (!selectedFiestaId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id')
+        .eq('fiesta_id', selectedFiestaId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setEvents(data?.map(e => ({ id: e.id, name: `Evento ${e.id.slice(0, 8)}` })) || []);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+    }
+  }, [selectedFiestaId]);
+
   // This useEffect must be called before any early returns to maintain hook order
   useEffect(() => {
     if (selectedFiestaId) {
       fetchEvents();
     }
-  }, [selectedFiestaId]);
+  }, [selectedFiestaId, fetchEvents]);
 
   // Show message if no fiesta is selected (after all hooks are called)
   if (!selectedFiestaId) {
@@ -66,23 +83,6 @@ export function AdvancedDashboard() {
       </div>
     );
   }
-
-  const fetchEvents = async () => {
-    if (!selectedFiestaId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('id')
-        .eq('fiesta_id', selectedFiestaId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setEvents(data?.map(e => ({ id: e.id, name: `Evento ${e.id.slice(0, 8)}` })) || []);
-    } catch (err) {
-      console.error('Error fetching events:', err);
-    }
-  };
 
   const exportAnalytics = async () => {
     try {
@@ -291,25 +291,78 @@ export function AdvancedDashboard() {
                   <CardTitle>Distribución de Rendimiento</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={analyticsData.performance_distribution}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          dataKey="count"
-                          label={({ category, percentage }) => `${category} ${percentage}%`}
-                        >
-                          {analyticsData.performance_distribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                  {/* Filter out categories with 0% */}
+                  {(() => {
+                    const filteredData = analyticsData.performance_distribution.filter(
+                      (item) => item.count > 0 && item.percentage > 0
+                    );
+                    
+                    if (filteredData.length === 0) {
+                      return (
+                        <div className="h-64 flex items-center justify-center text-muted-foreground">
+                          <div className="text-center">
+                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No hay datos de rendimiento disponibles</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={filteredData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={100}
+                                paddingAngle={filteredData.length > 1 ? 2 : 0}
+                                dataKey="count"
+                              >
+                                {filteredData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                formatter={(value: number, name: string, props: { payload: { percentage: number; category: string } }) => [
+                                  `${value} embajadores (${props.payload.percentage}%)`,
+                                  props.payload.category
+                                ]}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        
+                        {/* Legend Menu */}
+                        <div className="flex flex-wrap justify-center gap-4 pt-4 border-t">
+                          {analyticsData.performance_distribution.map((item) => (
+                            <div
+                              key={item.category}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                                item.count > 0
+                                  ? 'bg-muted/50 hover:bg-muted cursor-pointer'
+                                  : 'opacity-40'
+                              }`}
+                            >
+                              <div
+                                className="w-4 h-4 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">{item.category}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {item.count} ({item.percentage}%)
+                                </span>
+                              </div>
+                            </div>
                           ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </div>
