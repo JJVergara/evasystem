@@ -107,25 +107,20 @@ async function getOrganizationCredentials(supabaseClient: SupabaseClient, organi
 async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
   try {
     const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.replace('Bearer ', '')
-      : null;
+    const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;
 
     if (!token) {
       return jsonResponse(
         { error: 'unauthorized', error_description: 'Missing auth token' },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
-    const {
-      data: { user: authUser },
-    } = await supabaseClient.auth.getUser(token);
-
+    const { data: { user: authUser } } = await supabaseClient.auth.getUser(token);
     if (!authUser) {
       return jsonResponse(
         { error: 'unauthorized', error_description: 'Invalid auth token' },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -142,49 +137,78 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
           redirect_base?: string;
         };
 
-    const body = (await req.json()) as AuthorizeBody;
-    const { type, organization_id, redirect_base } = body;
+    const body = await req.json();
+    const { type, ambassador_id, organization_id, redirect_base } = body as AuthorizeBody & {
+      ambassador_id?: string;
+    };
 
-    if (!organization_id) {
+    if (!type || !organization_id) {
       return jsonResponse(
         {
           error: 'invalid_request',
-          error_description: 'organization_id is required',
+          error_description: 'type and organization_id are required',
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    // Map auth user -> app user (public.users)
-    const { data: appUser, error: appUserError } = await supabaseClient
-      .from('users')
-      .select('id, organization_id')
-      .eq('auth_user_id', authUser.id)
+    if (type === 'ambassador' && !ambassador_id) {
+      return jsonResponse(
+        {
+          error: 'invalid_request',
+          error_description: 'ambassador_id is required for ambassador flow',
+        },
+        { status: 400 }
+      );
+    }
+
+    // ----- NEW: organization_members-based membership check -----
+    const { data: membership, error: membershipError } = await supabaseClient
+      .from('organization_members')
+      .select('id, organization_id, status, permissions')
+      .eq('user_id', authUser.id)              // auth.users.id
+      .eq('organization_id', organization_id)
+      .eq('status', 'active')
       .single();
 
-    if (appUserError || !appUser || appUser.organization_id !== organization_id) {
+    if (membershipError || !membership) {
       return jsonResponse(
         {
           error: 'forbidden',
           error_description: 'No access to this organization',
         },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
-    // Use global Meta App credentials for all flows
+    // Optional: enforce permissions
+    const perms = (membership as any).permissions || {};
+    const canManageAmbassadors =
+      perms.manage_ambassadors === true || perms.manage_instagram === true;
+
+    if (!canManageAmbassadors && type === 'ambassador') {
+      return jsonResponse(
+        {
+          error: 'forbidden',
+          error_description:
+            'You do not have permissions to manage ambassadors for this organization',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Still get the internal app user row, but only for storing oauth_states.user_id
+    const { data: appUser } = await supabaseClient
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authUser.id)
+      .single();
+
+    // Use global Meta App credentials for all users
     const appId = Deno.env.get('META_APP_ID');
     const appSecret = Deno.env.get('META_APP_SECRET');
 
-    // IMPORTANT: this must match your Meta "Valid OAuth Redirect URI"
-    const REDIRECT_URI =
-      'https://app.evasystem.cl/meta-oauth?action=callback';
-
-    console.log('Environment check:', {
-      hasAppId: !!appId,
-      hasAppSecret: !!appSecret,
-      redirectUri: REDIRECT_URI,
-    });
+    const REDIRECT_URI = `https://app.evasystem.cl/api/meta-oauth?action=callback`;
 
     if (!appId || !appSecret) {
       console.error('Missing Meta credentials');
@@ -194,115 +218,43 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
           error_description:
             'Instagram connection is not available. Meta App credentials are not configured.',
         },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    let statePayload:
-      | {
-          type: 'ambassador';
-          ambassador_id: string;
-          organization_id: string;
-          auth_user_id: string;
-          redirect_base?: string;
-          nonce: string;
-        }
-      | {
-          type: 'organization';
-          organization_id: string;
-          auth_user_id: string;
-          redirect_base?: string;
-          nonce: string;
-        };
-
-    let dbType: 'ambassador' | 'organization' = type;
-    let dbAmbassadorId: string | null = null;
-    let defaultRedirectBase = 'https://app.evasystem.cl/settings?tab=instagram';
-
-    if (type === 'ambassador') {
-      const { ambassador_id } = body as Extract<
-        AuthorizeBody,
-        { type: 'ambassador' }
-      >;
-
-      if (!ambassador_id) {
-        return jsonResponse(
-          {
-            error: 'invalid_request',
-            error_description: 'ambassador_id is required for ambassador flow',
-          },
-          { status: 400 },
-        );
-      }
-
-      // Verify ambassador belongs to this org
-      const { data: ambassadorRow, error: ambassadorError } =
-        await supabaseClient
-          .from('embassadors')
-          .select('id, organization_id')
-          .eq('id', ambassador_id)
-          .single();
-
-      if (
-        ambassadorError ||
-        !ambassadorRow ||
-        ambassadorRow.organization_id !== organization_id
-      ) {
-        return jsonResponse(
-          {
-            error: 'forbidden',
-            error_description: 'Ambassador does not belong to this organization',
-          },
-          { status: 403 },
-        );
-      }
-
-      statePayload = {
-        type: 'ambassador',
-        ambassador_id,
-        organization_id,
-        auth_user_id: authUser.id,
-        redirect_base:
-          redirect_base || 'https://app.evasystem.cl/ambassadors?tab=instagram',
-        nonce: crypto.randomUUID(),
-      };
-      dbType = 'ambassador';
-      dbAmbassadorId = ambassador_id;
-      defaultRedirectBase =
-        redirect_base || 'https://app.evasystem.cl/ambassadors?tab=instagram';
-    } else {
-      // ORGANIZATION FLOW
-      statePayload = {
-        type: 'organization',
-        organization_id,
-        auth_user_id: authUser.id,
-        redirect_base:
-          redirect_base || 'https://app.evasystem.cl/settings?tab=instagram',
-        nonce: crypto.randomUUID(),
-      };
-      dbType = 'organization';
-      dbAmbassadorId = null;
-      defaultRedirectBase =
-        redirect_base || 'https://app.evasystem.cl/settings?tab=instagram';
-    }
+    // Build state payload
+    const statePayload =
+      type === 'ambassador'
+        ? {
+            type: 'ambassador' as const,
+            ambassador_id,
+            organization_id,
+            auth_user_id: authUser.id,
+            redirect_base: redirect_base || 'https://app.evasystem.cl/ambassadors',
+            nonce: crypto.randomUUID(),
+          }
+        : {
+            type: 'organization' as const,
+            organization_id,
+            auth_user_id: authUser.id,
+            redirect_base: redirect_base || 'https://app.evasystem.cl/settings',
+            nonce: crypto.randomUUID(),
+          };
 
     const state = btoa(JSON.stringify(statePayload));
-    console.log('State payload:', statePayload);
-    console.log('State:', state);
 
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    const { error: stateError } = await supabaseClient.from('oauth_states')
-      .insert({
-        state,
-        user_id: appUser.id, // internal app user (public.users.id)
-        ambassador_id: dbAmbassadorId,
-        organization_id,
-        type: dbType,
-        redirect_base: defaultRedirectBase,
-        created_at: new Date().toISOString(),
-        expires_at: expiresAt,
-      });
+    const { error: stateError } = await supabaseClient.from('oauth_states').insert({
+      state,
+      user_id: appUser?.id ?? null, // internal app user (can be null if not found)
+      ambassador_id: type === 'ambassador' ? ambassador_id : null,
+      organization_id,
+      type,
+      redirect_base: redirect_base || null,
+      created_at: new Date().toISOString(),
+      expires_at: expiresAt,
+    });
 
     if (stateError) {
       console.error('Error storing OAuth state:', stateError);
@@ -313,19 +265,16 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
             stateError.message || 'Database error'
           }`,
         },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    // Scopes: use the same set for both flows for now.
     const scopes = [
       'instagram_business_basic',
+      'instagram_business_manage_insights',
       'instagram_business_manage_messages',
-      'instagram_business_content_publish',
-      'instagram_business_manage_insights'
+      'instagram_business_content_publish'
     ].join(',');
-
-    console.log('OAuth scopes being requested:', scopes);
 
     const authUrl =
       'https://api.instagram.com/oauth/authorize?' +
@@ -334,9 +283,6 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       `scope=${encodeURIComponent(scopes)}&` +
       `response_type=code&` +
       `state=${encodeURIComponent(state)}`;
-
-    console.log('Generated Instagram auth URL:');
-    console.log(authUrl);
 
     return jsonResponse({ authUrl });
   } catch (error) {
@@ -348,10 +294,11 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
+
 
 
 async function handleCallback(req: Request, supabaseClient: SupabaseClient) {

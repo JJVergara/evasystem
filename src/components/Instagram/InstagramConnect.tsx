@@ -8,7 +8,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface InstagramConnectProps {
   type: "ambassador" | "organization";
+  /** For ambassadors: ambassador.id. For org: organization.id */
   entityId: string;
+  /** Optional explicit org id; if not provided, we’ll fall back to entityId for org flow */
   organizationId?: string;
   currentStatus?: {
     isConnected: boolean;
@@ -19,12 +21,12 @@ interface InstagramConnectProps {
   onConnectionChange?: () => void;
 }
 
-export function InstagramConnect({ 
-  type, 
-  entityId, 
+export function InstagramConnect({
+  type,
+  entityId,
   organizationId,
   currentStatus = { isConnected: false },
-  onConnectionChange 
+  onConnectionChange,
 }: InstagramConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const { user } = useAuth();
@@ -32,55 +34,73 @@ export function InstagramConnect({
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
-      
-      // Use authenticated user ID instead of entityId
-      const userId = user?.id || entityId;
-      
-      console.log('Initiating Instagram connection with production redirect URI');
-      
-      // Call the meta-oauth edge function with action as query parameter
-      const { data, error } = await supabase.functions.invoke('meta-oauth?action=authorize', {
-        body: {
-          user_id: userId,
-          organization_id: organizationId || entityId,
-          type: type
-          // redirect_base removed - always using production URL for Meta OAuth
-        }
+
+      if (!user) {
+        toast.error("Debes iniciar sesión para conectar Instagram");
+        return;
+      }
+
+      // Determine which organization we’re acting on
+      const orgId = organizationId ?? (type === "organization" ? entityId : undefined);
+      if (!orgId) {
+        toast.error("No se encontró la organización asociada");
+        return;
+      }
+
+      // Build body according to the new edge function contract
+      const body: any = {
+        type,
+        organization_id: orgId,
+        // If you ever want a custom UI redirect after success:
+        // redirect_base: "https://app.evasystem.cl/ambassadors",
+      };
+
+      if (type === "ambassador") {
+        body.ambassador_id = entityId;
+      }
+
+      console.log("Initiating Instagram connection", {
+        type,
+        orgId,
+        ambassador_id: body.ambassador_id,
       });
 
+      const { data, error } = await supabase.functions.invoke(
+        "meta-oauth?action=authorize",
+        { body }
+      );
+
       if (error) {
-        console.error('Supabase function error:', error);
-        let errorMessage = 'Error al conectar con Instagram';
-        
-        // More specific error handling
-        if (error.message?.includes('credentials') || error.message?.includes('configuration_error')) {
-          errorMessage = 'Credenciales de Meta no configuradas. Configura las credenciales de Meta App y asegúrate de que el redirect URI en Meta Developers sea: https://app.evasystem.cl/api/meta-oauth?action=callback';
-        } else if (error.message?.includes('redirect_uri')) {
-          errorMessage = 'URI de redirección no válida. Añade esta URL a Meta Developers: https://app.evasystem.cl/api/meta-oauth?action=callback';
-        } else if (error.message?.includes('fetch')) {
-          errorMessage = 'Error de conexión. Verifica tu conexión a internet.';
-        } else if (error.message?.includes('cors')) {
-          errorMessage = 'Error de configuración. Contacta al administrador.';
+        console.error("Supabase function error:", error);
+        let errorMessage = "Error al conectar con Instagram";
+
+        if (error.message?.includes("configuration_error") || error.message?.includes("credentials")) {
+          errorMessage =
+            "Credenciales de Meta no configuradas. Asegúrate de configurar la app de Meta y el redirect URI: https://app.evasystem.cl/api/meta-oauth?action=callback";
+        } else if (error.message?.includes("redirect_uri")) {
+          errorMessage =
+            "URI de redirección no válida. Añade esta URL en Meta Developers: https://app.evasystem.cl/api/meta-oauth?action=callback";
+        } else if (error.message?.toLowerCase().includes("forbidden")) {
+          errorMessage =
+            "No tienes permisos para conectar esta organización. Verifica que seas miembro activo.";
         }
-        
+
         throw new Error(errorMessage);
       }
 
       if (data?.authUrl) {
-        console.log('Redirecting to Meta OAuth:', data.authUrl);
-        console.log('Using production redirect URI: https://app.evasystem.cl/api/meta-oauth?action=callback');
-        // Redirect to Meta OAuth
+        console.log("Redirecting to Instagram OAuth:", data.authUrl);
         window.location.href = data.authUrl;
       } else {
-        console.error('No authUrl in response:', data);
-        if (data?.error_description) {
-          throw new Error(data.error_description);
-        }
-        throw new Error('No se pudo generar la URL de autorización. Verifica la configuración de Meta.');
+        console.error("No authUrl in response:", data);
+        const msg =
+          data?.error_description ||
+          "No se pudo generar la URL de autorización. Verifica la configuración de Meta.";
+        throw new Error(msg);
       }
-    } catch (error) {
-      console.error('Error connecting Instagram:', error);
-      const message = error instanceof Error ? error.message : 'Error al conectar con Instagram';
+    } catch (err) {
+      console.error("Error connecting Instagram:", err);
+      const message = err instanceof Error ? err.message : "Error al conectar con Instagram";
       toast.error(message);
       setIsConnecting(false);
     }
@@ -106,21 +126,13 @@ export function InstagramConnect({
           </div>
           {currentStatus.lastSync && (
             <p className="text-sm text-muted-foreground">
-              Última sincronización: {new Date(currentStatus.lastSync).toLocaleDateString()}
+              Última sincronización:{" "}
+              {new Date(currentStatus.lastSync).toLocaleDateString()}
             </p>
           )}
         </div>
-        <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={handleConnect}
-          disabled={isConnecting}
-        >
-          {isConnecting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            "Reconectar"
-          )}
+        <Button size="sm" variant="outline" onClick={handleConnect} disabled={isConnecting}>
+          {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reconectar"}
         </Button>
       </div>
     );
@@ -132,17 +144,12 @@ export function InstagramConnect({
       <div className="flex-1">
         <p className="font-medium">Instagram no conectado</p>
         <p className="text-sm text-muted-foreground">
-          {type === "ambassador" 
-            ? "Conecta tu cuenta de Instagram para sincronizar datos automáticamente"
-            : "Conecta tu cuenta business de Instagram para gestionar contenido"
-          }
+          {type === "ambassador"
+            ? "Conecta la cuenta de Instagram del embajador para sincronizar datos automáticamente."
+            : "Conecta la cuenta business de Instagram de la organización para gestionar contenido."}
         </p>
       </div>
-      <Button 
-        onClick={handleConnect}
-        disabled={isConnecting}
-        className="gap-2"
-      >
+      <Button onClick={handleConnect} disabled={isConnecting} className="gap-2">
         {isConnecting ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
