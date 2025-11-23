@@ -156,12 +156,11 @@ export interface MessageData {
 /**
  * Meta OAuth token data
  */
-export interface TokenData {
+export type TokenData = {
   access_token: string;
-  expires_in?: number;
-  token_type?: string;
-  [key: string]: unknown;
-}
+  expires_in: number;   // seconds
+};
+
 
 /**
  * Social mention update data
