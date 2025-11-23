@@ -1,10 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Calendar, Users, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { AmbassadorRanking } from "./AmbassadorRanking";
 
 interface DashboardStats {
   totalOrganizations: number;
@@ -21,13 +22,7 @@ export function SimpleDashboardContent() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardStats();
-    }
-  }, [user]);
-
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -75,12 +70,18 @@ export function SimpleDashboardContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardStats();
+    }
+  }, [user, fetchDashboardStats]);
 
   const StatCard = ({ title, value, icon: Icon, description }: {
     title: string;
     value: number;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     description: string;
   }) => (
     <Card>
@@ -143,6 +144,10 @@ export function SimpleDashboardContent() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {stats.totalOrganizations > 0 && (
+        <AmbassadorRanking />
       )}
     </div>
   );

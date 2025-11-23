@@ -1,54 +1,29 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
+import { handleError, assert } from '../shared/error-handler.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
-    // Initialize Supabase client with service role to update sensitive fields
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Get the user from the Authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
-    }
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-
-    if (authError || !user) {
-      throw new Error('Unauthorized')
-    }
+    // Authenticate user
+    const authResult = await authenticateRequest(req);
+    if (authResult instanceof Response) return authResult;
+    
+    const { user, supabase: supabaseClient } = authResult;
 
     // Get user's organization
-    const { data: userData, error: userError } = await supabaseClient
-      .from('users')
-      .select('organization_id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (userError || !userData) {
-      throw new Error('User not found')
-    }
+    const organizationId = await getUserOrganization(supabaseClient, user.id);
+    assert(organizationId, 'Organization not found', 404);
 
     // Delete tokens from secure table
     const { error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
       .delete()
-      .eq('organization_id', userData.organization_id);
+      .eq('organization_id', organizationId);
 
     if (tokenError) {
       console.error('Failed to delete organization tokens:', tokenError);
@@ -65,39 +40,22 @@ serve(async (req) => {
         instagram_business_account_id: null,
         last_instagram_sync: null
       })
-      .eq('id', userData.organization_id)
-      .eq('created_by', user.id) // Double-check ownership
+      .eq('id', organizationId)
+      .eq('created_by', user.id); // Double-check ownership
 
     if (updateError) {
-      console.error('Failed to disconnect Instagram:', updateError)
-      throw new Error('Failed to disconnect Instagram account')
+      console.error('Failed to disconnect Instagram:', updateError);
+      throw new Error('Failed to disconnect Instagram account');
     }
 
-    console.log('Instagram account disconnected successfully for organization:', userData.organization_id)
+    console.log('Instagram account disconnected successfully for organization:', organizationId);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Instagram account disconnected successfully'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
+    return jsonResponse({
+      success: true,
+      message: 'Instagram account disconnected successfully'
+    });
 
   } catch (error) {
-    console.error('Disconnect Instagram error:', error)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMessage
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
-    )
+    return handleError(error);
   }
-})
+});

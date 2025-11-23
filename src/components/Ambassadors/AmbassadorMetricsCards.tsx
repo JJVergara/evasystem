@@ -2,8 +2,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MetricCard } from "@/components/Dashboard/MetricCard";
-import { Users, Trophy, Target, TrendingUp, Eye, Heart } from "lucide-react";
+import { Users, Trophy, Target, TrendingUp, Eye, Heart, MessageSquare, Share2, Image, AlertTriangle } from "lucide-react";
 
 interface AmbassadorMetricsCardsProps {
   metrics: {
@@ -21,6 +22,17 @@ interface AmbassadorMetricsCardsProps {
     avg_engagement: number;
     completion_rate: number;
     last_activity: string | null;
+    story_insights?: {
+      total_stories: number;
+      total_reach: number;
+      total_impressions: number;
+      total_engagement: number;
+      avg_reach_per_story: number;
+      avg_impressions_per_story: number;
+      total_replies: number;
+      total_shares: number;
+    };
+    insights_error?: boolean;
   };
 }
 
@@ -130,6 +142,62 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
           description="Instagram followers"
         />
       </div>
+
+      {/* Story Insights Section */}
+      {metrics.insights_error && (
+        <div className="mt-6">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              No se pudieron cargar los insights de Stories. Los datos básicos del embajador están disponibles.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      
+      {metrics.story_insights && metrics.story_insights.total_stories > 0 && !metrics.insights_error && (
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="w-5 h-5" />
+                Insights de Stories
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MetricCard
+                  title="Stories Totales"
+                  value={metrics.story_insights.total_stories}
+                  icon={<Image className="w-4 h-4" />}
+                  description="Historias con insights"
+                />
+                
+                <MetricCard
+                  title="Alcance Stories"
+                  value={metrics.story_insights.total_reach.toLocaleString()}
+                  icon={<Eye className="w-4 h-4" />}
+                  description={`Promedio: ${metrics.story_insights.avg_reach_per_story.toLocaleString()}`}
+                />
+                
+                <MetricCard
+                  title="Impresiones"
+                  value={metrics.story_insights.total_impressions.toLocaleString()}
+                  icon={<TrendingUp className="w-4 h-4" />}
+                  description={`Promedio: ${metrics.story_insights.avg_impressions_per_story.toLocaleString()}`}
+                />
+                
+                <MetricCard
+                  title="Engagement"
+                  value={metrics.story_insights.total_engagement.toLocaleString()}
+                  icon={<Heart className="w-4 h-4" />}
+                  description={`${metrics.story_insights.total_replies} respuestas, ${metrics.story_insights.total_shares} shares`}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

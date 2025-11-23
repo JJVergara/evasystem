@@ -1,15 +1,14 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { Organization, SupabaseClient, Notification } from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse, notFoundResponse } from '../shared/responses.ts';
+import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
@@ -96,15 +95,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in instagram-diagnostics:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return handleError(error);
   }
 });
 
-async function testTokenValidity(org: any) {
+async function testTokenValidity(org: Organization) {
   // Get credentials from secure table
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -143,7 +138,7 @@ async function testTokenValidity(org: any) {
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/me?access_token=${org.meta_token}`
+      `https://graph.facebook.com/v21.0/me?access_token=${org.meta_token}`
     );
 
     const data = await response.json();
@@ -185,14 +180,14 @@ async function testTokenValidity(org: any) {
   }
 }
 
-async function testProfileAccess(org: any) {
+async function testProfileAccess(org: Organization) {
   if (!org.meta_token || !org.instagram_business_account_id) {
     throw new Error('Missing token or Instagram business account ID');
   }
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${org.instagram_business_account_id}?fields=id,username,followers_count,media_count&access_token=${org.meta_token}`
+      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}?fields=id,username,followers_count,media_count&access_token=${org.meta_token}`
     );
     const data = await response.json();
     
@@ -209,7 +204,7 @@ async function testProfileAccess(org: any) {
   }
 }
 
-async function testMentionsPermissions(org: any) {
+async function testMentionsPermissions(org: Organization) {
   if (!org.meta_token || !org.instagram_business_account_id) {
     throw new Error('Missing token or Instagram business account ID');
   }
@@ -217,7 +212,7 @@ async function testMentionsPermissions(org: any) {
   try {
     // Test access to mentioned media
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${org.instagram_business_account_id}/tags?limit=1&access_token=${org.meta_token}`
+      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}/tags?limit=1&access_token=${org.meta_token}`
     );
     const data = await response.json();
     
@@ -235,7 +230,7 @@ async function testMentionsPermissions(org: any) {
   }
 }
 
-async function testStoriesPermissions(org: any) {
+async function testStoriesPermissions(org: Organization) {
   if (!org.meta_token || !org.instagram_business_account_id) {
     throw new Error('Missing token or Instagram business account ID');
   }
@@ -243,7 +238,7 @@ async function testStoriesPermissions(org: any) {
   try {
     // Test access to stories
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${org.instagram_business_account_id}/stories?limit=1&access_token=${org.meta_token}`
+      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}/stories?limit=1&access_token=${org.meta_token}`
     );
     const data = await response.json();
     
@@ -269,7 +264,7 @@ async function testStoriesPermissions(org: any) {
   }
 }
 
-async function testWebhookStatus(supabase: any, org: any) {
+async function testWebhookStatus(supabase: SupabaseClient, org: Organization) {
   // Get credentials to verify webhook setup
   const { data: creds, error: credsError } = await supabase
     .rpc('get_organization_credentials_secure', {
@@ -304,7 +299,7 @@ async function testWebhookStatus(supabase: any, org: any) {
   return {
     configured: hasCredentials,
     reachable: recentNotifications && recentNotifications.length > 0,
-    recent_activity: recentNotifications?.map((n: any) => ({
+    recent_activity: recentNotifications?.map((n: Notification) => ({
       type: n.type,
       created_at: n.created_at
     })) || [],
@@ -315,7 +310,7 @@ async function testWebhookStatus(supabase: any, org: any) {
   };
 }
 
-async function testWebhookDelivery(org: any) {
+async function testWebhookDelivery(org: Organization) {
   // Send a test webhook payload to verify signature validation
   if (!org.instagram_business_account_id) {
     return {

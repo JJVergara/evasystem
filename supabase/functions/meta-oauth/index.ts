@@ -1,16 +1,20 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { encryptToken, safeDecryptToken } from '../shared/crypto.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { 
+  SupabaseClient, 
+  TokenData, 
+  ErrorWithMessage, 
+  InstagramData, 
+  OrganizationInstagramData 
+} from '../shared/types.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
+import { handleError } from '../shared/error-handler.ts';
+import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   console.log('=== META OAUTH REQUEST DEBUG ===')
@@ -18,10 +22,7 @@ Deno.serve(async (req) => {
   console.log('Request URL:', req.url)
   
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseClient = createSupabaseClient()
 
     const url = new URL(req.url)
     let action = url.searchParams.get('action')
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
   }
 })
 
-async function getOrganizationCredentials(supabaseClient: any, organizationId: string) {
+async function getOrganizationCredentials(supabaseClient: SupabaseClient, organizationId: string) {
   // Try to get organization-specific credentials using secure function
   const { data: orgCreds, error: orgError } = await supabaseClient
     .rpc('get_organization_credentials_secure', {
@@ -104,12 +105,12 @@ async function getOrganizationCredentials(supabaseClient: any, organizationId: s
   };
 }
 
-async function handleAuthorize(req: Request, supabaseClient: any) {
+async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;
 
-    let authedUser: any = null;
+    let authedUser: { id: string } | null = null;
     if (token) {
       const { data: { user } } = await supabaseClient.auth.getUser(token);
       authedUser = user;
@@ -232,7 +233,7 @@ async function handleAuthorize(req: Request, supabaseClient: any) {
   }
 }
 
-async function handleCallback(req: Request, supabaseClient: any) {
+async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
   // Try to get data from body first (proxy call), then fall back to query params (direct Meta callback)
   let code, state, error, isProxyCall = false;
   
@@ -380,29 +381,30 @@ async function handleCallback(req: Request, supabaseClient: any) {
 
   } catch (error) {
     console.error('=== CALLBACK ERROR ===')
+    const err = error as ErrorWithMessage;
     console.error('Error details:', {
-      name: (error as any).name,
-      message: (error as any).message,
-      stack: (error as any).stack
+      name: err.name,
+      message: err.message,
+      stack: err.stack
     })
     
     // Determine specific error type and message
     let errorType = 'token_exchange_failed'
     let errorMsg = 'Failed to process Instagram authorization'
-    let debugInfo = (error as any).message
+    let debugInfo = err.message
     
-    if ((error as any).message?.includes('Token exchange failed')) {
+    if (err.message?.includes('Token exchange failed')) {
       errorType = 'meta_api_error'
       errorMsg = 'Meta API rejected the authorization code. This could be due to expired state, mismatched redirect URI, or invalid Meta App configuration.'
-      debugInfo = `Meta API Error: ${(error as any).message}`
-    } else if ((error as any).message?.includes('Invalid time value')) {
+      debugInfo = `Meta API Error: ${err.message}`
+    } else if (err.message?.includes('Invalid time value')) {
       errorType = 'token_processing_error'
       errorMsg = 'Error processing token expiration data from Meta API.'
       debugInfo = 'Token expiry calculation failed - Meta API may have returned invalid data'
-    } else if ((error as any).message?.includes('Failed to store')) {
+    } else if (err.message?.includes('Failed to store')) {
       errorType = 'database_error'
       errorMsg = 'Error saving Instagram connection data.'
-      debugInfo = `Database Error: ${(error as any).message}`
+      debugInfo = `Database Error: ${err.message}`
     }
     
     // Always return 200 with structured error for better client handling
@@ -419,7 +421,7 @@ async function handleCallback(req: Request, supabaseClient: any) {
   }
 }
 
-async function exchangeCodeForToken(supabaseClient: any, organizationId: string, code: string, redirectUri?: string) {
+async function exchangeCodeForToken(supabaseClient: SupabaseClient, organizationId: string, code: string, redirectUri?: string) {
   // Use global Meta App credentials for all users
   const app_id = Deno.env.get('META_APP_ID');
   const app_secret = Deno.env.get('META_APP_SECRET');
@@ -508,19 +510,19 @@ async function exchangeCodeForToken(supabaseClient: any, organizationId: string,
   }
 }
 // Update ambassador data in Supabase using secure token storage
-async function updateAmbassadorInstagramData(supabaseClient: any, userId: string, tokenData: any) {
+async function updateAmbassadorInstagramData(supabaseClient: SupabaseClient, userId: string, tokenData: TokenData) {
   try {
     console.log('Updating ambassador Instagram data for user:', userId);
     
     // Get Instagram user details
-    const userResponse = await fetch(`https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${tokenData.access_token}`);
+    const userResponse = await fetch(`${META_API_BASE}/me?fields=id,name&access_token=${tokenData.access_token}`);
     const userData = await userResponse.json();
     
     // Get Instagram account info if available
-    const accountsResponse = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`);
+    const accountsResponse = await fetch(`${META_API_BASE}/me/accounts?access_token=${tokenData.access_token}`);
     const accountsData = await accountsResponse.json();
     
-    let instagramData: any = {
+    let instagramData: InstagramData = {
       instagram_user_id: userData.id,
     };
 
@@ -528,11 +530,11 @@ async function updateAmbassadorInstagramData(supabaseClient: any, userId: string
     if (accountsData.data && accountsData.data.length > 0) {
       for (const page of accountsData.data) {
         try {
-          const igResponse = await fetch(`https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${tokenData.access_token}`);
+          const igResponse = await fetch(`${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${tokenData.access_token}`);
           const igData = await igResponse.json();
           
           if (igData.instagram_business_account) {
-            const igAccountResponse = await fetch(`https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=username,followers_count,profile_picture_url&access_token=${tokenData.access_token}`);
+            const igAccountResponse = await fetch(`${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count,profile_picture_url&access_token=${tokenData.access_token}`);
             const igAccountData = await igAccountResponse.json();
             
             instagramData = {
@@ -550,6 +552,10 @@ async function updateAmbassadorInstagramData(supabaseClient: any, userId: string
     }
 
     // Store token in secure private table
+    if (!tokenData.access_token) {
+      throw new Error('No access token provided');
+    }
+    
     // Handle token expiry safely - Meta might not always provide expires_in
     const expiryDate = tokenData.expires_in 
       ? new Date(Date.now() + (tokenData.expires_in * 1000))
@@ -591,12 +597,12 @@ async function updateAmbassadorInstagramData(supabaseClient: any, userId: string
 }
 
 // Update organization data in Supabase using secure token storage
-async function updateOrganizationInstagramData(supabaseClient: any, organizationId: string, tokenData: any) {
+async function updateOrganizationInstagramData(supabaseClient: SupabaseClient, organizationId: string, tokenData: TokenData) {
   try {
     console.log('Updating organization Instagram data for:', organizationId);
     
     // Get Facebook pages associated with this access token
-    const pagesResponse = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`);
+    const pagesResponse = await fetch(`${META_API_BASE}/me/accounts?access_token=${tokenData.access_token}`);
     const pagesData = await pagesResponse.json();
     
     if (!pagesData.data || pagesData.data.length === 0) {
@@ -609,10 +615,10 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
     console.log('Found Facebook page:', page.name, page.id);
 
     // Get Instagram business account linked to this Facebook page
-    const igResponse = await fetch(`https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${tokenData.access_token}`);
+    const igResponse = await fetch(`${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${tokenData.access_token}`);
     const igData = await igResponse.json();
 
-    let instagramData: any = {
+    let instagramData: OrganizationInstagramData = {
       facebook_page_id: page.id,
     };
 
@@ -620,7 +626,7 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
       console.log('Found Instagram business account:', igData.instagram_business_account.id);
       
       // Get Instagram account details
-      const igAccountResponse = await fetch(`https://graph.facebook.com/v18.0/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${tokenData.access_token}`);
+      const igAccountResponse = await fetch(`${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${tokenData.access_token}`);
       const igAccountData = await igAccountResponse.json();
       
       instagramData = {
@@ -632,6 +638,10 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
     }
 
     // Store token in secure private table
+    if (!tokenData.access_token) {
+      throw new Error('No access token provided');
+    }
+    
     // Handle token expiry safely - Meta might not always provide expires_in
     const expiryDate = tokenData.expires_in 
       ? new Date(Date.now() + (tokenData.expires_in * 1000))
@@ -671,7 +681,7 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
         // First try to subscribe the Instagram Business Account directly
         console.log('Subscribing Instagram Business Account to webhooks...')
         const igWebhookResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${instagramData.instagram_business_account_id}/subscribed_apps`,
+          `${META_API_BASE}/${instagramData.instagram_business_account_id}/subscribed_apps`,
           {
             method: 'POST',
             body: new URLSearchParams({
@@ -690,11 +700,15 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
         } else {
           console.warn('Instagram webhook subscription failed:', igWebhookData);
           // Fallback to Facebook page subscription
-          await subscribeToPageWebhooks(page.id, tokenData.access_token);
+          if (tokenData.access_token) {
+            await subscribeToPageWebhooks(page.id, tokenData.access_token);
+          }
         }
       } else {
         // No Instagram account, just subscribe the page
-        await subscribeToPageWebhooks(page.id, tokenData.access_token);
+        if (tokenData.access_token) {
+          await subscribeToPageWebhooks(page.id, tokenData.access_token);
+        }
       }
     } catch (webhookError) {
       console.warn('Webhook subscription failed:', webhookError);
@@ -709,7 +723,7 @@ async function updateOrganizationInstagramData(supabaseClient: any, organization
 }
 
 // Handle token refresh using secure token storage
-async function handleTokenRefresh(req: Request, supabaseClient: any) {
+async function handleTokenRefresh(req: Request, supabaseClient: SupabaseClient) {
   try {
     // Get the user from the Authorization header
     const authHeader = req.headers.get('Authorization');
@@ -861,7 +875,7 @@ async function handleTokenRefresh(req: Request, supabaseClient: any) {
 
 // Helper function to exchange a token for a long-lived token
 async function exchangeTokenForLongLived(appId: string, appSecret: string, accessToken: string) {
-  const exchangeUrl = `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${accessToken}`;
+  const exchangeUrl = `${META_API_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${accessToken}`;
   
   const response = await fetch(exchangeUrl);
   const data = await response.json();
@@ -876,7 +890,7 @@ async function exchangeTokenForLongLived(appId: string, appSecret: string, acces
 }
 
 async function subscribeToPageWebhooks(pageId: string, accessToken: string) {
-  const webhookUrl = `https://graph.facebook.com/v18.0/${pageId}/subscribed_apps`;
+  const webhookUrl = `${META_API_BASE}/${pageId}/subscribed_apps`;
   
   const response = await fetch(webhookUrl, {
     method: 'POST',

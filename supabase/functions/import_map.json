@@ -1,0 +1,14 @@
+{
+  "imports": {
+    "supabase": "https://esm.sh/@supabase/supabase-js@2",
+    "@/shared/": "./shared/",
+    "@/constants": "./shared/constants.ts",
+    "@/types": "./shared/types.ts",
+    "@/responses": "./shared/responses.ts",
+    "@/crypto": "./shared/crypto.ts",
+    "@/auth": "./shared/auth.ts",
+    "@/instagram-api": "./shared/instagram-api.ts",
+    "@/error-handler": "./shared/error-handler.ts"
+  }
+}
+
