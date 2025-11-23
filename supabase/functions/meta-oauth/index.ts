@@ -367,6 +367,7 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
         JSON.stringify({ 
           success: true,
           message: 'Instagram connected successfully',
+          type: stateData.type, // Include connection type for proper frontend redirect
           timestamp: new Date().toISOString() 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

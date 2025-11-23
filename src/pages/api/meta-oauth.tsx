@@ -14,11 +14,13 @@ const MetaOAuthProxy = () => {
   useEffect(() => {
     const handleCallback = async () => {
       const action = searchParams.get('action');
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
       
-      if (action === 'callback' || action === 'refresh') {
-        // Extract all URL parameters from the callback
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
+      // Check if this is an OAuth callback (has code and state, even without explicit action)
+      if (action === 'callback' || action === 'refresh' || (code && state)) {
+        // code and state already extracted above
+       
         const error = searchParams.get('error');
         const errorCode = searchParams.get('error_code');
         const errorMessage = searchParams.get('error_message');
@@ -41,7 +43,13 @@ const MetaOAuthProxy = () => {
           setStatus('error');
           setErrorDetails(errorMsg);
           toast.error(errorMsg);
-          setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg)), 2000);
+          
+          // Try to determine connection type from state parameter to redirect properly
+          const isAmbassadorConnection = state?.includes('_ambassador_');
+          const errorRedirectPath = isAmbassadorConnection
+            ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
+            : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg);
+          setTimeout(() => navigate(errorRedirectPath), 2000);
           return;
         }
 
@@ -52,7 +60,13 @@ const MetaOAuthProxy = () => {
           setStatus('error');
           setErrorDetails(missingMsg);
           toast.error(missingMsg);
-          setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(missingMsg)), 2000);
+          
+          // Try to determine connection type from state parameter to redirect properly
+          const isAmbassadorConnection = state?.includes('_ambassador_');
+          const errorRedirectPath = isAmbassadorConnection
+            ? '/ambassadors?status=error&error=' + encodeURIComponent(missingMsg)
+            : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(missingMsg);
+          setTimeout(() => navigate(errorRedirectPath), 2000);
           return;
         }
 
@@ -79,7 +93,13 @@ const MetaOAuthProxy = () => {
             setStatus('error');
             setErrorDetails(errorMsg);
             toast.error('Error al conectar Instagram: ' + errorMsg);
-            setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg)), 2000);
+            
+            // Try to determine connection type from state parameter to redirect properly
+            const isAmbassadorConnection = state?.includes('_ambassador_');
+            const errorRedirectPath = isAmbassadorConnection
+              ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
+              : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg);
+            setTimeout(() => navigate(errorRedirectPath), 2000);
           } else if (data?.success === false || data?.error) {
             console.error('Callback processing error:', data);
             
@@ -98,12 +118,23 @@ const MetaOAuthProxy = () => {
             setStatus('error');
             setErrorDetails(`${userFriendlyMsg} ${data?.debug_info ? `(Debug: ${data.debug_info})` : ''}`);
             toast.error(`Error al conectar Instagram: ${userFriendlyMsg}`);
-            setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(userFriendlyMsg)), 2000);
+            
+            // Use type from response if available, otherwise check state parameter
+            const isAmbassadorConnection = data?.type === 'ambassador' || state?.includes('_ambassador_');
+            const errorRedirectPath = isAmbassadorConnection
+              ? '/ambassadors?status=error&error=' + encodeURIComponent(userFriendlyMsg)
+              : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(userFriendlyMsg);
+            setTimeout(() => navigate(errorRedirectPath), 2000);
           } else if (data?.success === true) {
             console.log('Instagram connection successful!');
             setStatus('success');
             toast.success('Instagram conectado exitosamente');
-            setTimeout(() => navigate('/settings?tab=instagram&status=success'), 1000);
+            
+            // Determine redirect based on connection type
+            const redirectPath = data?.type === 'ambassador' 
+              ? '/ambassadors?status=success'
+              : '/settings?tab=instagram&status=success';
+            setTimeout(() => navigate(redirectPath), 1000);
           } else {
             // Fallback for unexpected response format
             console.warn('Unexpected response format:', data);
@@ -111,7 +142,13 @@ const MetaOAuthProxy = () => {
             setStatus('error');
             setErrorDetails(errorMsg);
             toast.error('Error al conectar Instagram: ' + errorMsg);
-            setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg)), 2000);
+            
+            // Try to determine connection type from state parameter to redirect properly
+            const isAmbassadorConnection = state?.includes('_ambassador_');
+            const errorRedirectPath = isAmbassadorConnection
+              ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
+              : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg);
+            setTimeout(() => navigate(errorRedirectPath), 2000);
           }
         } catch (error) {
           console.error('=== PROXY EXCEPTION ===');
@@ -120,7 +157,13 @@ const MetaOAuthProxy = () => {
           setStatus('error');
           setErrorDetails(errorMsg);
           toast.error('Error en la conexión: ' + errorMsg);
-          setTimeout(() => navigate('/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg)), 2000);
+          
+          // Try to determine connection type from state parameter to redirect properly
+          const isAmbassadorConnection = state?.includes('_ambassador_');
+          const errorRedirectPath = isAmbassadorConnection
+            ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
+            : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg);
+          setTimeout(() => navigate(errorRedirectPath), 2000);
         }
       } else {
         console.log('Not a callback action, redirecting to settings');

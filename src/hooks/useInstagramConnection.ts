@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { toast } from "sonner";
@@ -9,6 +9,11 @@ export function useInstagramConnection() {
   const { user } = useAuth();
   const { organization, loading, updateOrganization, refreshOrganization } = useCurrentOrganization();
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // Refs to prevent infinite loops
+  const isRefreshingRef = useRef(false);
+  const previousOrgIdRef = useRef<string | undefined>(undefined);
+  const isMountedRef = useRef(true);
 
   // Token status now comes from secure edge function
   const [tokenStatus, setTokenStatus] = useState<{
@@ -23,7 +28,14 @@ export function useInstagramConnection() {
   });
 
   const refreshTokenStatus = async () => {
+    // Prevent concurrent calls
+    if (isRefreshingRef.current) {
+      console.log('Token status refresh already in progress, skipping...');
+      return;
+    }
+
     try {
+      isRefreshingRef.current = true;
       const { data, error } = await supabase.functions.invoke('instagram-token-status');
       
       // Handle network/invocation errors (not HTTP errors, since we return 200 always)
@@ -37,58 +49,88 @@ export function useInstagramConnection() {
       
       // Handle response data - should always have success field now
       if (data?.success) {
-        setTokenStatus(data.data);
-        console.log('Token status updated:', data.data);
+        // Only update state if component is still mounted
+        if (isMountedRef.current) {
+          setTokenStatus(data.data);
+          console.log('Token status updated:', data.data);
+        }
       } else {
         // This is a server-reported error (but still HTTP 200)
         console.log('Token status check reported error:', data);
         // Don't show toast for server errors - they're usually permission-related
         // Just set disconnected state
-        setTokenStatus({
-          isConnected: false,
-          isTokenExpired: false
-        });
+        if (isMountedRef.current) {
+          setTokenStatus({
+            isConnected: false,
+            isTokenExpired: false
+          });
+        }
       }
     } catch (error) {
       console.error('Unexpected error refreshing token status:', error);
       toast.error('Error de conexión', {
         description: 'No se pudo conectar con el servidor'
       });
+    } finally {
+      isRefreshingRef.current = false;
     }
   };
 
   // Fetch token status securely
   useEffect(() => {
-    if (user && organization) {
-      refreshTokenStatus();
-      
-      // Clean up URL parameters after OAuth callback to prevent re-processing
-      const urlParams = new URLSearchParams(window.location.search);
-      const hasOAuthParams = urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
-      
-      if (hasOAuthParams) {
-        try {
-          const cleanUrl = window.location.pathname;
-          // Use a timeout to ensure the page has rendered
-          setTimeout(() => {
-            try {
-              window.history.replaceState({}, document.title, cleanUrl);
-            } catch (error) {
-              console.warn('Could not clean URL parameters (fallback):', error);
-            }
-          }, 100);
-          
-          // After OAuth, refresh token status again with a delay to catch any token writes
-          setTimeout(() => {
-            console.log('Refreshing token status after OAuth callback...');
-            refreshTokenStatus();
-          }, 2000);
-        } catch (error) {
-          console.warn('Could not clean URL parameters:', error);
-        }
+    // Guard: Only refresh if user and organization exist
+    if (!user || !organization) {
+      return;
+    }
+
+    // Guard: Only refresh if organization ID actually changed
+    if (previousOrgIdRef.current === organization.id) {
+      return;
+    }
+
+    // Guard: Don't refresh if already in progress
+    if (isRefreshingRef.current) {
+      return;
+    }
+
+    console.log('Organization changed, refreshing token status...', organization.id);
+    previousOrgIdRef.current = organization.id;
+    refreshTokenStatus();
+    
+    // Clean up URL parameters after OAuth callback to prevent re-processing
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
+    
+    if (hasOAuthParams) {
+      try {
+        const cleanUrl = window.location.pathname;
+        // Use a timeout to ensure the page has rendered
+        setTimeout(() => {
+          try {
+            window.history.replaceState({}, document.title, cleanUrl);
+          } catch (error) {
+            console.warn('Could not clean URL parameters (fallback):', error);
+          }
+        }, 100);
+        
+        // After OAuth, refresh token status again with a delay to catch any token writes
+        setTimeout(() => {
+          console.log('Refreshing token status after OAuth callback...');
+          refreshTokenStatus();
+        }, 2000);
+      } catch (error) {
+        console.warn('Could not clean URL parameters:', error);
       }
     }
-  }, [user, organization?.id]);
+  }, [user?.id, organization?.id]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const isConnected = tokenStatus.isConnected;
   const isTokenExpired = tokenStatus.isTokenExpired;

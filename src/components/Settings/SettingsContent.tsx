@@ -74,32 +74,35 @@ export default function SettingsContent() {
   // Refresh organization after returning from OAuth and on mount
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout | null = null;
+    let hasRefreshed = false; // Flag to ensure we only refresh once
 
     const refresh = () => {
-      if (isMounted && refreshOrganization) {
+      if (isMounted && refreshOrganization && !hasRefreshed) {
+        hasRefreshed = true;
+        console.log('SettingsContent: Refreshing organization...');
         refreshOrganization();
       }
     };
 
     const params = new URLSearchParams(window.location.search);
-    if (params.has('status') || params.has('ig') || params.has('instagram')) {
-      refresh();
+    const hasOAuthParams = params.has('status') || params.has('ig') || params.has('instagram');
+    
+    if (hasOAuthParams) {
+      // Clean up URL params immediately to prevent re-processing
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
       url.searchParams.delete('ig');
       url.searchParams.delete('instagram');
       window.history.replaceState({}, '', url.toString());
-    } else {
-      // Only refresh on initial mount, debounce to prevent multiple calls
-      timeoutId = setTimeout(refresh, 100);
+      
+      // Refresh after OAuth callback
+      refresh();
     }
+    // Note: Removed the else branch that was refreshing on every mount
+    // The useInstagramConnection hook now handles organization-based refreshes
 
     return () => {
       isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
