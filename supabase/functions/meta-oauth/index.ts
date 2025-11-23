@@ -208,7 +208,7 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
     const appId = Deno.env.get('META_APP_ID');
     const appSecret = Deno.env.get('META_APP_SECRET');
 
-    const REDIRECT_URI = `https://app.evasystem.cl/api/meta-oauth?action=callback`;
+    const REDIRECT_URI = `https://app.evasystem.cl/meta-oauth`;
 
     if (!appId || !appSecret) {
       console.error('Missing Meta credentials');
@@ -614,7 +614,7 @@ async function exchangeCodeForToken(code: string) {
   const app_secret = Deno.env.get('META_APP_SECRET');
   
   // Always force production redirect URI for Meta API token exchange
-  const REDIRECT_URI = 'https://app.evasystem.cl/api/meta-oauth?action=callback'
+  const REDIRECT_URI = 'https://app.evasystem.cl/meta-oauth'
 
   console.log('=== INSTAGRAM TOKEN EXCHANGE DEBUG ===')
   console.log('Code received:', code ? 'Yes' : 'No')

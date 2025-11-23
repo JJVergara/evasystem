@@ -24,7 +24,7 @@ const StoryMentions = lazy(() => import("./pages/StoryMentions"));
 const InstagramDiagnostics = lazy(() => import("./pages/InstagramDiagnostics"));
 const InstagramBusiness = lazy(() => import("./pages/InstagramBusiness"));
 const AuthCallback = lazy(() => import("./pages/auth-callback"));
-const MetaOAuthProxy = lazy(() => import("./pages/api/meta-oauth"));
+const MetaOAuthProxy = lazy(() => import("./pages/MetaOAuthProxy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // QueryClient configuration optimized for performance  
@@ -88,7 +88,7 @@ const App = () => (
               <Route path="/instagram-business" element={<InstagramBusiness />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth-callback" element={<AuthCallback />} />
-              <Route path="/api/meta-oauth" element={<MetaOAuthProxy />} />
+              <Route path="/meta-oauth" element={<MetaOAuthProxy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

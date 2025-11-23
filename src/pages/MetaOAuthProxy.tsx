@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// This component acts as a proxy for Meta OAuth callbacks
-// It receives the callback from Meta and forwards it to the Supabase edge function
+
 const MetaOAuthProxy = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
