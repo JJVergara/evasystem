@@ -35,6 +35,7 @@ export function EditAmbassadorModal({
   ambassador, 
   onAmbassadorUpdated 
 }: EditAmbassadorModalProps) {
+  const instagramStatus = useAmbassadorInstagramStatus(ambassador?.id ?? null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
@@ -118,8 +119,6 @@ export function EditAmbassadorModal({
   };
 
   if (!ambassador) return null;
-
-  const instagramStatus = useAmbassadorInstagramStatus(ambassador.id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
