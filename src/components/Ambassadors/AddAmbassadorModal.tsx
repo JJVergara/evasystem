@@ -244,15 +244,9 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
             {/* Instagram Connection */}
             <div>
               <Label>Conexión Instagram (Opcional)</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Puedes conectar Instagram ahora o después desde el dashboard
+              <p className="text-sm text-muted-foreground">
+                Podrás conectar la cuenta de Instagram del embajador después de crearlo, desde el dashboard.
               </p>
-              <InstagramConnect
-                type="ambassador"
-                entityId={formData.organization_id} // Temporalmente usamos org_id, se actualizará tras crear el ambassador
-                organizationId={formData.organization_id}
-                currentStatus={{ isConnected: false }}
-              />
             </div>
           </div>
 

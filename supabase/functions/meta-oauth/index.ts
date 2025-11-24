@@ -98,8 +98,8 @@ async function getOrganizationCredentials(supabaseClient: SupabaseClient, organi
 
   console.log('Using global Meta credentials as fallback');
   return {
-    app_id: Deno.env.get('META_APP_ID'),
-    app_secret: Deno.env.get('META_APP_SECRET'),
+    app_id: "602564099251848",//Deno.env.get('META_APP_ID'),
+    app_secret: "74bc6263089d8179354b31437d1982fc",//Deno.env.get('META_APP_SECRET'),
     webhook_verify_token: Deno.env.get('WEBHOOK_VERIFY_TOKEN')
   };
 }
@@ -205,8 +205,8 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       .single();
 
     // Use global Meta App credentials for all users
-    const appId = Deno.env.get('META_APP_ID');
-    const appSecret = Deno.env.get('META_APP_SECRET');
+    const appId = "602564099251848";//Deno.env.get('META_APP_ID');
+    const appSecret = "74bc6263089d8179354b31437d1982fc";//Deno.env.get('META_APP_SECRET');
 
     const REDIRECT_URI = `https://app.evasystem.cl/meta-oauth`;
 
@@ -270,19 +270,20 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
     }
 
     const scopes = [
-      'instagram_business_basic',
-      'instagram_business_manage_insights',
-      'instagram_business_manage_messages',
-      'instagram_business_content_publish'
+      'instagram_basic',
+      'instagram_manage_insights',
+      'instagram_manage_messages',
+      'instagram_content_publish'
     ].join(',');
 
     const authUrl =
-      'https://api.instagram.com/oauth/authorize?' +
-      `client_id=${encodeURIComponent(appId)}&` +
-      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-      `scope=${encodeURIComponent(scopes)}&` +
+      `https://www.facebook.com/v21.0/dialog/oauth?` +
+      `client_id=${encodeURIComponent(appId)}&` +           // Facebook app ID
+      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` + // https://app.evasystem.cl/meta-oauth
+      `state=${encodeURIComponent(state)}&` +
       `response_type=code&` +
-      `state=${encodeURIComponent(state)}`;
+      `scope=${encodeURIComponent(scopes)}`;
+
 
     return jsonResponse({ authUrl });
   } catch (error) {
@@ -609,92 +610,54 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
 }
 
 async function exchangeCodeForToken(code: string) {
-  // Use global Meta App credentials for all users
-  const app_id = Deno.env.get('META_APP_ID');
-  const app_secret = Deno.env.get('META_APP_SECRET');
-  
-  // Always force production redirect URI for Meta API token exchange
-  const REDIRECT_URI = 'https://app.evasystem.cl/meta-oauth'
+  const appId = "602564099251848";//Deno.env.get('META_APP_ID');
+  const appSecret = "74bc6263089d8179354b31437d1982fc";//Deno.env.get('META_APP_SECRET');
+  const REDIRECT_URI = 'https://app.evasystem.cl/meta-oauth';
 
-  console.log('=== INSTAGRAM TOKEN EXCHANGE DEBUG ===')
-  console.log('Code received:', code ? 'Yes' : 'No')
-  console.log('APP_ID exists:', !!app_id)
-  console.log('APP_SECRET exists:', !!app_secret)
-  console.log('REDIRECT_URI:', REDIRECT_URI)
+  // Step 1: code -> short-lived user access token
+  const shortUrl =
+    `https://graph.facebook.com/v21.0/oauth/access_token` +
+    `?client_id=${encodeURIComponent(appId)}` +
+    `&client_secret=${encodeURIComponent(appSecret)}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&code=${encodeURIComponent(code)}`;
 
-  if (!app_id || !app_secret) {
-    throw new Error('Global Meta App credentials not configured')
+  const shortRes = await fetch(shortUrl);
+  const shortData = await shortRes.json();
+
+  if (!shortRes.ok || shortData.error) {
+    throw new Error(
+      `Short-lived token exchange failed: ${shortData.error?.message || shortData.error_description || 'Unknown error'}`
+    );
   }
 
-  // Paso 1: Intercambio del code por short-lived token usando Instagram API
-  const shortLivedTokenData = new FormData();
-  shortLivedTokenData.append('client_id', app_id);
-  shortLivedTokenData.append('client_secret', app_secret);
-  shortLivedTokenData.append('grant_type', 'authorization_code');
-  shortLivedTokenData.append('redirect_uri', REDIRECT_URI);
-  shortLivedTokenData.append('code', code);
+  // Step 2: short-lived -> long-lived token
+  const longUrl =
+    `https://graph.facebook.com/v21.0/oauth/access_token` +
+    `?grant_type=fb_exchange_token` +
+    `&client_id=${encodeURIComponent(appId)}` +
+    `&client_secret=${encodeURIComponent(appSecret)}` +
+    `&fb_exchange_token=${encodeURIComponent(shortData.access_token)}`;
 
-  console.log('Making short-lived token exchange request to Instagram API...')
+  const longRes = await fetch(longUrl);
+  const longData = await longRes.json();
 
-  const shortLivedResponse = await fetch('https://api.instagram.com/oauth/access_token', { 
-    method: 'POST',
-    body: shortLivedTokenData
-  });
-  const shortLivedData = await shortLivedResponse.json();
-
-  console.log('Short-lived token exchange response status:', shortLivedResponse.status)
-  
-  if (!shortLivedResponse.ok) {
-    console.error('SHORT-LIVED TOKEN EXCHANGE FAILED:', {
-      status: shortLivedResponse.status,
-      statusText: shortLivedResponse.statusText,
-      data: shortLivedData,
-      error: shortLivedData.error,
-      errorDescription: shortLivedData.error_description
-    })
-    throw new Error(`Short-lived token exchange failed: ${shortLivedData.error_description || shortLivedData.error?.message || 'Unknown Instagram API error'}`)
+  if (!longRes.ok || longData.error) {
+    throw new Error(
+      `Long-lived token exchange failed: ${longData.error?.message || longData.error_description || 'Unknown error'}`
+    );
   }
 
-  // Paso 2: Intercambio del short-lived token por long-lived token
-  try {
-    const longLivedTokenUrl = `https://graph.instagram.com/access_token?` +
-      `grant_type=ig_exchange_token&` +
-      `client_secret=${app_secret}&` +
-      `access_token=${shortLivedData.access_token}`;
+  // Compute expiry
+  const expiresAt = new Date();
+  expiresAt.setSeconds(expiresAt.getSeconds() + (longData.expires_in ?? 60 * 24 * 60 * 60));
 
-    console.log('Making long-lived token exchange request...')
-
-    const longLivedResponse = await fetch(longLivedTokenUrl);
-    const longLivedData = await longLivedResponse.json();
-
-    if (longLivedResponse.ok && longLivedData.access_token) {
-      console.log('Long-lived token exchange successful')
-      console.log('Long-lived token expires in:', longLivedData.expires_in, 'seconds')
-      
-      // Calculate expiry date
-      const expiresAt = new Date();
-      expiresAt.setSeconds(expiresAt.getSeconds() + longLivedData.expires_in);
-      
-      return {
-        access_token: longLivedData.access_token,
-        token_type: longLivedData.token_type || 'bearer',
-        expires_in: longLivedData.expires_in,
-        expires_at: expiresAt.toISOString(),
-        user_id: shortLivedData.user_id,
-        username: shortLivedData.username || null
-      };
-    } else {
-      console.error('LONG-LIVED TOKEN EXCHANGE FAILED:', {
-        status: longLivedResponse.status,
-        statusText: longLivedResponse.statusText,
-        data: longLivedData
-      })
-      throw new Error(`Long-lived token exchange failed: ${longLivedData.error?.message || longLivedData.error_description || 'Unknown Meta Graph API error'}`)
-    }
-  } catch (error) {
-    console.error('Error during long-lived token exchange:', error)
-    throw new Error(`Failed to exchange tokens: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
+  return {
+    access_token: longData.access_token,
+    token_type: longData.token_type || 'bearer',
+    expires_in: longData.expires_in,
+    expires_at: expiresAt.toISOString(),
+  };
 }
 
 // Update ambassador data in Supabase using secure token storage
@@ -799,17 +762,23 @@ async function updateAmbassadorInstagramData(
       ? new Date(Date.now() + tokenData.expires_in * 1000)
       : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // default ~60 days
 
-    // 4) Encrypt and store token in ambassador_tokens
+    // 4) Encrypt and store token in ambassador_tokens    
     const encryptedToken = await encryptToken(tokenData.access_token);
 
     const { error: tokenError } = await supabaseClient
       .from('ambassador_tokens')
-      .upsert({
-        embassador_id: ambassadorId,
-        access_token: encryptedToken,
-        token_expiry: expiryDate.toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          embassador_id: ambassadorId,
+          access_token: encryptedToken,
+          token_expiry: expiryDate.toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'embassador_id',  
+        }
+      );
+
 
     if (tokenError) {
       console.error('Failed to store ambassador token:', tokenError);

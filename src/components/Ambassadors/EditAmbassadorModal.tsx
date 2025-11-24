@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { InstagramConnect } from "@/components/Instagram/InstagramConnect";
+import { useAmbassadorInstagramStatus } from "@/hooks/useAmbassadorInstagramStatus";
 
 interface Ambassador {
   id: string;
@@ -117,6 +118,8 @@ export function EditAmbassadorModal({
   };
 
   if (!ambassador) return null;
+
+  const instagramStatus = useAmbassadorInstagramStatus(ambassador.id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -230,8 +233,8 @@ export function EditAmbassadorModal({
               type="ambassador"
               entityId={ambassador.id}
               organizationId={ambassador.organization_id}
-              currentStatus={{ isConnected: false }}
-              onConnectionChange={() => {}}
+              currentStatus={instagramStatus}
+              onConnectionChange={onAmbassadorUpdated}
             />
           </div>
 

@@ -9,24 +9,27 @@ const IV_LENGTH = 12; // 96 bits for GCM
 /**
  * Get encryption key from environment
  */
-function getEncryptionKey(): CryptoKey {
-  const keyString = Deno.env.get('TOKEN_ENCRYPTION_KEY');
-  if (!keyString) {
+async function getEncryptionKey(): Promise<CryptoKey> {
+  const keyHex = "40c280da434d3017b4a97ea81014c05466a7dda359e611b98d89addaa5352bce";//Deno.env.get('TOKEN_ENCRYPTION_KEY');
+  if (!keyHex) {
     throw new Error('TOKEN_ENCRYPTION_KEY not configured');
   }
-  
-  // Convert hex string to ArrayBuffer
-  const keyBytes = new Uint8Array(keyString.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
-  if (keyBytes.length !== 32) {
-    throw new Error('TOKEN_ENCRYPTION_KEY must be 32 bytes (64 hex characters)');
+
+  // validate: exactly 64 hex chars
+  if (!/^[0-9a-fA-F]{64}$/.test(keyHex)) {
+    throw new Error('TOKEN_ENCRYPTION_KEY must be 64 hex characters (32 bytes).');
   }
-  
-  return crypto.subtle.importKey(
+
+  const keyBytes = new Uint8Array(
+    keyHex.match(/.{2}/g)!.map((b) => parseInt(b, 16))
+  );
+
+  return await crypto.subtle.importKey(
     'raw',
     keyBytes,
     { name: ALGORITHM },
     false,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   );
 }
 
@@ -52,8 +55,12 @@ export async function encryptToken(token: string): Promise<string> {
     
     return btoa(String.fromCharCode(...combined));
   } catch (error) {
-    console.error('Token encryption failed:', error);
-    throw new Error('Failed to encrypt token');
+    console.error('Token encryption failed (raw):', error);
+    throw new Error(
+      `Failed to encrypt token: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 }
 
@@ -80,7 +87,11 @@ export async function decryptToken(encryptedToken: string): Promise<string> {
     return new TextDecoder().decode(decrypted);
   } catch (error) {
     console.error('Token decryption failed:', error);
-    throw new Error('Failed to decrypt token');
+    throw new Error(
+      `Failed to decrypt token: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 }
 
