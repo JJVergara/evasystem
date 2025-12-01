@@ -48,15 +48,13 @@ Deno.serve(async (req) => {
 
     console.log('Checking token status for user:', user.id);
 
-    // Get user's organization
-    const { data: userData, error: userError } = await supabaseClient
-      .from('users')
-      .select('organization_id')
-      .eq('auth_user_id', user.id)
-      .single()
+    // Get user's organization via organization_members (same as frontend)
+    // This is more reliable than users.organization_id which can be null
+    const { data: userOrgs, error: orgsError } = await supabaseClient
+      .rpc('get_user_organizations', { user_auth_id: user.id });
 
-    if (userError || !userData) {
-      console.log('User data not found:', userError?.message);
+    if (orgsError || !userOrgs || userOrgs.length === 0) {
+      console.log('No organizations found for user:', orgsError?.message);
       return jsonResponse({
           success: true,
           data: {
@@ -69,34 +67,15 @@ Deno.serve(async (req) => {
         })
     }
 
-    console.log('Checking organization access for user:', user.id, 'org:', userData.organization_id);
-
-    // Check if user has access to this organization (either owner or member)
-    const { data: hasAccess, error: accessError } = await supabaseClient
-      .rpc('is_organization_member', { 
-        user_auth_id: user.id, 
-        org_id: userData.organization_id 
-      });
-
-    if (accessError || !hasAccess) {
-      console.log('Organization access denied:', accessError?.message, 'hasAccess:', hasAccess);
-      return jsonResponse({
-          success: true,
-          data: {
-            isConnected: false,
-            isTokenExpired: false,
-            lastSync: null,
-            username: null,
-            tokenExpiryDate: null
-          }
-        })
-    }
+    // Use the first organization (or the one marked as current if available)
+    const organizationId = userOrgs[0].organization_id;
+    console.log('Found organization for user:', user.id, 'org:', organizationId);
 
     // Get organization token status from secure table
     const { data: orgData, error: orgError } = await supabaseClient
       .from('organizations')
       .select('instagram_username, last_instagram_sync')
-      .eq('id', userData.organization_id)
+      .eq('id', organizationId)
       .single();
 
     if (orgError) {
@@ -112,12 +91,12 @@ Deno.serve(async (req) => {
     const { data: tokenData, error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
       .select('token_expiry')
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId)
       .single();
 
     // Token not found is not an error - organization might not be connected
     const hasToken = !tokenError && tokenData;
-    console.log('Token status for org', userData.organization_id, ':', hasToken ? 'found' : 'not found');
+    console.log('Token status for org', organizationId, ':', hasToken ? 'found' : 'not found');
 
     const isConnected = !!hasToken;
     const isTokenExpired = hasToken && tokenData.token_expiry ? new Date(tokenData.token_expiry) < new Date() : false;
