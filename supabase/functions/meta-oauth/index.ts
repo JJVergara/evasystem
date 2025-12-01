@@ -273,7 +273,9 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       'instagram_basic',
       'instagram_manage_insights',
       'instagram_manage_messages',
-      'instagram_content_publish'
+      'instagram_content_publish',
+      'pages_show_list',        // Required to list user's Pages
+      'pages_read_engagement'   // Required to read Page data
     ].join(',');
 
     const authUrl =
@@ -839,8 +841,10 @@ async function updateOrganizationInstagramData(
     }
 
     if (!pagesData.data || pagesData.data.length === 0) {
-      console.log('No Facebook pages found for this account');
-      return;
+      throw new Error(
+        'No Facebook pages found. Please ensure you have at least one Facebook Page ' +
+        'linked to your account and that you granted page access during authorization.'
+      );
     }
 
     // Use the first page for now
