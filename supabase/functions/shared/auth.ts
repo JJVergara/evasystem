@@ -118,19 +118,28 @@ export async function verifyOrganizationMembership(
 }
 
 /**
- * Get user's organization
+ * Get user's organization via organization_members (more reliable than users.organization_id)
  */
 export async function getUserOrganization(
   supabase: SupabaseClient,
   userId: string
 ): Promise<string | null> {
-  const { data } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('auth_user_id', userId)
-    .single();
+  // Use get_user_organizations RPC which queries organization_members
+  const { data: userOrgs, error } = await supabase
+    .rpc('get_user_organizations', { user_auth_id: userId });
 
-  return data?.organization_id ?? null;
+  if (error || !userOrgs || userOrgs.length === 0) {
+    // Fallback to users.organization_id for backwards compatibility
+    const { data: userData } = await supabase
+      .from('users')
+      .select('organization_id')
+      .eq('auth_user_id', userId)
+      .single();
+    
+    return userData?.organization_id ?? null;
+  }
+
+  return userOrgs[0].organization_id;
 }
 
 /**

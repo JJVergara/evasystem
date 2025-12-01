@@ -46,41 +46,68 @@ Deno.serve(async (req) => {
       );
     }
 
-    // SECURITY: Verify user owns this organization
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .select('id, meta_token, token_expiry, instagram_business_account_id, instagram_username')
-      .eq('id', organization_id)
-      .eq('created_by', user.id) // CRITICAL: Only allow access to owned organizations
-      .single();
+    // SECURITY: Verify user is a member of this organization
+    const { data: isMember } = await supabase
+      .rpc('is_organization_member', {
+        user_auth_id: user.id,
+        org_id: organization_id
+      });
 
-    if (orgError || !org) {
+    if (!isMember) {
       return new Response(
         JSON.stringify({ error: 'Organization not found or access denied' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Get organization data
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, instagram_business_account_id, instagram_username')
+      .eq('id', organization_id)
+      .single();
+
+    if (orgError || !org) {
+      return new Response(
+        JSON.stringify({ error: 'Organization not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get token from secure table
+    const { data: tokenData } = await supabase
+      .from('organization_instagram_tokens')
+      .select('access_token, token_expiry')
+      .eq('organization_id', organization_id)
+      .single();
+
+    // Merge token into org object for backwards compatibility with test functions
+    const orgWithToken = {
+      ...org,
+      meta_token: tokenData?.access_token || null,
+      token_expiry: tokenData?.token_expiry || null
+    };
+
     let result = {};
 
     switch (test) {
       case 'token_validity':
-        result = await testTokenValidity(org);
+        result = await testTokenValidity(orgWithToken);
         break;
       case 'profile_access':
-        result = await testProfileAccess(org);
+        result = await testProfileAccess(orgWithToken);
         break;
       case 'mentions_permissions':
-        result = await testMentionsPermissions(org);
+        result = await testMentionsPermissions(orgWithToken);
         break;
       case 'stories_permissions':
-        result = await testStoriesPermissions(org);
+        result = await testStoriesPermissions(orgWithToken);
         break;
       case 'webhook_status':
-        result = await testWebhookStatus(supabase, org);
+        result = await testWebhookStatus(supabase, orgWithToken);
         break;
       case 'webhook_test':
-        result = await testWebhookDelivery(org);
+        result = await testWebhookDelivery(orgWithToken);
         break;
       default:
         return new Response(

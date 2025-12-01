@@ -30,6 +30,17 @@ Deno.serve(async (req) => {
       throw new Error('Failed to disconnect Instagram tokens');
     }
 
+    // Verify user has access to this organization
+    const { data: hasAccess } = await supabaseClient
+      .rpc('is_organization_member', {
+        user_auth_id: user.id,
+        org_id: organizationId
+      });
+
+    if (!hasAccess) {
+      throw new Error('No access to this organization');
+    }
+
     // Clear Instagram-related fields from organizations table
     const { error: updateError } = await supabaseClient
       .from('organizations')
@@ -40,8 +51,7 @@ Deno.serve(async (req) => {
         instagram_business_account_id: null,
         last_instagram_sync: null
       })
-      .eq('id', organizationId)
-      .eq('created_by', user.id); // Double-check ownership
+      .eq('id', organizationId);
 
     if (updateError) {
       console.error('Failed to disconnect Instagram:', updateError);
