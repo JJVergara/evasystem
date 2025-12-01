@@ -25,11 +25,35 @@ import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { InstagramConfigChecklist } from "./InstagramConfigChecklist";
 import { MetaAppCredentialsForm } from "./MetaAppCredentialsForm";
 import { InstagramDiagnosticsPanel } from "./InstagramDiagnosticsPanel";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PageDiagnostic {
+  id: string;
+  name: string;
+  instagram_business_account: {
+    id: string;
+    username?: string;
+    followers_count?: number;
+  } | null;
+}
+
+interface DiagnosticResult {
+  total_pages: number;
+  pages_with_instagram: number;
+  pages_without_instagram: number;
+  pages: PageDiagnostic[];
+  help?: {
+    message: string;
+    steps: string[];
+  } | null;
+}
 
 export function EnhancedInstagramSettings() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const { isConnected, isTokenExpired, isConnecting, connectInstagram, disconnectInstagram, refreshTokenStatus } = useInstagramConnection();
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
   const { 
     isRunning: isDiagnosticRunning, 
@@ -79,6 +103,36 @@ export function EnhancedInstagramSettings() {
       case 'success': return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'error': return <AlertCircle className="h-4 w-4 text-red-500" />;
       default: return <Clock className="h-4 w-4 text-yellow-500" />;
+    }
+  };
+
+  const runAccountDiagnostic = async () => {
+    setIsDiagnosing(true);
+    setDiagnosticResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('meta-oauth?action=diagnose');
+      
+      if (error) {
+        toast.error('Error al ejecutar diagnóstico', { description: error.message });
+        return;
+      }
+      
+      if (data?.success && data?.data) {
+        setDiagnosticResult(data.data);
+        if (data.data.pages_with_instagram === 0) {
+          toast.warning('No se encontraron cuentas de Instagram', {
+            description: 'Ninguna de tus páginas de Facebook tiene una cuenta de Instagram Business vinculada.'
+          });
+        } else {
+          toast.success(`Se encontraron ${data.data.pages_with_instagram} cuenta(s) de Instagram`);
+        }
+      } else {
+        toast.error(data?.error_description || 'Error desconocido');
+      }
+    } catch (err) {
+      toast.error('Error de conexión');
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -245,7 +299,7 @@ export function EnhancedInstagramSettings() {
               Detalles de la cuenta de Instagram conectada
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -254,18 +308,28 @@ export function EnhancedInstagramSettings() {
                     {isTokenExpired ? "Expirado" : "Válido"}
                   </Badge>
                 </div>
-                {instagramUsername && (
+                {instagramUsername ? (
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Usuario:</span>
                     <span className="text-sm break-all">@{instagramUsername}</span>
                   </div>
+                ) : (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Usuario:</span>
+                    <span className="text-sm text-yellow-600">No detectado</span>
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
-                {businessAccountId && (
+                {businessAccountId ? (
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Cuenta Business:</span>
                     <span className="text-sm text-green-600">Conectada</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Cuenta Business:</span>
+                    <span className="text-sm text-yellow-600">No vinculada</span>
                   </div>
                 )}
                 {facebookPageId && (
@@ -276,6 +340,71 @@ export function EnhancedInstagramSettings() {
                 )}
               </div>
             </div>
+
+            {/* Diagnostic Section */}
+            {!instagramUsername && !businessAccountId && (
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-50 p-3 rounded mb-3">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span>No se detectó cuenta de Instagram Business vinculada a tu página de Facebook.</span>
+                </div>
+                <Button
+                  onClick={runAccountDiagnostic}
+                  disabled={isDiagnosing}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Eye className={`h-4 w-4 mr-2 ${isDiagnosing ? 'animate-pulse' : ''}`} />
+                  {isDiagnosing ? 'Analizando...' : 'Diagnosticar Cuentas'}
+                </Button>
+              </div>
+            )}
+
+            {/* Diagnostic Results */}
+            {diagnosticResult && (
+              <div className="border-t pt-4 space-y-3">
+                <h4 className="text-sm font-medium">Resultados del Diagnóstico</h4>
+                <div className="text-sm space-y-1">
+                  <p>Páginas de Facebook encontradas: <strong>{diagnosticResult.total_pages}</strong></p>
+                  <p>Con Instagram vinculado: <strong className="text-green-600">{diagnosticResult.pages_with_instagram}</strong></p>
+                  <p>Sin Instagram: <strong className="text-yellow-600">{diagnosticResult.pages_without_instagram}</strong></p>
+                </div>
+                
+                {diagnosticResult.pages.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Detalle por página:</p>
+                    {diagnosticResult.pages.map((page) => (
+                      <div key={page.id} className="text-sm bg-muted p-2 rounded">
+                        <div className="font-medium">{page.name}</div>
+                        {page.instagram_business_account ? (
+                          <div className="text-green-600">
+                            ✓ Instagram: @{page.instagram_business_account.username || page.instagram_business_account.id}
+                            {page.instagram_business_account.followers_count && (
+                              <span className="text-muted-foreground ml-2">
+                                ({page.instagram_business_account.followers_count.toLocaleString()} seguidores)
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-yellow-600">✗ Sin Instagram Business vinculado</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {diagnosticResult.help && (
+                  <div className="bg-blue-50 p-3 rounded text-sm">
+                    <p className="font-medium text-blue-800 mb-2">{diagnosticResult.help.message}</p>
+                    <ul className="text-blue-700 space-y-1">
+                      {diagnosticResult.help.steps.map((step, i) => (
+                        <li key={i}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

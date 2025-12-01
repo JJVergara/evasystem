@@ -48,6 +48,8 @@ Deno.serve(async (req) => {
         return handleCallback(req, supabaseClient)
       case 'refresh':
         return handleTokenRefresh(req, supabaseClient)
+      case 'diagnose':
+        return handleDiagnose(req, supabaseClient)
       default:
         console.log('Invalid action or no action specified:', action)
         return new Response(
@@ -848,58 +850,88 @@ async function updateOrganizationInstagramData(
       );
     }
 
-    // Use the first page for now
-    // Note: page.access_token is the Page Access Token (different from user token)
-    const page = pagesData.data[0] as { id: string; name: string; access_token: string };
-    console.log('Found Facebook page:', page.name, page.id);
+    // 2) Scan ALL pages to find one with an Instagram Business Account
+    console.log(`Found ${pagesData.data.length} Facebook page(s). Scanning for Instagram accounts...`);
     
-    // The page access token is required for page-level operations and webhook subscriptions
-    const pageAccessToken = page.access_token;
-    if (!pageAccessToken) {
-      console.warn('No page access token returned - this may cause webhook subscription issues');
-    }
-
-    // 2) Get Instagram business account linked to this FB page (use page token)
-    const igResponse = await fetch(
-      `${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
-        pageAccessToken || tokenData.access_token,
-      )}`,
-    );
-    const igData = await igResponse.json();
-
-    if (!igResponse.ok || igData.error) {
-      console.warn('Error fetching instagram_business_account:', igData.error || igData);
-    }
-
-    let instagramData: OrganizationInstagramData = {
-      facebook_page_id: page.id,
+    type PageWithIG = {
+      page: { id: string; name: string; access_token: string };
+      instagram?: { id: string; username?: string; followers_count?: number };
     };
-
-    if (igData.instagram_business_account) {
-      console.log(
-        'Found Instagram business account:',
-        igData.instagram_business_account.id,
-      );
-
-      // 3) Get Instagram account details (use page token)
-      const igAccountResponse = await fetch(
-        `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${encodeURIComponent(
-          pageAccessToken || tokenData.access_token,
-        )}`,
-      );
-      const igAccountData = await igAccountResponse.json();
-
-      if (!igAccountResponse.ok || igAccountData.error) {
-        console.warn('Error fetching IG account details:', igAccountData.error || igAccountData);
-      } else {
-        instagramData = {
-          ...instagramData,
-          instagram_business_account_id: igData.instagram_business_account.id,
-          instagram_username: igAccountData.username,
-          instagram_user_id: igData.instagram_business_account.id,
-        };
+    
+    const pagesWithInstagram: PageWithIG[] = [];
+    const pagesWithoutInstagram: { id: string; name: string }[] = [];
+    
+    for (const pageItem of pagesData.data as Array<{ id: string; name: string; access_token: string }>) {
+      console.log(`Checking page: ${pageItem.name} (${pageItem.id})`);
+      
+      try {
+        const igResponse = await fetch(
+          `${META_API_BASE}/${pageItem.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
+            pageItem.access_token || tokenData.access_token,
+          )}`,
+        );
+        const igData = await igResponse.json();
+        
+        if (igData.instagram_business_account) {
+          // Found Instagram account - get details
+          const igAccountResponse = await fetch(
+            `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${encodeURIComponent(
+              pageItem.access_token || tokenData.access_token,
+            )}`,
+          );
+          const igAccountData = await igAccountResponse.json();
+          
+          console.log(`  → Instagram Business Account found: @${igAccountData.username || igData.instagram_business_account.id}`);
+          
+          pagesWithInstagram.push({
+            page: pageItem,
+            instagram: {
+              id: igData.instagram_business_account.id,
+              username: igAccountData.username,
+              followers_count: igAccountData.followers_count,
+            },
+          });
+        } else {
+          console.log(`  → No Instagram Business Account linked to this page`);
+          pagesWithoutInstagram.push({ id: pageItem.id, name: pageItem.name });
+        }
+      } catch (err) {
+        console.warn(`  → Error checking page ${pageItem.name}:`, err);
+        pagesWithoutInstagram.push({ id: pageItem.id, name: pageItem.name });
       }
     }
+    
+    console.log(`Summary: ${pagesWithInstagram.length} page(s) with Instagram, ${pagesWithoutInstagram.length} page(s) without`);
+    
+    // Use the first page WITH Instagram, or fall back to first page without
+    let selectedPage: { id: string; name: string; access_token: string };
+    let instagramData: OrganizationInstagramData;
+    
+    if (pagesWithInstagram.length > 0) {
+      // Use the first page that has an Instagram Business Account
+      const selected = pagesWithInstagram[0];
+      selectedPage = selected.page;
+      instagramData = {
+        facebook_page_id: selected.page.id,
+        instagram_business_account_id: selected.instagram?.id,
+        instagram_username: selected.instagram?.username,
+        instagram_user_id: selected.instagram?.id,
+      };
+      console.log(`Selected page with Instagram: ${selectedPage.name} (@${selected.instagram?.username})`);
+    } else {
+      // No pages have Instagram - use first page anyway (for messaging features)
+      selectedPage = pagesData.data[0] as { id: string; name: string; access_token: string };
+      instagramData = {
+        facebook_page_id: selectedPage.id,
+      };
+      console.warn(`No Instagram Business Accounts found. Using page "${selectedPage.name}" without Instagram.`);
+      console.warn('To link an Instagram account:');
+      console.warn('1. Your Instagram must be a Business or Creator account (not Personal)');
+      console.warn('2. Link it to a Facebook Page in Meta Business Suite');
+    }
+    
+    const page = selectedPage;
+    const pageAccessToken = page.access_token;
 
     // 4) Compute expiry date
     const expiryDate = tokenData.expires_in
@@ -1207,4 +1239,150 @@ async function subscribeToPageWebhooks(pageId: string, accessToken: string) {
   }
 
   console.log(`Page webhooks subscribed for page ${pageId}`, json);
+}
+
+// Diagnose endpoint - lists all Facebook Pages and their Instagram accounts
+async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
+  try {
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;
+
+    if (!token) {
+      return jsonResponse(
+        { success: false, error: 'unauthorized', error_description: 'Missing auth token' },
+        { status: 401 }
+      );
+    }
+
+    const { data: { user: authUser } } = await supabaseClient.auth.getUser(token);
+    if (!authUser) {
+      return jsonResponse(
+        { success: false, error: 'unauthorized', error_description: 'Invalid auth token' },
+        { status: 401 }
+      );
+    }
+
+    // Get user's organization
+    const { data: userOrgs } = await supabaseClient
+      .rpc('get_user_organizations', { user_auth_id: authUser.id });
+
+    if (!userOrgs || userOrgs.length === 0) {
+      return jsonResponse({
+        success: false,
+        error: 'no_organization',
+        error_description: 'User has no organization',
+      });
+    }
+
+    const organizationId = userOrgs[0].organization_id;
+
+    // Get the stored token
+    const { data: tokenData, error: tokenError } = await supabaseClient
+      .from('organization_instagram_tokens')
+      .select('access_token')
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (tokenError || !tokenData?.access_token) {
+      return jsonResponse({
+        success: false,
+        error: 'no_token',
+        error_description: 'No Instagram token found. Please connect Instagram first.',
+      });
+    }
+
+    // Decrypt the token
+    const accessToken = await safeDecryptToken(tokenData.access_token);
+
+    // Fetch all Facebook Pages
+    const pagesResponse = await fetch(
+      `${META_API_BASE}/me/accounts?access_token=${encodeURIComponent(accessToken)}`,
+    );
+    const pagesData = await pagesResponse.json();
+
+    if (!pagesResponse.ok || pagesData.error) {
+      return jsonResponse({
+        success: false,
+        error: 'meta_api_error',
+        error_description: pagesData.error?.message || 'Failed to fetch Facebook pages',
+      });
+    }
+
+    // For each page, check for Instagram Business Account
+    const pages = [];
+    for (const page of (pagesData.data || []) as Array<{ id: string; name: string; access_token: string }>) {
+      const pageInfo: {
+        id: string;
+        name: string;
+        instagram_business_account: {
+          id: string;
+          username?: string;
+          followers_count?: number;
+        } | null;
+      } = {
+        id: page.id,
+        name: page.name,
+        instagram_business_account: null,
+      };
+
+      try {
+        const igResponse = await fetch(
+          `${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
+            page.access_token || accessToken
+          )}`,
+        );
+        const igData = await igResponse.json();
+
+        if (igData.instagram_business_account) {
+          // Get Instagram account details
+          const igAccountResponse = await fetch(
+            `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count,profile_picture_url&access_token=${encodeURIComponent(
+              page.access_token || accessToken
+            )}`,
+          );
+          const igAccountData = await igAccountResponse.json();
+
+          pageInfo.instagram_business_account = {
+            id: igData.instagram_business_account.id,
+            username: igAccountData.username,
+            followers_count: igAccountData.followers_count,
+          };
+        }
+      } catch (err) {
+        console.warn(`Error checking page ${page.name}:`, err);
+      }
+
+      pages.push(pageInfo);
+    }
+
+    const pagesWithIG = pages.filter(p => p.instagram_business_account);
+    const pagesWithoutIG = pages.filter(p => !p.instagram_business_account);
+
+    return jsonResponse({
+      success: true,
+      data: {
+        total_pages: pages.length,
+        pages_with_instagram: pagesWithIG.length,
+        pages_without_instagram: pagesWithoutIG.length,
+        pages,
+        help: pagesWithIG.length === 0 ? {
+          message: 'No Instagram Business Accounts found linked to your Facebook Pages.',
+          steps: [
+            '1. Make sure your Instagram account is a Business or Creator account (not Personal)',
+            '2. Go to Meta Business Suite (business.facebook.com)',
+            '3. Link your Instagram account to one of your Facebook Pages',
+            '4. Reconnect Instagram in this app'
+          ]
+        } : null
+      }
+    });
+
+  } catch (error) {
+    console.error('Diagnose error:', error);
+    return jsonResponse({
+      success: false,
+      error: 'diagnose_error',
+      error_description: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 }
