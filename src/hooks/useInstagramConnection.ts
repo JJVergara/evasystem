@@ -83,28 +83,21 @@ export function useInstagramConnection() {
       return;
     }
 
-    // Guard: Only refresh if organization ID actually changed
-    if (previousOrgIdRef.current === organization.id) {
-      return;
-    }
-
     // Guard: Don't refresh if already in progress
     if (isRefreshingRef.current) {
       return;
     }
 
-    console.log('Organization changed, refreshing token status...', organization.id);
-    previousOrgIdRef.current = organization.id;
-    refreshTokenStatus();
-    
-    // Clean up URL parameters after OAuth callback to prevent re-processing
+    // Check for OAuth callback params FIRST (before org change check)
     const urlParams = new URLSearchParams(window.location.search);
     const hasOAuthParams = urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
     
     if (hasOAuthParams) {
+      console.log('OAuth callback detected, refreshing token status...');
+      
+      // Clean up URL parameters
       try {
-        const cleanUrl = window.location.pathname;
-        // Use a timeout to ensure the page has rendered
+        const cleanUrl = window.location.pathname + '?tab=instagram';
         setTimeout(() => {
           try {
             window.history.replaceState({}, document.title, cleanUrl);
@@ -112,16 +105,28 @@ export function useInstagramConnection() {
             console.warn('Could not clean URL parameters (fallback):', error);
           }
         }, 100);
-        
-        // After OAuth, refresh token status again with a delay to catch any token writes
-        setTimeout(() => {
-          console.log('Refreshing token status after OAuth callback...');
-          refreshTokenStatus();
-        }, 2000);
       } catch (error) {
         console.warn('Could not clean URL parameters:', error);
       }
+      
+      // Refresh token status immediately and again after a delay
+      refreshTokenStatus();
+      setTimeout(() => {
+        console.log('Refreshing token status again after OAuth callback...');
+        refreshTokenStatus();
+      }, 2000);
+      
+      return;
     }
+
+    // Guard: Only refresh if organization ID actually changed (for non-OAuth cases)
+    if (previousOrgIdRef.current === organization.id) {
+      return;
+    }
+
+    console.log('Organization changed, refreshing token status...', organization.id);
+    previousOrgIdRef.current = organization.id;
+    refreshTokenStatus();
   }, [user?.id, organization?.id]);
 
   // Cleanup on unmount

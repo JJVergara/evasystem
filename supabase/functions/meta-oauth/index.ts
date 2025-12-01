@@ -274,8 +274,9 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       'instagram_manage_insights',
       'instagram_manage_messages',
       'instagram_content_publish',
-      'pages_show_list',        // Required to list user's Pages
-      'pages_read_engagement'   // Required to read Page data
+      'pages_show_list',         // Required to list user's Pages
+      'pages_read_engagement',   // Required to read Page data
+      'pages_manage_metadata'    // Required for webhook subscriptions
     ].join(',');
 
     const authUrl =
@@ -848,13 +849,20 @@ async function updateOrganizationInstagramData(
     }
 
     // Use the first page for now
-    const page = pagesData.data[0];
+    // Note: page.access_token is the Page Access Token (different from user token)
+    const page = pagesData.data[0] as { id: string; name: string; access_token: string };
     console.log('Found Facebook page:', page.name, page.id);
+    
+    // The page access token is required for page-level operations and webhook subscriptions
+    const pageAccessToken = page.access_token;
+    if (!pageAccessToken) {
+      console.warn('No page access token returned - this may cause webhook subscription issues');
+    }
 
-    // 2) Get Instagram business account linked to this FB page
+    // 2) Get Instagram business account linked to this FB page (use page token)
     const igResponse = await fetch(
       `${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
-        tokenData.access_token,
+        pageAccessToken || tokenData.access_token,
       )}`,
     );
     const igData = await igResponse.json();
@@ -873,10 +881,10 @@ async function updateOrganizationInstagramData(
         igData.instagram_business_account.id,
       );
 
-      // 3) Get Instagram account details
+      // 3) Get Instagram account details (use page token)
       const igAccountResponse = await fetch(
         `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${encodeURIComponent(
-          tokenData.access_token,
+          pageAccessToken || tokenData.access_token,
         )}`,
       );
       const igAccountData = await igAccountResponse.json();
@@ -902,12 +910,17 @@ async function updateOrganizationInstagramData(
     const encryptedToken = await encryptToken(tokenData.access_token);
     const { error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
-      .upsert({
-        organization_id: organizationId,
-        access_token: encryptedToken,
-        token_expiry: expiryDate.toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          organization_id: organizationId,
+          access_token: encryptedToken,
+          token_expiry: expiryDate.toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'organization_id',
+        }
+      );
 
     if (tokenError) {
       console.error('Failed to store organization token:', tokenError);
@@ -932,16 +945,19 @@ async function updateOrganizationInstagramData(
       throw new Error('Failed to update organization data');
     }
 
-    // 7) Subscribe to webhooks
+    // 7) Subscribe to webhooks (using Page Access Token - required by Meta API)
     try {
-      if (instagramData.instagram_business_account_id) {
+      const webhookToken = pageAccessToken || tokenData.access_token;
+      
+      if (instagramData.instagram_business_account_id && pageAccessToken) {
         console.log('Subscribing Instagram Business Account to webhooks...');
         const igWebhookResponse = await fetch(
           `${META_API_BASE}/${instagramData.instagram_business_account_id}/subscribed_apps`,
           {
             method: 'POST',
             body: new URLSearchParams({
-              subscribed_fields: 'mentions,comments,messages,story_insights',
+              subscribed_fields: 'mentions,comments,story_insights',
+              access_token: pageAccessToken, // Must use Page Access Token
             }),
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -956,11 +972,13 @@ async function updateOrganizationInstagramData(
         } else {
           console.warn('Instagram webhook subscription failed:', igWebhookData);
           // Fallback to page-level subscription
-          await subscribeToPageWebhooks(page.id, tokenData.access_token);
+          await subscribeToPageWebhooks(page.id, webhookToken);
         }
-      } else {
+      } else if (pageAccessToken) {
         // No Instagram account, just subscribe the page
-        await subscribeToPageWebhooks(page.id, tokenData.access_token);
+        await subscribeToPageWebhooks(page.id, pageAccessToken);
+      } else {
+        console.warn('No page access token available, skipping webhook subscriptions');
       }
     } catch (webhookError) {
       console.warn('Webhook subscription failed:', webhookError);
@@ -1164,8 +1182,10 @@ async function exchangeTokenForLongLived(accessToken: string): Promise<{
 async function subscribeToPageWebhooks(pageId: string, accessToken: string) {
   const webhookUrl = `${META_API_BASE}/${encodeURIComponent(pageId)}/subscribed_apps`;
 
+  // Use valid Facebook Page webhook fields (not Instagram fields)
+  // 'feed' covers posts, 'mention' for page mentions, 'messages' for messaging
   const body = new URLSearchParams({
-    subscribed_fields: 'mentions,comments,messages,story_insights',
+    subscribed_fields: 'feed,mention,messages',
     access_token: accessToken,
   });
 
@@ -1180,9 +1200,11 @@ async function subscribeToPageWebhooks(pageId: string, accessToken: string) {
   const json = await response.json();
 
   if (!response.ok || json.error) {
-    console.error('Webhook subscription failed:', json.error || json);
-    throw new Error(`Webhook subscription failed: ${JSON.stringify(json)}`);
+    console.error('Page webhook subscription failed:', json.error || json);
+    // Don't throw - page webhooks are optional, Instagram webhooks are more important
+    console.warn('Continuing without page webhook subscription');
+    return;
   }
 
-  console.log(`Webhooks subscribed for page ${pageId}`, json);
+  console.log(`Page webhooks subscribed for page ${pageId}`, json);
 }
