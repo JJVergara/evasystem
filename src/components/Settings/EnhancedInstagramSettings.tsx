@@ -51,7 +51,7 @@ export function EnhancedInstagramSettings() {
         status: 'Desconectado',
         variant: 'destructive' as const,
         icon: <AlertCircle className="h-4 w-4" />,
-        description: 'Instagram no estรก conectado a tu organizaciรณn'
+        description: 'Instagram no estáก conectado a tu organización'
       };
     }
     
@@ -68,7 +68,7 @@ export function EnhancedInstagramSettings() {
       status: 'Conectado',
       variant: 'default' as const,
       icon: <CheckCircle className="h-4 w-4" />,
-      description: 'Instagram estรก conectado y funcionando correctamente'
+      description: 'Instagram estáก conectado y funcionando correctamente'
     };
   };
 
@@ -114,10 +114,10 @@ export function EnhancedInstagramSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Instagram className="h-5 w-5" />
-            Estado de Conexiรณn
+            Estado de Conexión
           </CardTitle>
           <CardDescription>
-            Conecta tu cuenta de Instagram para sincronizar historias y gestionar embajadores automรกticamente.
+            Conecta tu cuenta de Instagram para sincronizar historias y gestionar embajadores automáticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -227,7 +227,7 @@ export function EnhancedInstagramSettings() {
 
           {isConnected && lastSync && (
             <div className="text-sm text-muted-foreground">
-              ร�ltima sincronizaciรณn: {new Date(lastSync).toLocaleString('es-ES')}
+              última sincronización: {new Date(lastSync).toLocaleString('es-ES')}
             </div>
           )}
         </CardContent>
@@ -239,7 +239,7 @@ export function EnhancedInstagramSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
-              Informaciรณn de la Cuenta
+              Información de la Cuenta
             </CardTitle>
             <CardDescription>
               Detalles de la cuenta de Instagram conectada
@@ -251,7 +251,7 @@ export function EnhancedInstagramSettings() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Estado del Token</span>
                   <Badge variant={isTokenExpired ? "destructive" : "success"}>
-                    {isTokenExpired ? "Expirado" : "Vรกlido"}
+                    {isTokenExpired ? "Expirado" : "Válido"}
                   </Badge>
                 </div>
                 {instagramUsername && (
@@ -270,7 +270,7 @@ export function EnhancedInstagramSettings() {
                 )}
                 {facebookPageId && (
                   <div className="flex justify-between">
-                    <span className="text-sm font-medium">Pรกgina Facebook:</span>
+                    <span className="text-sm font-medium">Página Facebook:</span>
                     <span className="text-sm text-green-600">Vinculada</span>
                   </div>
                 )}
@@ -290,7 +290,7 @@ export function EnhancedInstagramSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5" />
-            Configuraciรณn de Webhooks
+            Configuración de Webhooks
           </CardTitle>
           <CardDescription>
             URLs y tokens necesarios para Meta Developer Console
@@ -333,7 +333,7 @@ export function EnhancedInstagramSettings() {
                 </div>
                 {webhookStatus?.lastEvent && (
                   <div className="text-sm text-muted-foreground">
-                    ร�ltimo evento: {webhookStatus.lastEvent}
+                    último evento: {webhookStatus.lastEvent}
                   </div>
                 )}
               </div>
