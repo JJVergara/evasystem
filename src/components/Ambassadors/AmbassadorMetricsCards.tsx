@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MetricCard } from "@/components/Dashboard/MetricCard";
-import { Users, Trophy, Target, TrendingUp, Eye, Heart, MessageSquare, Share2, Image, AlertTriangle } from "lucide-react";
+import { Users, Trophy, Target, TrendingUp, Eye, Heart, Image, AlertTriangle } from "lucide-react";
 
 interface AmbassadorMetricsCardsProps {
   metrics: {
@@ -143,7 +143,7 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
         />
       </div>
 
-      {/* Story Insights Section */}
+      {/* Story Insights Section - Powered by instagram_manage_insights API */}
       {metrics.insights_error && (
         <div className="mt-6">
           <Alert variant="destructive">
@@ -157,12 +157,20 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
       
       {metrics.story_insights && metrics.story_insights.total_stories > 0 && !metrics.insights_error && (
         <div className="mt-6">
-          <Card>
+          <Card className="border-pink-200 bg-gradient-to-br from-pink-50/50 to-purple-50/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="w-5 h-5" />
-                Insights de Stories
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="w-5 h-5 text-pink-600" />
+                  Insights de Stories
+                </CardTitle>
+                <Badge variant="outline" className="text-xs bg-pink-100 text-pink-700 border-pink-300">
+                  📊 Instagram Insights API
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Métricas de rendimiento obtenidas de la API de Instagram
+              </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -193,6 +201,26 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
                   icon={<Heart className="w-4 h-4" />}
                   description={`${metrics.story_insights.total_replies} respuestas, ${metrics.story_insights.total_shares} shares`}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
+      {/* Show placeholder when no insights but connection exists */}
+      {!metrics.story_insights && !metrics.insights_error && (
+        <div className="mt-6">
+          <Card className="border-dashed border-2 border-muted">
+            <CardContent className="pt-6">
+              <div className="text-center text-muted-foreground">
+                <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium mb-2">Insights de Stories</p>
+                <p className="text-sm">
+                  Los insights aparecerán aquí cuando el embajador publique Stories mencionando la marca
+                </p>
+                <Badge variant="outline" className="mt-3 text-xs">
+                  Requiere: instagram_manage_insights
+                </Badge>
               </div>
             </CardContent>
           </Card>

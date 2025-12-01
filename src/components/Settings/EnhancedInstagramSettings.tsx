@@ -414,6 +414,51 @@ export function EnhancedInstagramSettings() {
         <InstagramDiagnosticsPanel />
       )}
 
+      {/* Permissions Card - Shows what API permissions are used */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Permisos de API Utilizados
+          </CardTitle>
+          <CardDescription>
+            Permisos de Meta/Instagram que usa EVA System
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium text-sm">pages_show_list</p>
+                <p className="text-xs text-muted-foreground">Listar páginas de Facebook</p>
+              </div>
+              <Badge variant="outline" className="text-xs">Conexión</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium text-sm">instagram_manage_insights</p>
+                <p className="text-xs text-muted-foreground">Métricas de Stories</p>
+              </div>
+              <Badge variant="outline" className="text-xs">Analíticas</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium text-sm">instagram_business_basic</p>
+                <p className="text-xs text-muted-foreground">Datos básicos de Instagram</p>
+              </div>
+              <Badge variant="default" className="text-xs bg-green-600">Aprobado</Badge>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium text-sm">instagram_business_manage_messages</p>
+                <p className="text-xs text-muted-foreground">Mensajería</p>
+              </div>
+              <Badge variant="default" className="text-xs bg-green-600">Aprobado</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Webhook Configuration Card - Moved inline */}
       <Card>
         <CardHeader>
@@ -428,7 +473,7 @@ export function EnhancedInstagramSettings() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Callback URL:</label>
-            <code className="block p-2 bg-muted rounded text-xs">
+            <code className="block p-2 bg-muted rounded text-xs break-all">
               https://awpfslcepylnipaolmvv.supabase.co/functions/v1/instagram-webhook
             </code>
           </div>

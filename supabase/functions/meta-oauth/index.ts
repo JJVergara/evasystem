@@ -851,7 +851,9 @@ async function updateOrganizationInstagramData(
     }
 
     // 2) Scan ALL pages to find one with an Instagram Business Account
-    console.log(`Found ${pagesData.data.length} Facebook page(s). Scanning for Instagram accounts...`);
+    console.log(`=== OAUTH CALLBACK: Found ${pagesData.data.length} Facebook page(s) ===`);
+    console.log('Page names:', pagesData.data.map((p: { name: string }) => p.name).join(', '));
+    console.log('Scanning for Instagram accounts...');
     
     type PageWithIG = {
       page: { id: string; name: string; access_token: string };
@@ -1276,10 +1278,10 @@ async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
 
     const organizationId = userOrgs[0].organization_id;
 
-    // Get the stored token
+    // Get the stored token with updated_at timestamp
     const { data: tokenData, error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
-      .select('access_token')
+      .select('access_token, updated_at')
       .eq('organization_id', organizationId)
       .single();
 
@@ -1291,8 +1293,11 @@ async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
       });
     }
 
+    console.log('Token last updated at:', tokenData.updated_at);
+
     // Decrypt the token
     const accessToken = await safeDecryptToken(tokenData.access_token);
+    console.log('Token decrypted, length:', accessToken?.length || 0);
 
     // Fetch all Facebook Pages
     const pagesResponse = await fetch(
@@ -1300,11 +1305,14 @@ async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
     );
     const pagesData = await pagesResponse.json();
 
+    console.log('Meta API /me/accounts returned:', pagesData.data?.length || 0, 'pages');
+
     if (!pagesResponse.ok || pagesData.error) {
       return jsonResponse({
         success: false,
         error: 'meta_api_error',
         error_description: pagesData.error?.message || 'Failed to fetch Facebook pages',
+        token_updated_at: tokenData.updated_at,
       });
     }
 
@@ -1365,6 +1373,7 @@ async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
         pages_with_instagram: pagesWithIG.length,
         pages_without_instagram: pagesWithoutIG.length,
         pages,
+        token_updated_at: tokenData.updated_at,
         help: pagesWithIG.length === 0 ? {
           message: 'No Instagram Business Accounts found linked to your Facebook Pages.',
           steps: [

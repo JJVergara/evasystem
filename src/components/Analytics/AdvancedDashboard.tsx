@@ -209,32 +209,42 @@ export function AdvancedDashboard() {
       </PageHeader>
 
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title="Alcance Total"
-            value={`${(analyticsData.summary.total_reach / 1000000).toFixed(1)}M`}
-            description="Visualizaciones estimadas"
-            icon={<Eye className="w-4 h-4" />}
-          />
-          <MetricCard
-            title="Total Menciones"
-            value={analyticsData.summary.total_mentions.toLocaleString()}
-            description="Historias y menciones"
-            icon={<MessageCircle className="w-4 h-4" />}
-          />
-          <MetricCard
-            title="Tasa de Completitud"
-            value={`${analyticsData.summary.completion_rate}%`}
-            description="Tareas completadas"
-            icon={<CheckCircle className="w-4 h-4" />}
-          />
-          <MetricCard
-            title="Embajadores Activos"
-            value={analyticsData.summary.active_ambassadors}
-            description="Con actividad reciente"
-            icon={<Users className="w-4 h-4" />}
-          />
+        {/* Key Metrics - Instagram Insights Powered */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
+              <Instagram className="w-3 h-3 mr-1" />
+              Métricas de Instagram Insights API
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Alcance Total"
+              value={analyticsData.summary.total_reach >= 1000000 
+                ? `${(analyticsData.summary.total_reach / 1000000).toFixed(1)}M`
+                : analyticsData.summary.total_reach.toLocaleString()}
+              description="📊 Via instagram_manage_insights"
+              icon={<Eye className="w-4 h-4" />}
+            />
+            <MetricCard
+              title="Total Menciones"
+              value={analyticsData.summary.total_mentions.toLocaleString()}
+              description="Historias y menciones"
+              icon={<MessageCircle className="w-4 h-4" />}
+            />
+            <MetricCard
+              title="Tasa de Completitud"
+              value={`${analyticsData.summary.completion_rate}%`}
+              description="Tareas completadas"
+              icon={<CheckCircle className="w-4 h-4" />}
+            />
+            <MetricCard
+              title="Embajadores Activos"
+              value={analyticsData.summary.active_ambassadors}
+              description="Con actividad reciente"
+              icon={<Users className="w-4 h-4" />}
+            />
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
