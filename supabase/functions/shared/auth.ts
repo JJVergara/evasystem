@@ -40,16 +40,20 @@ export async function authenticateRequest(
   const cronSecret = req.headers.get('x-cron-secret');
   const supabase = createSupabaseClient();
 
-  // Handle cron requests
-  if (!authHeader && options.allowCron) {
+  // Handle cron requests FIRST (cron secret takes priority over auth header)
+  // This allows calling with both auth header (for Supabase gateway) and cron secret
+  if (options.allowCron && cronSecret) {
     const expectedSecret = Deno.env.get('CRON_SECRET');
-    if (cronSecret && expectedSecret && cronSecret === expectedSecret) {
+    if (expectedSecret && cronSecret === expectedSecret) {
+      console.log('[AUTH] Authenticated via cron secret');
       // Return a system user for cron jobs
       return {
         user: { id: 'system', isCron: true },
         supabase,
         isCron: true
       };
+    } else {
+      console.log('[AUTH] Invalid cron secret provided');
     }
   }
 
@@ -62,21 +66,25 @@ export async function authenticateRequest(
   }
 
   if (authHeader) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    const token = authHeader.replace('Bearer ', '');
+    console.log('[AUTH] Validating user token...');
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.log('[AUTH] User token validation failed:', authError?.message);
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('[AUTH] User authenticated:', user.id);
     return { user, supabase };
   }
 
   // No auth required
+  console.log('[AUTH] No auth required, using anonymous user');
   return { user: { id: 'anonymous' }, supabase };
 }
 
