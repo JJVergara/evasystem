@@ -66,17 +66,34 @@ export function useOnboardingStatus() {
     // Verificar el estado de cada paso
     const orgCompleted = organization.name !== "Mi Organización";
     
-    // Verificar Instagram - usando el nuevo sistema de credenciales
+    // Verificar Instagram - check multiple indicators
     let instagramCompleted = false;
     try {
-      const { data: credentialsStatus } = await supabase.rpc('get_org_meta_credentials_status', {
-        p_organization_id: organization.id
-      });
+      // Method 1: Check if organization has Instagram business account linked
+      if (organization.instagram_business_account_id) {
+        instagramCompleted = true;
+      }
       
-      if (credentialsStatus?.[0]?.has_credentials) {
-        // Verificar si además está conectado (tiene token activo)
+      // Method 2: If not found via org data, check token status directly
+      if (!instagramCompleted) {
         const { data: tokenStatus } = await supabase.functions.invoke('instagram-token-status');
-        instagramCompleted = tokenStatus?.success && tokenStatus?.data?.isConnected;
+        if (tokenStatus?.success && tokenStatus?.data?.isConnected) {
+          instagramCompleted = true;
+        }
+      }
+      
+      // Method 3: Check if there's a valid token in the tokens table
+      if (!instagramCompleted) {
+        const { data: tokenData } = await supabase
+          .from('organization_instagram_tokens')
+          .select('id, token_expiry')
+          .eq('organization_id', organization.id)
+          .maybeSingle();
+        
+        if (tokenData && tokenData.token_expiry) {
+          const expiryDate = new Date(tokenData.token_expiry);
+          instagramCompleted = expiryDate > new Date();
+        }
       }
     } catch (error) {
       console.error('Error checking Instagram status:', error);
