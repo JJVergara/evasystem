@@ -10,17 +10,77 @@ import {
   AlertTriangle,
   Info,
   ExternalLink,
-  Shield
+  Shield,
+  Search,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useInstagramConnection } from "@/hooks/useInstagramConnection";
 import { useInstagramSync } from "@/hooks/useInstagramSync";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PageDiagnostic {
+  id: string;
+  name: string;
+  instagram_business_account: {
+    id: string;
+    username?: string;
+    followers_count?: number;
+  } | null;
+}
+
+interface DiagnosticResult {
+  total_pages: number;
+  pages_with_instagram: number;
+  pages_without_instagram: number;
+  pages: PageDiagnostic[];
+}
 
 export function EnhancedInstagramSettings() {
-  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const { organization, loading: orgLoading, refreshOrganization } = useCurrentOrganization();
   const { isConnected, isTokenExpired, isConnecting, connectInstagram, disconnectInstagram, refreshTokenStatus } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
+  
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  const runAccountDiagnostic = async () => {
+    setIsDiagnosing(true);
+    setDiagnosticResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('meta-oauth?action=diagnose');
+      
+      if (error) {
+        toast.error('Error al ejecutar diagnóstico', { description: error.message });
+        return;
+      }
+      
+      if (data?.success && data?.data) {
+        setDiagnosticResult(data.data);
+        if (data.data.pages_with_instagram === 0) {
+          toast.warning('No se encontraron cuentas de Instagram vinculadas');
+        } else {
+          toast.success(`Se encontraron ${data.data.pages_with_instagram} cuenta(s) de Instagram`);
+        }
+      } else {
+        toast.error(data?.error_description || 'Error desconocido');
+      }
+    } catch (err) {
+      toast.error('Error de conexión');
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const handleRefreshAll = async () => {
+    await refreshTokenStatus();
+    await refreshOrganization();
+    toast.success('Estado actualizado');
+  };
 
   // Safe data access with null checks
   const instagramUsername = organization?.instagram_username || null;
@@ -194,12 +254,23 @@ export function EnhancedInstagramSettings() {
       {isConnected && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Detalles de la Cuenta
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Detalles de la Cuenta
+              </CardTitle>
+              <Button
+                onClick={handleRefreshAll}
+                variant="ghost"
+                size="sm"
+                disabled={isConnecting}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isConnecting ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Usuario</p>
@@ -228,16 +299,108 @@ export function EnhancedInstagramSettings() {
               </div>
             </div>
 
-            {/* Warning if no Instagram Business found */}
-            {!instagramUsername && !businessAccountId && (
-              <div className="mt-4 flex items-start gap-3 text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg">
-                <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium mb-1">No se detectó cuenta de Instagram Business</p>
-                  <p className="text-yellow-600">
-                    Asegúrate de que tu página de Facebook tenga una cuenta de Instagram Business vinculada.
-                  </p>
+            {/* Warning and diagnostic option if data seems incomplete */}
+            {(!businessAccountId || !facebookPageId) && (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">Información incompleta</p>
+                    <p className="text-yellow-600 mb-3">
+                      Puede que los datos no se hayan cargado completamente. Intenta actualizar o ejecutar un diagnóstico.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={handleRefreshAll}
+                        variant="outline"
+                        size="sm"
+                        disabled={isConnecting}
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isConnecting ? 'animate-spin' : ''}`} />
+                        Actualizar datos
+                      </Button>
+                      <Button
+                        onClick={() => setShowDiagnostics(!showDiagnostics)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Search className="h-4 w-4 mr-2" />
+                        {showDiagnostics ? 'Ocultar diagnóstico' : 'Ver diagnóstico'}
+                        {showDiagnostics ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Diagnostic Panel */}
+                {showDiagnostics && (
+                  <div className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Diagnóstico de Páginas</h4>
+                      <Button
+                        onClick={runAccountDiagnostic}
+                        disabled={isDiagnosing}
+                        size="sm"
+                      >
+                        <Search className={`h-4 w-4 mr-2 ${isDiagnosing ? 'animate-pulse' : ''}`} />
+                        {isDiagnosing ? 'Analizando...' : 'Ejecutar diagnóstico'}
+                      </Button>
+                    </div>
+
+                    {diagnosticResult && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-3 text-sm">
+                          <div className="p-3 bg-muted rounded-lg text-center">
+                            <p className="text-2xl font-bold">{diagnosticResult.total_pages}</p>
+                            <p className="text-muted-foreground">Páginas encontradas</p>
+                          </div>
+                          <div className="p-3 bg-green-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-green-600">{diagnosticResult.pages_with_instagram}</p>
+                            <p className="text-green-700">Con Instagram</p>
+                          </div>
+                          <div className="p-3 bg-yellow-50 rounded-lg text-center">
+                            <p className="text-2xl font-bold text-yellow-600">{diagnosticResult.pages_without_instagram}</p>
+                            <p className="text-yellow-700">Sin Instagram</p>
+                          </div>
+                        </div>
+
+                        {diagnosticResult.pages.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Detalle:</p>
+                            {diagnosticResult.pages.map((page) => (
+                              <div key={page.id} className="text-sm bg-muted/50 p-3 rounded-lg flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">{page.name}</p>
+                                  <p className="text-muted-foreground text-xs">ID: {page.id}</p>
+                                </div>
+                                {page.instagram_business_account ? (
+                                  <div className="text-right">
+                                    <Badge variant="default" className="bg-green-600">
+                                      @{page.instagram_business_account.username || page.instagram_business_account.id}
+                                    </Badge>
+                                    {page.instagram_business_account.followers_count && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {page.instagram_business_account.followers_count.toLocaleString()} seguidores
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <Badge variant="secondary">Sin Instagram</Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!diagnosticResult && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Haz clic en "Ejecutar diagnóstico" para ver las páginas de Facebook disponibles
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
