@@ -246,7 +246,10 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
       const metrics_by_hour: HourlyMetrics[] = Array.from({ length: 24 }, (_, hour) => {
         const data = hourMap.get(hour) || { reach: 0, views: 0, stories: [] };
         const count = data.stories.length;
-        const sortedStories = data.stories.sort((a, b) => b.reach - a.reach); // Sort by reach desc
+        // Sort by creation date (earliest first) so colors represent chronological order
+        const sortedStories = data.stories.sort((a, b) => 
+          a.created_at.getTime() - b.created_at.getTime()
+        );
         
         // Create base metrics
         const metrics: HourlyMetrics = {
