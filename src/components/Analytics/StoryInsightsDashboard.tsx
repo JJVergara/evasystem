@@ -36,6 +36,7 @@ import {
   Area,
   ReferenceLine,
   Cell,
+  Rectangle,
 } from "recharts";
 import { useStoryInsightsAnalytics } from "@/hooks/useStoryInsightsAnalytics";
 import { supabase } from "@/integrations/supabase/client";
@@ -446,7 +447,7 @@ export function StoryInsightsDashboard() {
                   Rendimiento por Hora
                 </CardTitle>
                 <CardDescription>
-                  Cada segmento de color representa una story individual. La línea punteada muestra el alcance promedio por hora.
+                  Cada segmento de color representa una story individual, ordenadas cronológicamente (más antigua a más reciente). La línea punteada muestra el alcance promedio por hora.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -495,9 +496,19 @@ export function StoryInsightsDashboard() {
                                         className="w-3 h-3 rounded-sm flex-shrink-0" 
                                         style={{ backgroundColor: storyColors[idx % storyColors.length] }}
                                       />
-                                      <span className="text-muted-foreground">
-                                        #{story.instagram_story_id?.slice(-8) || "N/A"}
-                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-muted-foreground">
+                                            #{story.instagram_story_id?.slice(-8) || "N/A"}
+                                          </span>
+                                          <span className="text-muted-foreground text-[10px]">
+                                            {new Date(story.created_at).toLocaleTimeString("es-ES", { 
+                                              hour: "2-digit", 
+                                              minute: "2-digit" 
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
                                       <span className="ml-auto font-medium">
                                         {formatNumber(story.reach)}
                                       </span>
@@ -510,16 +521,40 @@ export function StoryInsightsDashboard() {
                         }}
                       />
                       {/* Stacked bars for each story position */}
-                      {Array.from({ length: max_stories_per_hour }, (_, i) => (
-                        <Bar
-                          key={`story_${i}`}
-                          dataKey={`story_${i}_reach`}
-                          stackId="stories"
-                          fill={storyColors[i % storyColors.length]}
-                          radius={i === max_stories_per_hour - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                          name={`Story ${i + 1}`}
-                        />
-                      ))}
+                      {Array.from({ length: max_stories_per_hour }, (_, i) => {
+                        // Custom shape that applies rounded corners to the last non-zero bar in each stack
+                        const CustomBarShape = (props: {
+                          payload?: Record<string, unknown>;
+                          [key: string]: unknown;
+                        }) => {
+                          const { payload, ...barProps } = props;
+                          // Find the last non-zero story index for this hour
+                          let lastNonZeroIndex = -1;
+                          for (let j = max_stories_per_hour - 1; j >= 0; j--) {
+                            const value = payload?.[`story_${j}_reach`];
+                            if (typeof value === 'number' && value > 0) {
+                              lastNonZeroIndex = j;
+                              break;
+                            }
+                          }
+                          // Apply rounded corners only to the last non-zero bar
+                          const radius: [number, number, number, number] = i === lastNonZeroIndex 
+                            ? [4, 4, 0, 0] 
+                            : [0, 0, 0, 0];
+                          return <Rectangle {...barProps} radius={radius} />;
+                        };
+                        
+                        return (
+                          <Bar
+                            key={`story_${i}`}
+                            dataKey={`story_${i}_reach`}
+                            stackId="stories"
+                            fill={storyColors[i % storyColors.length]}
+                            shape={CustomBarShape}
+                            name={`Story ${i + 1}`}
+                          />
+                        );
+                      })}
                       {/* Reference line for average - shown as dashed line at avg_reach level */}
                       <ReferenceLine 
                         y={Math.round(metrics_by_hour.filter(h => h.avg_reach > 0).reduce((sum, h) => sum + h.avg_reach, 0) / Math.max(1, metrics_by_hour.filter(h => h.avg_reach > 0).length))} 
@@ -533,13 +568,18 @@ export function StoryInsightsDashboard() {
 
                 {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-3 justify-center text-xs">
+                  <span className="text-muted-foreground text-[10px] w-full text-center mb-1">
+                    Colores ordenados cronológicamente (más antigua → más reciente)
+                  </span>
                   {Array.from({ length: Math.min(max_stories_per_hour, 8) }, (_, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <div 
                         className="w-3 h-3 rounded-sm" 
                         style={{ backgroundColor: storyColors[i % storyColors.length] }}
                       />
-                      <span className="text-muted-foreground">Story {i + 1}</span>
+                      <span className="text-muted-foreground">
+                        {i === 0 ? "1ª story" : i === 1 ? "2ª story" : i === 2 ? "3ª story" : `${i + 1}ª story`}
+                      </span>
                     </div>
                   ))}
                   <div className="flex items-center gap-1.5">
