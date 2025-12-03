@@ -66,15 +66,43 @@ export interface SocialMention {
 
 /**
  * Story insights metrics
+ * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
+ * 
+ * Available STORY metrics:
+ * - reach: Unique accounts that viewed the story
+ * - replies: Total replies on the story
+ * - shares: Number of shares
+ * - profile_visits: Number of profile visits from the story
+ * - total_interactions: Likes, saves, comments, shares (minus unlikes/unsaves/deleted)
+ * - views: Total views (metric in development)
+ * - navigation: Total navigation actions with breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
+ * 
+ * Note: 'impressions' was deprecated in v22.0+ for media created after July 2, 2024
  */
 export interface StoryInsights {
-  impressions: number;
+  // Core metrics
   reach: number;
   replies: number;
-  exits: number;
-  taps_forward: number;
-  taps_back: number;
   shares: number;
+  
+  // Engagement metrics
+  profile_visits: number;
+  total_interactions: number;
+  views: number;
+  
+  // Navigation breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
+  navigation?: number | {
+    tap_forward?: number;
+    tap_back?: number;
+    tap_exit?: number;
+    swipe_forward?: number;
+  };
+  
+  // Legacy fields (kept for DB compatibility)
+  impressions?: number;
+  exits?: number;
+  taps_forward?: number;
+  taps_back?: number;
 }
 
 /**

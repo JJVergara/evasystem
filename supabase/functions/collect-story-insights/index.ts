@@ -1,22 +1,24 @@
 /**
  * Collect Story Insights Function
  * 
- * This function polls Instagram Stories that are still active (<24h old) 
- * and collects their insights metrics, storing snapshots in Supabase.
+ * This function fetches insights for active Instagram Stories (<24h old)
+ * using the Instagram Graph API and stores snapshots in Supabase.
  * 
- * Designed to be called by a cron job every 2 hours to capture the evolution
- * of Story metrics throughout their 24-hour lifecycle.
+ * Flow:
+ * 1. GET /{instagram_business_account_id}/stories - Get all active story IDs
+ * 2. GET /{story_id}/insights?metric=... - Get insights for each story
+ * 3. Store snapshots in story_insights_snapshots table
  * 
- * Snapshots are taken at: 1h, 4h, 8h, 12h, 20h, 23h after story creation
+ * Designed to be called by a cron job every 2 hours.
  */
 
-import { corsHeaders, STORY_EXPIRATION_MS, META_API_BASE, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
-import { Organization, SupabaseClient, InsightsMap } from '../shared/types.ts';
+import { corsHeaders, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
+import { Organization, SupabaseClient, StoryInsights } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
-import { fetchStoryInsights } from '../shared/instagram-api.ts';
+import { fetchAccountStories, fetchStoryInsights, StoryItem } from '../shared/instagram-api.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -70,14 +72,14 @@ Deno.serve(async (req) => {
       organization_id: string;
       organization_name: string;
       success: boolean;
-      storiesProcessed?: number;
+      storiesFound?: number;
       snapshotsCreated?: number;
       errors?: string[];
       error?: string;
     }
 
     const results: OrgResult[] = [];
-    let totalStoriesProcessed = 0;
+    let totalStoriesFound = 0;
     let totalSnapshotsCreated = 0;
 
     for (const org of organizations || []) {
@@ -93,6 +95,12 @@ Deno.serve(async (req) => {
 
         if (tokenError || !tokenData) {
           console.log(`No Instagram token found for organization ${org.name}`);
+          results.push({
+            organization_id: org.id,
+            organization_name: org.name,
+            success: false,
+            error: 'No Instagram token found'
+          });
           continue;
         }
 
@@ -109,6 +117,12 @@ Deno.serve(async (req) => {
               priority: 'high'
             });
           
+          results.push({
+            organization_id: org.id,
+            organization_name: org.name,
+            success: false,
+            error: 'Token expired'
+          });
           continue;
         }
 
@@ -121,7 +135,7 @@ Deno.serve(async (req) => {
           decryptedToken
         );
 
-        totalStoriesProcessed += orgResult.storiesProcessed;
+        totalStoriesFound += orgResult.storiesFound;
         totalSnapshotsCreated += orgResult.snapshotsCreated;
 
         results.push({
@@ -144,14 +158,14 @@ Deno.serve(async (req) => {
 
     console.log(
       `Story insights collection completed: ` +
-      `${totalStoriesProcessed} stories processed, ` +
+      `${totalStoriesFound} stories found, ` +
       `${totalSnapshotsCreated} snapshots created`
     );
 
     return jsonResponse({
       success: true,
       results,
-      totalStoriesProcessed,
+      totalStoriesFound,
       totalSnapshotsCreated,
       isCron,
       timestamp: new Date().toISOString()
@@ -162,78 +176,53 @@ Deno.serve(async (req) => {
   }
 });
 
-// Local interfaces specific to this function
-
 /**
  * Collect Story insights for a specific organization
  */
 async function collectOrganizationStoryInsights(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   organization: Organization,
   accessToken: string
-): Promise<{ storiesProcessed: number; snapshotsCreated: number; errors: string[] }> {
+): Promise<{ storiesFound: number; snapshotsCreated: number; errors: string[] }> {
   
-  let storiesProcessed = 0;
+  let storiesFound = 0;
   let snapshotsCreated = 0;
   const errors: string[] = [];
+  const now = new Date();
 
   try {
-    // Get active Stories from social_mentions (stories created in last 24h)
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    const { data: activeStoryMentions, error: mentionsError } = await supabase
-      .from('social_mentions')
-      .select('id, instagram_story_id, instagram_media_id, instagram_user_id, mentioned_at, expires_at, state')
-      .eq('organization_id', organization.id)
-      .eq('mention_type', 'story_referral')
-      .in('state', ['new', 'flagged_early_delete']) // Only active or recently deleted
-      .gte('mentioned_at', twentyFourHoursAgo.toISOString())
-      .lt('mentioned_at', now.toISOString());
-
-    if (mentionsError) {
-      console.error('Error fetching active story mentions:', mentionsError);
-      errors.push(`Failed to fetch story mentions: ${mentionsError.message}`);
-      return { storiesProcessed, snapshotsCreated, errors };
-    }
-
-    console.log(`Found ${activeStoryMentions?.length || 0} active story mentions for ${organization.name}`);
-
-    // Also get Stories from Instagram API directly (for comprehensive coverage)
-    const apiStories = await fetchStoriesFromInstagram(
-      organization.instagram_business_account_id,
-      accessToken
+    // Step 1: Fetch active stories using the /stories endpoint
+    // This returns only stories that are currently active (<24h old)
+    const stories = await fetchAccountStories(
+      organization.instagram_business_account_id!,
+      accessToken,
+      { fields: 'id,timestamp,media_type' }
     );
 
-    console.log(`Found ${apiStories.length} stories from Instagram API`);
+    storiesFound = stories.length;
+    console.log(`Found ${storiesFound} active stories for ${organization.name}`);
 
-    // Merge stories from both sources (deduplicate by story ID)
-    const storiesToProcess = mergeStories(activeStoryMentions || [], apiStories);
+    if (storiesFound === 0) {
+      return { storiesFound, snapshotsCreated, errors };
+    }
 
-    for (const story of storiesToProcess) {
+    // Step 2: For each story, fetch insights and store snapshot
+    for (const story of stories) {
       try {
-        const storyId = story.instagram_story_id || story.id;
+        const storyId = story.id;
         
         if (!storyId) {
           console.log('Skipping story without ID');
           continue;
         }
 
-        // Check if we should collect a snapshot based on story age
-        const timestamp = story.mentioned_at || story.timestamp;
-        if (!timestamp) {
-          console.log('Skipping story without timestamp');
-          continue;
-        }
-        const storyAge = calculateStoryAgeHours(timestamp);
-        
-        const snapshotId = story.id || story.instagram_story_id || '';
-        if (!shouldCollectSnapshot(snapshotId, storyAge)) {
-          console.log(`Skipping snapshot for story ${storyId}, age: ${storyAge}h`);
-          continue;
-        }
+        // Calculate story age for metadata
+        const storyAge = story.timestamp ? calculateStoryAgeHours(story.timestamp) : null;
 
-        // Fetch insights from Instagram API
+        console.log(`Fetching insights for story ${storyId} (age: ${storyAge?.toFixed(1) || 'unknown'}h)`);
+
+        // Step 2a: Fetch insights from Instagram API
+        // GET /{story_id}/insights?metric=impressions,reach,replies,...
         const insights = await fetchStoryInsights(storyId, accessToken);
 
         if (!insights) {
@@ -241,23 +230,45 @@ async function collectOrganizationStoryInsights(
           continue;
         }
 
-        // Store snapshot
+        console.log(`Story ${storyId} insights:`, JSON.stringify(insights));
+
+        // Step 2b: Try to find matching social_mention record
+        const { data: existingMention } = await supabase
+          .from('social_mentions')
+          .select('id')
+          .eq('organization_id', organization.id)
+          .eq('instagram_story_id', storyId)
+          .single();
+
+        // Step 2c: Store snapshot in database
+        // Parse navigation breakdown if available
+        const navBreakdown = typeof insights.navigation === 'object' ? insights.navigation : null;
+        
         const snapshot = {
-          social_mention_id: story.id || null,
+          social_mention_id: existingMention?.id || null,
           organization_id: organization.id,
           instagram_story_id: storyId,
-          instagram_media_id: story.instagram_media_id || null,
+          instagram_media_id: storyId, // Story ID is also the media ID
           snapshot_at: now.toISOString(),
           story_age_hours: storyAge,
-          impressions: insights.impressions || 0,
+          // Core metrics
           reach: insights.reach || 0,
           replies: insights.replies || 0,
-          exits: insights.exits || 0,
-          taps_forward: insights.taps_forward || 0,
-          taps_back: insights.taps_back || 0,
           shares: insights.shares || 0,
-          navigation: insights.navigation || {},
-          raw_insights: insights.raw || {}
+          // New engagement metrics
+          profile_visits: insights.profile_visits || 0,
+          total_interactions: insights.total_interactions || 0,
+          views: insights.views || 0,
+          // Navigation breakdown
+          exits: navBreakdown?.tap_exit ?? insights.exits ?? 0,
+          taps_forward: navBreakdown 
+            ? ((navBreakdown.tap_forward ?? 0) + (navBreakdown.swipe_forward ?? 0))
+            : (insights.taps_forward ?? 0),
+          taps_back: navBreakdown?.tap_back ?? insights.taps_back ?? 0,
+          navigation: insights.navigation ?? {},
+          // Legacy (deprecated)
+          impressions: insights.impressions ?? 0,
+          raw_insights: insights
         };
 
         const { error: insertError } = await supabase
@@ -266,17 +277,15 @@ async function collectOrganizationStoryInsights(
 
         if (insertError) {
           console.error(`Error inserting snapshot for story ${storyId}:`, insertError);
-          errors.push(`Failed to insert snapshot: ${insertError.message}`);
+          errors.push(`Failed to insert snapshot for ${storyId}: ${insertError.message}`);
         } else {
           snapshotsCreated++;
-          console.log(`Created snapshot for story ${storyId} (age: ${storyAge}h)`);
+          console.log(`Created snapshot for story ${storyId}`);
         }
 
-        storiesProcessed++;
-
       } catch (error) {
-        console.error(`Error processing story:`, error);
-        errors.push(`Story processing error: ${error.message}`);
+        console.error(`Error processing story ${story.id}:`, error);
+        errors.push(`Story ${story.id} error: ${error.message}`);
       }
     }
 
@@ -285,72 +294,8 @@ async function collectOrganizationStoryInsights(
     errors.push(`Organization processing error: ${error.message}`);
   }
 
-  return { storiesProcessed, snapshotsCreated, errors };
+  return { storiesFound, snapshotsCreated, errors };
 }
-
-/**
- * Types for story data
- */
-interface DBStory {
-  id: string | null;
-  instagram_story_id: string | null;
-  instagram_media_id: string | null;
-  instagram_user_id?: string | null;
-  mentioned_at: string;
-  expires_at?: string | null;
-  state: string;
-}
-
-interface APIStory {
-  id: string;
-  media_type?: string;
-  media_product_type: string;
-  timestamp: string;
-}
-
-interface MergedStory {
-  id: string | null;
-  instagram_story_id: string | null;
-  instagram_media_id: string | null;
-  mentioned_at?: string;
-  timestamp?: string;
-  state?: string;
-}
-
-/**
- * Fetch Stories from Instagram API
- */
-async function fetchStoriesFromInstagram(
-  instagramBusinessAccountId: string,
-  accessToken: string
-): Promise<APIStory[]> {
-  try {
-    // Get recent media, filtering for Stories
-    const mediaUrl = `${META_API_BASE}/${instagramBusinessAccountId}/media?fields=id,media_type,media_product_type,timestamp&limit=50&access_token=${accessToken}`;
-    
-    const response = await fetch(mediaUrl);
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('Error fetching media from Instagram:', data.error);
-      return [];
-    }
-
-    // Filter for Stories only (media_product_type === 'STORY')
-    const stories = (data.data || []).filter((media: APIStory) => 
-      media.media_product_type === 'STORY' && 
-      isStoryActive(media.timestamp)
-    );
-
-    return stories;
-
-  } catch (error) {
-    console.error('Error fetching stories from Instagram:', error);
-    return [];
-  }
-}
-
-// fetchStoryInsights is now imported from shared/instagram-api.ts
 
 /**
  * Calculate story age in hours
@@ -361,54 +306,3 @@ function calculateStoryAgeHours(timestamp: string): number {
   const ageMs = now - storyTime;
   return Math.round((ageMs / (1000 * 60 * 60)) * 100) / 100; // Round to 2 decimals
 }
-
-/**
- * Check if a story is still active (<24h old)
- */
-function isStoryActive(timestamp: string): boolean {
-  const ageHours = calculateStoryAgeHours(timestamp);
-  return ageHours < 24;
-}
-
-/**
- * Determine if we should collect a snapshot based on story age
- * We want snapshots at: 1h, 4h, 8h, 12h, 20h, 23h
- * With a 30-minute window on each side
- */
-function shouldCollectSnapshot(storyId: string, ageHours: number): boolean {
-  const snapshotPoints = [1, 4, 8, 12, 20, 23];
-  const windowHours = 0.5; // 30-minute window
-
-  for (const point of snapshotPoints) {
-    if (Math.abs(ageHours - point) <= windowHours) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Merge stories from database and API, removing duplicates
- */
-function mergeStories(dbStories: DBStory[], apiStories: APIStory[]): MergedStory[] {
-  const merged: MergedStory[] = [...dbStories];
-  const existingIds = new Set(
-    dbStories.map(s => s.instagram_story_id).filter(Boolean)
-  );
-
-  for (const apiStory of apiStories) {
-    if (!existingIds.has(apiStory.id)) {
-      merged.push({
-        id: null, // No social_mention_id
-        instagram_story_id: apiStory.id,
-        instagram_media_id: apiStory.id,
-        mentioned_at: apiStory.timestamp,
-        state: 'api_only'
-      });
-    }
-  }
-
-  return merged;
-}
-

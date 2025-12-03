@@ -14,20 +14,32 @@ export const corsHeaders = {
 /**
  * Meta/Instagram API configuration
  */
-export const META_API_VERSION = 'v21.0' as const;
+export const META_API_VERSION = 'v24.0' as const;
 export const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}` as const;
 
 /**
  * Story insights metrics to fetch from Instagram API
+ * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
+ * 
+ * Available STORY metrics:
+ * - reach: Unique accounts that viewed the story
+ * - replies: Total replies on the story
+ * - profile_visits: Number of profile visits from the story
+ * - total_interactions: Likes, saves, comments, shares minus unlikes/unsaves/deleted
+ * - shares: Number of shares
+ * - navigation: Total navigation actions (with breakdown available)
+ * - views: Total views (in development)
+ * 
+ * Note: 'impressions' was deprecated in v22.0+ for media created after July 2, 2024
  */
 export const STORY_INSIGHTS_METRICS = [
-  'impressions',
   'reach',
   'replies',
-  'exits',
-  'taps_forward',
-  'taps_back',
-  'shares'
+  'profile_visits',
+  'total_interactions',
+  'shares',
+  'navigation',
+  'views'
 ].join(',');
 
 /**
