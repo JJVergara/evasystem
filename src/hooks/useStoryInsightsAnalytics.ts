@@ -3,6 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { toast } from "sonner";
 
+// Database row type (not in generated Supabase types yet)
+interface StoryInsightsSnapshotRow {
+  id: string;
+  instagram_story_id: string;
+  snapshot_at: string;
+  story_age_hours: number | null;
+  reach: number;
+  views: number;
+  profile_visits: number;
+  total_interactions: number;
+  shares: number;
+  replies: number;
+  navigation: Record<string, number>;
+  organization_id: string;
+}
+
 export interface StoryInsightsSummary {
   total_stories: number;
   total_reach: number;
@@ -39,16 +55,26 @@ export interface DailyStoryMetrics {
   avg_reach: number;
 }
 
+export interface StoryByHour {
+  instagram_story_id: string;
+  reach: number;
+  views: number;
+  created_at: Date;
+}
+
+export interface HourlyMetrics {
+  hour: number;
+  avg_reach: number;
+  avg_views: number;
+  stories_count: number;
+  stories: StoryByHour[];
+}
+
 export interface StoryInsightsData {
   summary: StoryInsightsSummary;
   recent_snapshots: StorySnapshot[];
   daily_metrics: DailyStoryMetrics[];
-  metrics_by_hour: Array<{
-    hour: number;
-    avg_reach: number;
-    avg_views: number;
-    stories_count: number;
-  }>;
+  metrics_by_hour: HourlyMetrics[];
 }
 
 export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
@@ -79,12 +105,17 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
       startDate.setDate(startDate.getDate() - days);
 
       // Fetch all snapshots for the period
-      const { data: snapshots, error: snapshotsError } = await supabase
+      // Type assertion needed because story_insights_snapshots is not in generated Supabase types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: snapshots, error: snapshotsError } = await (supabase as any)
         .from("story_insights_snapshots")
         .select("*")
         .eq("organization_id", organization.id)
         .gte("snapshot_at", startDate.toISOString())
-        .order("snapshot_at", { ascending: false });
+        .order("snapshot_at", { ascending: false }) as { 
+          data: StoryInsightsSnapshotRow[] | null; 
+          error: { message: string } | null 
+        };
 
       if (snapshotsError) {
         throw new Error(snapshotsError.message);
@@ -138,9 +169,10 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
           });
         }
         const day = dailyMap.get(date)!;
-        day.stories.add(snapshot.instagram_story_id);
         // Only count metrics from the latest snapshot per story per day
+        // Since snapshots are ordered DESC, first occurrence is the latest
         if (!day.stories.has(snapshot.instagram_story_id)) {
+          day.stories.add(snapshot.instagram_story_id);
           day.reach += snapshot.reach || 0;
           day.views += snapshot.views || 0;
           day.profile_visits += snapshot.profile_visits || 0;
@@ -170,42 +202,72 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
       }
 
       // Group by hour for optimal posting time analysis
-      const hourMap = new Map<number, { reach: number; views: number; count: number }>();
-      for (const snapshot of snapshots || []) {
-        const hour = new Date(snapshot.snapshot_at).getHours();
+      // Use ONLY latest snapshot per story to avoid counting same story multiple times
+      const hourMap = new Map<number, { 
+        reach: number; 
+        views: number; 
+        stories: StoryByHour[];
+      }>();
+      
+      for (const snapshot of latestSnapshots) {
+        // Calculate story creation time from snapshot_at minus story_age_hours
+        const snapshotDate = new Date(snapshot.snapshot_at);
+        const storyAgeMs = snapshot.story_age_hours 
+          ? snapshot.story_age_hours * 60 * 60 * 1000 
+          : 0;
+        const storyCreatedAt = new Date(snapshotDate.getTime() - storyAgeMs);
+        const hour = storyCreatedAt.getHours();
+        
         if (!hourMap.has(hour)) {
-          hourMap.set(hour, { reach: 0, views: 0, count: 0 });
+          hourMap.set(hour, { reach: 0, views: 0, stories: [] });
         }
         const h = hourMap.get(hour)!;
         h.reach += snapshot.reach || 0;
         h.views += snapshot.views || 0;
-        h.count += 1;
+        h.stories.push({
+          instagram_story_id: snapshot.instagram_story_id,
+          reach: snapshot.reach || 0,
+          views: snapshot.views || 0,
+          created_at: storyCreatedAt,
+        });
       }
 
-      const metrics_by_hour = Array.from({ length: 24 }, (_, hour) => {
-        const data = hourMap.get(hour) || { reach: 0, views: 0, count: 0 };
+      const metrics_by_hour: HourlyMetrics[] = Array.from({ length: 24 }, (_, hour) => {
+        const data = hourMap.get(hour) || { reach: 0, views: 0, stories: [] };
+        const count = data.stories.length;
         return {
           hour,
-          avg_reach: data.count > 0 ? Math.round(data.reach / data.count) : 0,
-          avg_views: data.count > 0 ? Math.round(data.views / data.count) : 0,
-          stories_count: data.count,
+          avg_reach: count > 0 ? Math.round(data.reach / count) : 0,
+          avg_views: count > 0 ? Math.round(data.views / count) : 0,
+          stories_count: count,
+          stories: data.stories.sort((a, b) => b.reach - a.reach), // Sort by reach desc
         };
       });
 
-      // Recent snapshots (top 10)
-      const recent_snapshots: StorySnapshot[] = latestSnapshots.slice(0, 10).map(s => ({
-        id: s.id,
-        instagram_story_id: s.instagram_story_id,
-        snapshot_at: s.snapshot_at,
-        story_age_hours: s.story_age_hours,
-        reach: s.reach || 0,
-        views: s.views || 0,
-        profile_visits: s.profile_visits || 0,
-        total_interactions: s.total_interactions || 0,
-        shares: s.shares || 0,
-        replies: s.replies || 0,
-        navigation: s.navigation || {},
-      }));
+      // Recent snapshots (top 10) - sorted by story creation date (newest first)
+      const recent_snapshots: StorySnapshot[] = latestSnapshots
+        .sort((a, b) => {
+          // Calculate story creation time for sorting
+          const aSnapshotDate = new Date(a.snapshot_at).getTime();
+          const bSnapshotDate = new Date(b.snapshot_at).getTime();
+          const aCreatedAt = aSnapshotDate - (a.story_age_hours || 0) * 60 * 60 * 1000;
+          const bCreatedAt = bSnapshotDate - (b.story_age_hours || 0) * 60 * 60 * 1000;
+          return bCreatedAt - aCreatedAt; // Newest first
+        })
+        .slice(0, 10)
+        .map(s => ({
+          id: s.id,
+          instagram_story_id: s.instagram_story_id,
+          snapshot_at: s.snapshot_at,
+          story_age_hours: s.story_age_hours,
+          reach: s.reach || 0,
+          views: s.views || 0,
+          profile_visits: s.profile_visits || 0,
+          total_interactions: s.total_interactions || 0,
+          shares: s.shares || 0,
+          replies: s.replies || 0,
+          navigation: s.navigation || {},
+        }));
 
       setData({
         summary,

@@ -260,9 +260,11 @@ async function collectOrganizationStoryInsights(
           total_interactions: insights.total_interactions || 0,
           views: insights.views || 0,
           // Navigation breakdown
-          exits: navBreakdown?.tap_exit || insights.exits || 0,
-          taps_forward: (navBreakdown?.tap_forward || 0) + (navBreakdown?.swipe_forward || 0) || insights.taps_forward || 0,
-          taps_back: navBreakdown?.tap_back || insights.taps_back || 0,
+          exits: navBreakdown?.tap_exit ?? insights.exits ?? 0,
+          taps_forward: navBreakdown 
+            ? ((navBreakdown.tap_forward ?? 0) + (navBreakdown.swipe_forward ?? 0))
+            : (insights.taps_forward ?? 0),
+          taps_back: navBreakdown?.tap_back ?? insights.taps_back ?? 0,
           navigation: insights.navigation || {},
           // Legacy (deprecated)
           impressions: insights.impressions || 0,
