@@ -35,6 +35,7 @@ export function buildInstagramApiUrl(
 
 /**
  * Fetch story insights from Instagram API
+ * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
  */
 export async function fetchStoryInsights(
   storyId: string,
@@ -59,18 +60,61 @@ export async function fetchStoryInsights(
     
     const data = await response.json();
     const insights: StoryInsights = {
-      impressions: 0,
       reach: 0,
       replies: 0,
-      exits: 0,
-      taps_forward: 0,
-      taps_back: 0,
-      shares: 0
+      shares: 0,
+      profile_visits: 0,
+      total_interactions: 0,
+      views: 0,
+      navigation: undefined
     };
     
     for (const metric of data.data || []) {
-      if (metric.name in insights) {
-        insights[metric.name as keyof StoryInsights] = metric.values?.[0]?.value || 0;
+      const value = metric.values?.[0]?.value;
+      
+      switch (metric.name) {
+        case 'reach':
+          insights.reach = value || 0;
+          break;
+        case 'replies':
+          insights.replies = value || 0;
+          break;
+        case 'shares':
+          insights.shares = value || 0;
+          break;
+        case 'profile_visits':
+          insights.profile_visits = value || 0;
+          break;
+        case 'total_interactions':
+          insights.total_interactions = value || 0;
+          break;
+        case 'views':
+          insights.views = value || 0;
+          break;
+        case 'navigation':
+          // Navigation can be a number or have breakdown data
+          if (typeof value === 'number') {
+            insights.navigation = value;
+          } else if (metric.total_value?.breakdowns?.[0]?.results) {
+            // Parse breakdown: tap_forward, tap_back, tap_exit, swipe_forward
+            const breakdown: Record<string, number> = {};
+            for (const result of metric.total_value.breakdowns[0].results) {
+              const key = result.dimension_values?.[0];
+              if (key) {
+                breakdown[key] = result.value || 0;
+              }
+            }
+            insights.navigation = breakdown;
+            // Populate legacy fields for backwards compatibility
+            insights.exits = breakdown.tap_exit || 0;
+            insights.taps_forward = (breakdown.tap_forward || 0) + (breakdown.swipe_forward || 0);
+            insights.taps_back = breakdown.tap_back || 0;
+          }
+          break;
+        // Legacy metric (deprecated but might still be returned for old stories)
+        case 'impressions':
+          insights.impressions = value || 0;
+          break;
       }
     }
     
@@ -116,6 +160,60 @@ export async function fetchAccountMedia(
   }
   
   const data = await response.json();
+  return data.data || [];
+}
+
+/**
+ * Story item from Instagram API
+ */
+export interface StoryItem {
+  id: string;
+  timestamp?: string;
+  media_type?: string;
+  media_url?: string;
+  permalink?: string;
+}
+
+/**
+ * Fetch active stories from Instagram account
+ * Uses the dedicated /stories endpoint which returns only currently active stories (<24h old)
+ */
+export async function fetchAccountStories(
+  accountId: string,
+  accessToken: string,
+  options: {
+    fields?: string;
+  } = {}
+): Promise<StoryItem[]> {
+  const {
+    fields = 'id,timestamp,media_type'
+  } = options;
+  
+  const url = buildInstagramApiUrl(`${accountId}/stories`, {
+    fields,
+    access_token: accessToken
+  });
+  
+  console.log(`Fetching stories from: ${accountId}/stories`);
+  
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    const error = await response.json();
+    // Don't throw if no stories found or permission issue
+    if (error.error?.code === 100 || error.error?.code === 190) {
+      console.log(`No stories accessible for account ${accountId}: ${error.error?.message}`);
+      return [];
+    }
+    throw new InstagramApiError(
+      `Failed to fetch stories: ${error.error?.message || 'Unknown error'}`,
+      response.status,
+      error
+    );
+  }
+  
+  const data = await response.json();
+  console.log(`Found ${data.data?.length || 0} active stories`);
   return data.data || [];
 }
 
