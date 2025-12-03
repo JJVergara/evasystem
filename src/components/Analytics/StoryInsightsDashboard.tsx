@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/Layout/PageHeader";
 import { GlassPanel } from "@/components/Layout/GlassPanel";
+import { HelpCircle } from "lucide-react";
 import {
   Eye,
   Users,
@@ -28,7 +30,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   AreaChart,
   Area,
@@ -169,7 +171,22 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Alcance</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 cursor-help">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Alcance</p>
+                            <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <p className="font-medium">Alcance (Reach)</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Número de <strong>cuentas únicas</strong> que vieron tu Story. Cada persona se cuenta una sola vez, sin importar cuántas veces la vio.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <p className="text-2xl font-bold text-blue-700">{formatNumber(summary.total_reach)}</p>
                   </div>
                   <Eye className="w-8 h-8 text-blue-500/50" />
@@ -181,7 +198,22 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Vistas</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 cursor-help">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Vistas</p>
+                            <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                          <p className="font-medium">Vistas (Views)</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <strong>Total de reproducciones</strong> de tu Story. Incluye vistas repetidas de la misma persona. Si alguien ve tu Story 3 veces, cuenta como 3 vistas.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <p className="text-2xl font-bold text-emerald-700">{formatNumber(summary.total_views)}</p>
                   </div>
                   <Activity className="w-8 h-8 text-emerald-500/50" />
@@ -311,7 +343,7 @@ export function StoryInsightsDashboard() {
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
-                      <Tooltip
+                      <RechartsTooltip
                         labelFormatter={(date) => new Date(date).toLocaleDateString("es-ES", {
                           weekday: "short",
                           day: "numeric",
@@ -375,7 +407,7 @@ export function StoryInsightsDashboard() {
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
-                      <Tooltip
+                      <RechartsTooltip
                         labelFormatter={(date) => new Date(date).toLocaleDateString("es-ES")}
                         formatter={(value: number) => [value, "Stories"]}
                       />
@@ -414,7 +446,7 @@ export function StoryInsightsDashboard() {
                         className="text-xs"
                       />
                       <YAxis className="text-xs" />
-                      <Tooltip
+                      <RechartsTooltip
                         labelFormatter={(hour) => `${hour}:00 - ${hour}:59`}
                         formatter={(value: number, name: string) => [
                           formatNumber(value),
@@ -471,50 +503,67 @@ export function StoryInsightsDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {recent_snapshots.map((snapshot) => (
-                      <div
-                        key={snapshot.id}
-                        className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-full bg-gradient-to-br from-pink-500 to-purple-500">
-                            <Instagram className="w-4 h-4 text-white" />
+                    {recent_snapshots.map((snapshot) => {
+                      // Calculate story creation date from snapshot_at minus story_age_hours
+                      const snapshotDate = new Date(snapshot.snapshot_at);
+                      const storyCreatedAt = snapshot.story_age_hours
+                        ? new Date(snapshotDate.getTime() - snapshot.story_age_hours * 60 * 60 * 1000)
+                        : snapshotDate;
+                      
+                      return (
+                        <div
+                          key={snapshot.id}
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 rounded-full bg-gradient-to-br from-pink-500 to-purple-500">
+                              <Instagram className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">
+                                Story #{snapshot.instagram_story_id.slice(-8)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                📅 {storyCreatedAt.toLocaleDateString("es-ES", {
+                                  weekday: "short",
+                                  day: "numeric",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                              {snapshot.story_age_hours && (
+                                <p className="text-xs text-muted-foreground/70">
+                                  ⏱️ Snapshot tomado a las {snapshot.story_age_hours.toFixed(1)}h
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-sm">
-                              Story #{snapshot.instagram_story_id.slice(-8)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {snapshot.story_age_hours
-                                ? `${snapshot.story_age_hours.toFixed(1)}h de antigüedad`
-                                : new Date(snapshot.snapshot_at).toLocaleString("es-ES")}
-                            </p>
+                          <div className="flex items-center gap-6 text-sm">
+                            <div className="text-center">
+                              <p className="font-bold">{formatNumber(snapshot.reach)}</p>
+                              <p className="text-xs text-muted-foreground">Alcance</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold">{formatNumber(snapshot.views)}</p>
+                              <p className="text-xs text-muted-foreground">Vistas</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold">{snapshot.profile_visits}</p>
+                              <p className="text-xs text-muted-foreground">Perfil</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold">{snapshot.shares}</p>
+                              <p className="text-xs text-muted-foreground">Shares</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold">{snapshot.replies}</p>
+                              <p className="text-xs text-muted-foreground">Replies</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6 text-sm">
-                          <div className="text-center">
-                            <p className="font-bold">{formatNumber(snapshot.reach)}</p>
-                            <p className="text-xs text-muted-foreground">Alcance</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{formatNumber(snapshot.views)}</p>
-                            <p className="text-xs text-muted-foreground">Vistas</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{snapshot.profile_visits}</p>
-                            <p className="text-xs text-muted-foreground">Perfil</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{snapshot.shares}</p>
-                            <p className="text-xs text-muted-foreground">Shares</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{snapshot.replies}</p>
-                            <p className="text-xs text-muted-foreground">Replies</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
