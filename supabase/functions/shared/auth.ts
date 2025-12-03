@@ -40,10 +40,11 @@ export async function authenticateRequest(
   const cronSecret = req.headers.get('x-cron-secret');
   const supabase = createSupabaseClient();
 
-  // Handle cron requests
-  if (!authHeader && options.allowCron) {
+  // Handle cron requests - check cron secret FIRST (before user auth)
+  // This allows cron jobs to include Authorization header for service role access
+  if (options.allowCron && cronSecret) {
     const expectedSecret = Deno.env.get('CRON_SECRET');
-    if (cronSecret && expectedSecret && cronSecret === expectedSecret) {
+    if (expectedSecret && cronSecret === expectedSecret) {
       // Return a system user for cron jobs
       return {
         user: { id: 'system', isCron: true },
