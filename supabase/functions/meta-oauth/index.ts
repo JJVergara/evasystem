@@ -100,8 +100,8 @@ async function getOrganizationCredentials(supabaseClient: SupabaseClient, organi
 
   console.log('Using global Meta credentials as fallback');
   return {
-    app_id: "602564099251848",//Deno.env.get('META_APP_ID'),
-    app_secret: "74bc6263089d8179354b31437d1982fc",//Deno.env.get('META_APP_SECRET'),
+    app_id: Deno.env.get('META_APP_ID'),
+    app_secret: Deno.env.get('META_APP_SECRET'),
     webhook_verify_token: Deno.env.get('WEBHOOK_VERIFY_TOKEN')
   };
 }
@@ -207,8 +207,8 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       .single();
 
     // Use global Meta App credentials for all users
-    const appId = "602564099251848";//Deno.env.get('META_APP_ID');
-    const appSecret = "74bc6263089d8179354b31437d1982fc";//Deno.env.get('META_APP_SECRET');
+    const appId = Deno.env.get('META_APP_ID');
+    const appSecret = Deno.env.get('META_APP_SECRET');
 
     const REDIRECT_URI = `https://app.evasystem.cl/meta-oauth`;
 
@@ -615,8 +615,8 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
 }
 
 async function exchangeCodeForToken(code: string) {
-  const appId = "602564099251848";//Deno.env.get('META_APP_ID');
-  const appSecret = "74bc6263089d8179354b31437d1982fc";//Deno.env.get('META_APP_SECRET');
+  const appId = Deno.env.get('META_APP_ID');
+  const appSecret = Deno.env.get('META_APP_SECRET');
   const REDIRECT_URI = 'https://app.evasystem.cl/meta-oauth';
 
   // Step 1: code -> short-lived user access token
