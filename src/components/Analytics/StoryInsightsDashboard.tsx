@@ -34,6 +34,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  ReferenceLine,
+  Cell,
 } from "recharts";
 import { useStoryInsightsAnalytics } from "@/hooks/useStoryInsightsAnalytics";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +111,19 @@ export function StoryInsightsDashboard() {
     );
   }
 
-  const { summary, daily_metrics, metrics_by_hour, recent_snapshots } = data;
+  const { summary, daily_metrics, metrics_by_hour, recent_snapshots, max_stories_per_hour } = data;
+  
+  // Color palette for stacked story bars
+  const storyColors = [
+    "#8b5cf6", // Purple
+    "#10b981", // Green
+    "#f59e0b", // Amber
+    "#ef4444", // Red
+    "#3b82f6", // Blue
+    "#ec4899", // Pink
+    "#14b8a6", // Teal
+    "#f97316", // Orange
+  ];
 
   return (
     <div className="space-y-6">
@@ -432,13 +446,18 @@ export function StoryInsightsDashboard() {
                   Rendimiento por Hora
                 </CardTitle>
                 <CardDescription>
-                  Descubre cuándo tus Stories tienen mejor rendimiento. Cada barra muestra el alcance promedio de stories publicadas en esa hora.
+                  Cada segmento de color representa una story individual. La línea punteada muestra el alcance promedio por hora.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={metrics_by_hour}>
+                      <defs>
+                        <pattern id="avgPattern" patternUnits="userSpaceOnUse" width="4" height="4">
+                          <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#666" strokeWidth="0.5" />
+                        </pattern>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis
                         dataKey="hour"
@@ -453,42 +472,80 @@ export function StoryInsightsDashboard() {
                           if (!hourData) return null;
                           
                           return (
-                            <div className="bg-popover border rounded-lg p-3 shadow-lg">
+                            <div className="bg-popover border rounded-lg p-3 shadow-lg min-w-[200px]">
                               <p className="font-medium mb-2">{label}:00 - {label}:59</p>
-                              <div className="space-y-1 text-sm">
-                                <p>📊 Alcance Promedio: <span className="font-medium">{formatNumber(hourData.avg_reach)}</span></p>
-                                <p>👁️ Vistas Promedio: <span className="font-medium">{formatNumber(hourData.avg_views)}</span></p>
-                                <p>📸 Stories: <span className="font-medium">{hourData.stories_count}</span></p>
+                              <div className="space-y-1 text-sm border-b pb-2 mb-2">
+                                <p className="flex justify-between">
+                                  <span className="text-muted-foreground">Promedio:</span>
+                                  <span className="font-medium">{formatNumber(hourData.avg_reach)} alcance</span>
+                                </p>
+                                <p className="flex justify-between">
+                                  <span className="text-muted-foreground">Stories:</span>
+                                  <span className="font-medium">{hourData.stories_count}</span>
+                                </p>
                               </div>
                               {hourData.stories.length > 0 && (
-                                <div className="mt-2 pt-2 border-t">
-                                  <p className="text-xs text-muted-foreground mb-1">Stories individuales:</p>
-                                  <div className="space-y-1">
-                                    {hourData.stories.map((story, idx) => (
-                                      <div key={story.instagram_story_id} className="text-xs flex justify-between gap-4">
-                                        <span className="text-muted-foreground">
-                                          #{story.instagram_story_id?.slice(-8) || "N/A"}
-                                        </span>
-                                        <span>
-                                          {formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
+                                <div className="space-y-2">
+                                  {hourData.stories.map((story, idx) => (
+                                    <div 
+                                      key={story.instagram_story_id} 
+                                      className="flex items-center gap-2 text-xs"
+                                    >
+                                      <div 
+                                        className="w-3 h-3 rounded-sm flex-shrink-0" 
+                                        style={{ backgroundColor: storyColors[idx % storyColors.length] }}
+                                      />
+                                      <span className="text-muted-foreground">
+                                        #{story.instagram_story_id?.slice(-8) || "N/A"}
+                                      </span>
+                                      <span className="ml-auto font-medium">
+                                        {formatNumber(story.reach)}
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
                           );
                         }}
                       />
-                      <Bar
-                        dataKey="avg_reach"
-                        fill="#8b5cf6"
-                        radius={[4, 4, 0, 0]}
-                        name="Alcance Promedio"
+                      {/* Stacked bars for each story position */}
+                      {Array.from({ length: max_stories_per_hour }, (_, i) => (
+                        <Bar
+                          key={`story_${i}`}
+                          dataKey={`story_${i}_reach`}
+                          stackId="stories"
+                          fill={storyColors[i % storyColors.length]}
+                          radius={i === max_stories_per_hour - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                          name={`Story ${i + 1}`}
+                        />
+                      ))}
+                      {/* Reference line for average - shown as dashed line at avg_reach level */}
+                      <ReferenceLine 
+                        y={Math.round(metrics_by_hour.filter(h => h.avg_reach > 0).reduce((sum, h) => sum + h.avg_reach, 0) / Math.max(1, metrics_by_hour.filter(h => h.avg_reach > 0).length))} 
+                        stroke="#666" 
+                        strokeDasharray="5 5" 
+                        label={{ value: "Promedio global", position: "insideTopRight", fontSize: 10, fill: "#666" }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+
+                {/* Legend */}
+                <div className="mt-4 flex flex-wrap gap-3 justify-center text-xs">
+                  {Array.from({ length: Math.min(max_stories_per_hour, 8) }, (_, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <div 
+                        className="w-3 h-3 rounded-sm" 
+                        style={{ backgroundColor: storyColors[i % storyColors.length] }}
+                      />
+                      <span className="text-muted-foreground">Story {i + 1}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-6 border-t-2 border-dashed border-gray-500" />
+                    <span className="text-muted-foreground">Promedio global</span>
+                  </div>
                 </div>
 
                 {/* Best hours summary */}
@@ -519,10 +576,14 @@ export function StoryInsightsDashboard() {
                           <div key={h.hour} className="text-sm">
                             <p className="font-medium">{h.hour}:00 - {h.stories_count} stories</p>
                             <div className="ml-4 mt-1 space-y-1">
-                              {h.stories.map(story => (
-                                <div key={story.instagram_story_id} className="flex justify-between text-muted-foreground text-xs">
+                              {h.stories.map((story, idx) => (
+                                <div key={story.instagram_story_id} className="flex items-center gap-2 text-muted-foreground text-xs">
+                                  <div 
+                                    className="w-2 h-2 rounded-sm" 
+                                    style={{ backgroundColor: storyColors[idx % storyColors.length] }}
+                                  />
                                   <span>#{story.instagram_story_id?.slice(-8) || "N/A"}</span>
-                                  <span>{formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas</span>
+                                  <span className="ml-auto">{formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas</span>
                                 </div>
                               ))}
                             </div>

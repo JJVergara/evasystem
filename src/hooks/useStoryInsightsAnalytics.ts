@@ -68,6 +68,8 @@ export interface HourlyMetrics {
   avg_views: number;
   stories_count: number;
   stories: StoryByHour[];
+  // Dynamic keys for stacked bars: story_0_reach, story_1_reach, story_0_id, etc.
+  [key: string]: number | string | StoryByHour[] | undefined;
 }
 
 export interface StoryInsightsData {
@@ -75,6 +77,7 @@ export interface StoryInsightsData {
   recent_snapshots: StorySnapshot[];
   daily_metrics: DailyStoryMetrics[];
   metrics_by_hour: HourlyMetrics[];
+  max_stories_per_hour: number; // For generating dynamic bar keys
 }
 
 export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
@@ -232,16 +235,36 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
         });
       }
 
+      // Find max stories in any hour for generating dynamic keys
+      let max_stories_per_hour = 0;
+      for (const [, hourData] of hourMap) {
+        if (hourData.stories.length > max_stories_per_hour) {
+          max_stories_per_hour = hourData.stories.length;
+        }
+      }
+
       const metrics_by_hour: HourlyMetrics[] = Array.from({ length: 24 }, (_, hour) => {
         const data = hourMap.get(hour) || { reach: 0, views: 0, stories: [] };
         const count = data.stories.length;
-        return {
+        const sortedStories = data.stories.sort((a, b) => b.reach - a.reach); // Sort by reach desc
+        
+        // Create base metrics
+        const metrics: HourlyMetrics = {
           hour,
           avg_reach: count > 0 ? Math.round(data.reach / count) : 0,
           avg_views: count > 0 ? Math.round(data.views / count) : 0,
           stories_count: count,
-          stories: data.stories.sort((a, b) => b.reach - a.reach), // Sort by reach desc
+          stories: sortedStories,
         };
+        
+        // Add dynamic keys for each story position (for stacked bars)
+        for (let i = 0; i < max_stories_per_hour; i++) {
+          const story = sortedStories[i];
+          metrics[`story_${i}_reach`] = story?.reach || 0;
+          metrics[`story_${i}_id`] = story?.instagram_story_id || '';
+        }
+        
+        return metrics;
       });
 
       // Recent snapshots (top 10) - sorted by story creation date (newest first)
@@ -274,6 +297,7 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
         recent_snapshots,
         daily_metrics,
         metrics_by_hour,
+        max_stories_per_hour,
       });
 
     } catch (err) {
