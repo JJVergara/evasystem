@@ -432,7 +432,7 @@ export function StoryInsightsDashboard() {
                   Rendimiento por Hora
                 </CardTitle>
                 <CardDescription>
-                  Descubre cuándo tus Stories tienen mejor rendimiento
+                  Descubre cuándo tus Stories tienen mejor rendimiento. Cada barra muestra el alcance promedio de stories publicadas en esa hora.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -447,13 +447,39 @@ export function StoryInsightsDashboard() {
                       />
                       <YAxis className="text-xs" />
                       <RechartsTooltip
-                        labelFormatter={(hour) => `${hour}:00 - ${hour}:59`}
-                        formatter={(value: number, name: string) => [
-                          formatNumber(value),
-                          name === "avg_reach" ? "Alcance Promedio" :
-                          name === "avg_views" ? "Vistas Promedio" :
-                          name === "stories_count" ? "Stories" : name,
-                        ]}
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          const hourData = metrics_by_hour.find(h => h.hour === label);
+                          if (!hourData) return null;
+                          
+                          return (
+                            <div className="bg-popover border rounded-lg p-3 shadow-lg">
+                              <p className="font-medium mb-2">{label}:00 - {label}:59</p>
+                              <div className="space-y-1 text-sm">
+                                <p>📊 Alcance Promedio: <span className="font-medium">{formatNumber(hourData.avg_reach)}</span></p>
+                                <p>👁️ Vistas Promedio: <span className="font-medium">{formatNumber(hourData.avg_views)}</span></p>
+                                <p>📸 Stories: <span className="font-medium">{hourData.stories_count}</span></p>
+                              </div>
+                              {hourData.stories.length > 0 && (
+                                <div className="mt-2 pt-2 border-t">
+                                  <p className="text-xs text-muted-foreground mb-1">Stories individuales:</p>
+                                  <div className="space-y-1">
+                                    {hourData.stories.map((story, idx) => (
+                                      <div key={story.instagram_story_id} className="text-xs flex justify-between gap-4">
+                                        <span className="text-muted-foreground">
+                                          #{story.instagram_story_id?.slice(-8) || "N/A"}
+                                        </span>
+                                        <span>
+                                          {formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }}
                       />
                       <Bar
                         dataKey="avg_reach"
@@ -475,11 +501,36 @@ export function StoryInsightsDashboard() {
                       .slice(0, 5)
                       .map((h, i) => (
                         <Badge key={h.hour} variant={i === 0 ? "default" : "outline"}>
-                          {h.hour}:00 - {formatNumber(h.avg_reach)} alcance
+                          {h.hour}:00 - {formatNumber(h.avg_reach)} alcance ({h.stories_count} {h.stories_count === 1 ? 'story' : 'stories'})
                         </Badge>
                       ))}
                   </div>
                 </div>
+
+                {/* Hours with multiple stories */}
+                {metrics_by_hour.filter(h => h.stories_count > 1).length > 0 && (
+                  <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <h4 className="font-medium mb-2 text-amber-600">📌 Horas con múltiples Stories</h4>
+                    <div className="space-y-3">
+                      {metrics_by_hour
+                        .filter(h => h.stories_count > 1)
+                        .sort((a, b) => b.stories_count - a.stories_count)
+                        .map(h => (
+                          <div key={h.hour} className="text-sm">
+                            <p className="font-medium">{h.hour}:00 - {h.stories_count} stories</p>
+                            <div className="ml-4 mt-1 space-y-1">
+                              {h.stories.map(story => (
+                                <div key={story.instagram_story_id} className="flex justify-between text-muted-foreground text-xs">
+                                  <span>#{story.instagram_story_id?.slice(-8) || "N/A"}</span>
+                                  <span>{formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -521,7 +572,7 @@ export function StoryInsightsDashboard() {
                             </div>
                             <div>
                               <p className="font-medium text-sm">
-                                Story #{snapshot.instagram_story_id.slice(-8)}
+                                Story #{snapshot.instagram_story_id?.slice(-8) || 'N/A'}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 📅 {storyCreatedAt.toLocaleDateString("es-ES", {
