@@ -1,5 +1,5 @@
 
-import { corsHeaders, STORY_INSIGHTS_METRICS, META_API_BASE, VERIFICATION_INTERVALS, STORY_EXPIRATION_MS } from '../shared/constants.ts';
+import { corsHeaders, STORY_INSIGHTS_METRICS, INSTAGRAM_API_BASE, VERIFICATION_INTERVALS, STORY_EXPIRATION_MS } from '../shared/constants.ts';
 import { MentionUpdateData, InsightsMap, SupabaseClient } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
                 try {
                   const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
                   const response = await fetch(
-                    `${META_API_BASE}/${mention.instagram_story_id}?fields=id&access_token=${decryptedToken}`
+                    `${INSTAGRAM_API_BASE}/${mention.instagram_story_id}?fields=id&access_token=${decryptedToken}`
                   );
                   storyExists = response.ok;
                 } catch (error) {
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
               const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
               
               // Try to fetch final insights (story might still be available for a short time after 24h)
-              const insightsUrl = `${META_API_BASE}/${mention.instagram_story_id}/insights?metric=${STORY_INSIGHTS_METRICS}&access_token=${decryptedToken}`;
+              const insightsUrl = `${INSTAGRAM_API_BASE}/${mention.instagram_story_id}/insights?metric=${STORY_INSIGHTS_METRICS}&access_token=${decryptedToken}`;
               const insightsResponse = await fetch(insightsUrl);
               
               if (insightsResponse.ok) {

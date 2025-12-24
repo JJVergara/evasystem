@@ -86,7 +86,6 @@ export function EnhancedInstagramSettings() {
   const instagramUsername = organization?.instagram_username || null;
   const lastSync = organization?.last_instagram_sync || null;
   const businessAccountId = organization?.instagram_business_account_id || null;
-  const facebookPageId = organization?.facebook_page_id || null;
 
   const getStatusInfo = () => {
     if (!isConnected) {
@@ -209,8 +208,7 @@ export function EnhancedInstagramSettings() {
                 <p className="font-medium">¿Qué necesitas para conectar?</p>
                 <ul className="space-y-1 text-blue-600">
                   <li>• Una cuenta de Instagram Business o Creator</li>
-                  <li>• Una página de Facebook vinculada a tu Instagram</li>
-                  <li>• Permisos de administrador en la página de Facebook</li>
+                  <li>• Acceso a tu cuenta de Instagram profesional</li>
                 </ul>
                 <Button
                   variant="link"
@@ -271,7 +269,7 @@ export function EnhancedInstagramSettings() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Usuario</p>
                 <p className="font-medium">
@@ -291,16 +289,10 @@ export function EnhancedInstagramSettings() {
                   {businessAccountId ? '✓ Conectada' : 'No vinculada'}
                 </p>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Página de Facebook</p>
-                <p className={`font-medium ${facebookPageId ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {facebookPageId ? '✓ Vinculada' : 'No vinculada'}
-                </p>
-              </div>
             </div>
 
             {/* Warning and diagnostic option if data seems incomplete */}
-            {(!businessAccountId || !facebookPageId) && (
+            {!businessAccountId && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg">
                   <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />

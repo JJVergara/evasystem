@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import { Organization, SupabaseClient, Notification } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse, notFoundResponse } from '../shared/responses.ts';
 import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
@@ -165,7 +165,7 @@ async function testTokenValidity(org: Organization) {
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/me?access_token=${org.meta_token}`
+      `${INSTAGRAM_API_BASE}/me?access_token=${org.meta_token}`
     );
 
     const data = await response.json();
@@ -214,7 +214,7 @@ async function testProfileAccess(org: Organization) {
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}?fields=id,username,followers_count,media_count&access_token=${org.meta_token}`
+      `${INSTAGRAM_API_BASE}/${org.instagram_business_account_id}?fields=id,username,followers_count,media_count&access_token=${org.meta_token}`
     );
     const data = await response.json();
     
@@ -239,7 +239,7 @@ async function testMentionsPermissions(org: Organization) {
   try {
     // Test access to mentioned media
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}/tags?limit=1&access_token=${org.meta_token}`
+      `${INSTAGRAM_API_BASE}/${org.instagram_business_account_id}/tags?limit=1&access_token=${org.meta_token}`
     );
     const data = await response.json();
     
@@ -265,7 +265,7 @@ async function testStoriesPermissions(org: Organization) {
   try {
     // Test access to stories
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/${org.instagram_business_account_id}/stories?limit=1&access_token=${org.meta_token}`
+      `${INSTAGRAM_API_BASE}/${org.instagram_business_account_id}/stories?limit=1&access_token=${org.meta_token}`
     );
     const data = await response.json();
     

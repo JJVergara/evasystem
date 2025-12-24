@@ -1,4 +1,4 @@
-import { corsHeaders, META_API_BASE, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
 import { SupabaseClient, Organization, Ambassador, InsightsData, MediaData, CommentData, MessageData } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
@@ -38,7 +38,7 @@ async function getWebhookCredentials(supabaseClient: SupabaseClient, instagramUs
 
   // Fallback to global credentials
   return {
-    APP_SECRET: Deno.env.get('META_APP_SECRET'),
+    APP_SECRET: Deno.env.get('INSTAGRAM_APP_SECRET'),
     WEBHOOK_VERIFY_TOKEN: Deno.env.get('WEBHOOK_VERIFY_TOKEN')
   };
 }
@@ -134,8 +134,8 @@ Deno.serve(async (req) => {
             try {
               const credentials = await getWebhookCredentials(supabase, entry.id);
               console.error('Signature validation failed using:', {
-                has_org_secret: !!credentials.APP_SECRET && credentials.APP_SECRET !== Deno.env.get('META_APP_SECRET'),
-                using_fallback: credentials.APP_SECRET === Deno.env.get('META_APP_SECRET'),
+                has_org_secret: !!credentials.APP_SECRET && credentials.APP_SECRET !== Deno.env.get('INSTAGRAM_APP_SECRET'),
+                using_fallback: credentials.APP_SECRET === Deno.env.get('INSTAGRAM_APP_SECRET'),
                 signature_header: signatureHeader ? `${signatureHeader.substring(0, 15)}...` : 'missing'
               });
             } catch (credError) {

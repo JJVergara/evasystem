@@ -1,5 +1,5 @@
 
-import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import { SupabaseClient, SyncResult, InsightsMap, MediaItem, Ambassador, Fiesta } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
@@ -97,9 +97,11 @@ Deno.serve(async (req) => {
     }
 
     // Fetch organizations that have Instagram connections
+    // Note: With Instagram Login, instagram_user_id is the key identifier
     let organizationsQuery = supabaseClient
       .from('organizations')
-      .select('id, name, instagram_business_account_id, instagram_username')
+      .select('id, name, instagram_user_id, instagram_username')
+      .not('instagram_user_id', 'is', null)
       .order('last_instagram_sync', { ascending: true, nullsFirst: true });
 
     // If specific organization requested, filter by it
@@ -117,7 +119,7 @@ Deno.serve(async (req) => {
     console.log(`Found ${organizations?.length || 0} organization(s) ${targetOrgId ? `(targeted: ${targetOrgId})` : ''}`)
     
     if (targetOrgId && (!organizations || organizations.length === 0)) {
-      console.log(`Target organization ${targetOrgId} not found`)
+      console.log(`Target organization ${targetOrgId} not found or has no Instagram connected`)
     }
 
     const results: SyncResult[] = []
@@ -156,9 +158,14 @@ Deno.serve(async (req) => {
           continue; // Skip this organization
         }
 
+        if (!org.instagram_user_id) {
+          console.log(`No Instagram User ID for organization ${org.name}`);
+          continue;
+        }
+
         // Sync Instagram data using decrypted token
         const decryptedToken = await safeDecryptToken(tokenData.access_token);
-        const syncResult = await syncOrganizationInstagramData(supabaseClient, org.id, decryptedToken);
+        const syncResult = await syncOrganizationInstagramData(supabaseClient, org.id, org.instagram_user_id, decryptedToken);
         
         // Update last sync timestamp
         await supabaseClient
@@ -211,19 +218,10 @@ Deno.serve(async (req) => {
   }
 })
 
-async function syncOrganizationInstagramData(supabaseClient: SupabaseClient, organizationId: string, accessToken: string) {
-  console.log(`Syncing Instagram data for organization ${organizationId}`)
+async function syncOrganizationInstagramData(supabaseClient: SupabaseClient, organizationId: string, igUserId: string, accessToken: string) {
+  console.log(`Syncing Instagram data for organization ${organizationId}, User ID: ${igUserId}`)
   
   try {
-    // Get Instagram business accounts
-    const accountsUrl = `${META_API_BASE}/me/accounts?access_token=${accessToken}`
-    const accountsResponse = await fetch(accountsUrl)
-    const accountsData = await accountsResponse.json()
-
-    if (!accountsResponse.ok) {
-      throw new Error(`Failed to get accounts: ${JSON.stringify(accountsData)}`)
-    }
-
     const instagramMetrics = {
       totalFollowers: 0,
       totalPosts: 0,
@@ -233,120 +231,108 @@ async function syncOrganizationInstagramData(supabaseClient: SupabaseClient, org
       newTags: 0
     }
 
-    // Process each Facebook page to find Instagram business accounts
-    for (const account of accountsData.data || []) {
-      try {
-        // Get Instagram business account
-        const igAccountUrl = `${META_API_BASE}/${account.id}?fields=instagram_business_account&access_token=${accessToken}`
-        const igAccountResponse = await fetch(igAccountUrl)
-        const igAccountData = await igAccountResponse.json()
-        
-        if (igAccountData.instagram_business_account) {
-          const igAccountId = igAccountData.instagram_business_account.id
-          
-          // Get account metrics
-          const metricsUrl = `${META_API_BASE}/${igAccountId}?fields=followers_count,media_count&access_token=${accessToken}`
-          const metricsResponse = await fetch(metricsUrl)
-          const metricsData = await metricsResponse.json()
-          
-          if (metricsResponse.ok) {
-            instagramMetrics.totalFollowers += metricsData.followers_count || 0
-            instagramMetrics.totalPosts += metricsData.media_count || 0
-          }
+    // 1. Get account metrics directly using the user ID
+    const metricsUrl = `${INSTAGRAM_API_BASE}/${igUserId}?fields=followers_count,media_count&access_token=${accessToken}`
+    const metricsResponse = await fetch(metricsUrl)
+    const metricsData = await metricsResponse.json()
+    
+    if (metricsResponse.ok) {
+      instagramMetrics.totalFollowers += metricsData.followers_count || 0
+      instagramMetrics.totalPosts += metricsData.media_count || 0
+    } else {
+      console.warn(`Failed to fetch metrics for user ${igUserId}:`, metricsData)
+    }
 
-          // Get recent media insights (last 50 items to cover active stories)
-          const mediaUrl = `${META_API_BASE}/${igAccountId}/media?fields=id,media_type,media_product_type,timestamp&limit=50&access_token=${accessToken}`
-          const mediaResponse = await fetch(mediaUrl)
-          const mediaData = await mediaResponse.json()
+    // 2. Get recent media insights (last 50 items to cover active stories)
+    const mediaUrl = `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=id,media_type,media_product_type,timestamp,username&limit=50&access_token=${accessToken}`
+    const mediaResponse = await fetch(mediaUrl)
+    const mediaData = await mediaResponse.json()
+    
+    if (mediaResponse.ok && mediaData.data) {
+      for (const media of mediaData.data) {
+        try {
+          // Check if this is a Story and if it's still active (<24h)
+          const isStory = media.media_product_type === 'STORY';
+          const mediaTime = new Date(media.timestamp).getTime();
+          const now = new Date().getTime();
+          const ageHours = (now - mediaTime) / (1000 * 60 * 60);
+          const isActive = ageHours < 24;
           
-          if (mediaResponse.ok && mediaData.data) {
-            for (const media of mediaData.data) {
-              try {
-                // Check if this is a Story and if it's still active (<24h)
-                const isStory = media.media_product_type === 'STORY';
-                const mediaTime = new Date(media.timestamp).getTime();
-                const now = new Date().getTime();
-                const ageHours = (now - mediaTime) / (1000 * 60 * 60);
-                const isActive = ageHours < 24;
-                
-                // Use appropriate metrics based on media type
-                const metrics = isStory 
-                  ? 'impressions,reach,replies,exits,taps_forward,taps_back,shares'
-                  : 'reach,impressions';
-                
-                const insightsUrl = `${META_API_BASE}/${media.id}/insights?metric=${metrics}&access_token=${accessToken}`
-                const insightsResponse = await fetch(insightsUrl)
-                const insightsData = await insightsResponse.json()
-                
-                if (insightsResponse.ok && insightsData.data) {
-                  // Accumulate metrics for organization totals
-                  for (const insight of insightsData.data) {
-                    if (insight.name === 'reach') {
-                      instagramMetrics.totalReach += insight.values[0]?.value || 0
-                    } else if (insight.name === 'impressions') {
-                      instagramMetrics.totalImpressions += insight.values[0]?.value || 0
-                    }
-                  }
-                  
-                  // If this is an active Story, create a snapshot
-                  if (isStory && isActive) {
-                    // Try to find matching social_mention
-                    const { data: storyMention } = await supabaseClient
-                      .from('social_mentions')
-                      .select('id')
-                      .eq('organization_id', organizationId)
-                      .or(`instagram_story_id.eq.${media.id},instagram_media_id.eq.${media.id}`)
-                      .maybeSingle();
-                    
-                    if (storyMention) {
-                      // Parse insights for snapshot
-                      const insights: InsightsMap = {};
-                      for (const insight of insightsData.data) {
-                        insights[insight.name] = insight.values?.[0]?.value || 0;
-                      }
-                      
-                      // Create snapshot
-                      const snapshot = {
-                        social_mention_id: storyMention.id,
-                        organization_id: organizationId,
-                        instagram_story_id: media.id,
-                        instagram_media_id: media.id,
-                        snapshot_at: new Date().toISOString(),
-                        story_age_hours: Math.round(ageHours * 100) / 100,
-                        impressions: insights.impressions || 0,
-                        reach: insights.reach || 0,
-                        replies: insights.replies || 0,
-                        exits: insights.exits || 0,
-                        taps_forward: insights.taps_forward || 0,
-                        taps_back: insights.taps_back || 0,
-                        shares: insights.shares || 0,
-                        navigation: {},
-                        raw_insights: insightsData
-                      };
-                      
-                      await supabaseClient
-                        .from('story_insights_snapshots')
-                        .insert(snapshot);
-                      
-                      console.log(`Created story insights snapshot during sync for story ${media.id}`);
-                    }
-                  }
+          // Use appropriate metrics based on media type
+          const metrics = isStory 
+            ? 'impressions,reach,replies,exits,taps_forward,taps_back,shares'
+            : 'reach,impressions'; // impressions is deprecated but still available for some media
+          
+          const insightsUrl = `${INSTAGRAM_API_BASE}/${media.id}/insights?metric=${metrics}&access_token=${accessToken}`
+          const insightsResponse = await fetch(insightsUrl)
+          const insightsData = await insightsResponse.json()
+          
+          if (insightsResponse.ok && insightsData.data) {
+            // Accumulate metrics for organization totals
+            for (const insight of insightsData.data) {
+              if (insight.name === 'reach') {
+                instagramMetrics.totalReach += insight.values[0]?.value || 0
+              } else if (insight.name === 'impressions') {
+                instagramMetrics.totalImpressions += insight.values[0]?.value || 0
+              }
+            }
+            
+            // If this is an active Story, create a snapshot
+            if (isStory && isActive) {
+              // Try to find matching social_mention
+              const { data: storyMention } = await supabaseClient
+                .from('social_mentions')
+                .select('id')
+                .eq('organization_id', organizationId)
+                .or(`instagram_story_id.eq.${media.id},instagram_media_id.eq.${media.id}`)
+                .maybeSingle();
+              
+              if (storyMention) {
+                // Parse insights for snapshot
+                const insights: InsightsMap = {};
+                for (const insight of insightsData.data) {
+                  insights[insight.name] = insight.values?.[0]?.value || 0;
                 }
-              } catch (error) {
-                console.warn(`Error getting insights for media ${media.id}:`, error)
+                
+                // Create snapshot
+                const snapshot = {
+                  social_mention_id: storyMention.id,
+                  organization_id: organizationId,
+                  instagram_story_id: media.id,
+                  instagram_media_id: media.id,
+                  snapshot_at: new Date().toISOString(),
+                  story_age_hours: Math.round(ageHours * 100) / 100,
+                  impressions: insights.impressions || 0,
+                  reach: insights.reach || 0,
+                  replies: insights.replies || 0,
+                  exits: insights.exits || 0,
+                  taps_forward: insights.taps_forward || 0,
+                  taps_back: insights.taps_back || 0,
+                  shares: insights.shares || 0,
+                  navigation: {},
+                  raw_insights: insightsData
+                };
+                
+                await supabaseClient
+                  .from('story_insights_snapshots')
+                  .insert(snapshot);
+                
+                console.log(`Created story insights snapshot during sync for story ${media.id}`);
               }
             }
           }
-
-          // Sync media where the account was mentioned and tagged media
-          const mentionResults = await processInstagramMentionsAndTags(supabaseClient, organizationId, igAccountId, accessToken)
-          instagramMetrics.newMentions += mentionResults.newMentions;
-          instagramMetrics.newTags += mentionResults.newTags;
+        } catch (error) {
+          console.warn(`Error getting insights for media ${media.id}:`, error)
         }
-      } catch (error) {
-        console.warn(`Error processing account ${account.id}:`, error)
       }
+    } else {
+      console.warn(`Failed to fetch media for user ${igUserId}:`, mediaData)
     }
+
+    // 3. Sync media where the account was mentioned and tagged media
+    const mentionResults = await processInstagramMentionsAndTags(supabaseClient, organizationId, igUserId, accessToken)
+    instagramMetrics.newMentions += mentionResults.newMentions;
+    instagramMetrics.newTags += mentionResults.newTags;
 
     // Create notification about successful sync only if there's new activity
     if (instagramMetrics.newMentions > 0 || instagramMetrics.newTags > 0) {
@@ -369,7 +355,7 @@ async function syncOrganizationInstagramData(supabaseClient: SupabaseClient, org
   }
 }
 
-async function processInstagramMentionsAndTags(supabaseClient: SupabaseClient, organizationId: string, igAccountId: string, accessToken: string) {
+async function processInstagramMentionsAndTags(supabaseClient: SupabaseClient, organizationId: string, igUserId: string, accessToken: string) {
   // Get ambassadors for this organization with normalized usernames
   const { data: ambassadors, error: ambassadorsError } = await supabaseClient
     .from('embassadors')
@@ -424,7 +410,7 @@ async function processInstagramMentionsAndTags(supabaseClient: SupabaseClient, o
 
   // Process mentioned media (when the account is mentioned)
   try {
-    const mentionsUrl = `${META_API_BASE}/${igAccountId}/mentioned_media?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`
+    const mentionsUrl = `${INSTAGRAM_API_BASE}/${igUserId}/mentioned_media?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`
     const mentionsRes = await fetch(mentionsUrl)
     const mentionsData = await mentionsRes.json()
 
@@ -444,7 +430,7 @@ async function processInstagramMentionsAndTags(supabaseClient: SupabaseClient, o
 
   // Process tagged media (when the account is tagged in posts)
   try {
-    const tagsUrl = `${META_API_BASE}/${igAccountId}/tags?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`
+    const tagsUrl = `${INSTAGRAM_API_BASE}/${igUserId}/tags?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`
     const tagsRes = await fetch(tagsUrl)
     const tagsData = await tagsRes.json()
 

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // Verify user owns the organization
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
-      .select('id, facebook_page_id, name')
+      .select('id, name')
       .eq('id', organizationId)
       .eq('created_by', user.id)
       .single();
@@ -53,39 +53,8 @@ Deno.serve(async (req) => {
     // Decrypt token for API call
     const decryptedToken = await safeDecryptToken(tokenData.access_token);
 
-    // Send message via Instagram Messaging API
-    const messagePayload = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: message
-      }
-    };
-
-    const instagramApiUrl = `https://graph.facebook.com/v21.0/${organization.facebook_page_id}/messages`;
-    
-    const response = await fetch(instagramApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${decryptedToken}`
-      },
-      body: JSON.stringify(messagePayload)
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error('Instagram API error:', responseData);
-      return new Response(JSON.stringify({ 
-        error: 'Failed to send Instagram message', 
-        details: responseData.error || responseData 
-      }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Send message via Instagram Messaging API using shared function
+    const responseData = await sendInstagramMessage(recipientId, message, decryptedToken);
 
     // Log the sent message for audit trail
     console.log('Instagram message sent successfully:', {

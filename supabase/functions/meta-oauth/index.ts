@@ -1,4 +1,4 @@
-import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE, INSTAGRAM_OAUTH_AUTHORIZE, INSTAGRAM_OAUTH_TOKEN, INSTAGRAM_TOKEN_EXCHANGE, INSTAGRAM_TOKEN_REFRESH, INSTAGRAM_SCOPES } from '../shared/constants.ts';
 import { 
   SupabaseClient, 
   TokenData, 
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     return corsPreflightResponse();
   }
 
-  console.log('=== META OAUTH REQUEST DEBUG ===')
+  console.log('=== INSTAGRAM OAUTH REQUEST DEBUG ===')
   console.log('Request method:', req.method)
   console.log('Request URL:', req.url)
   
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         )
     }
   } catch (error) {
-    console.error('=== META OAUTH MAIN ERROR ===')
+    console.error('=== INSTAGRAM OAUTH MAIN ERROR ===')
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : 'Error';
     const errorStack = error instanceof Error ? error.stack : undefined;
@@ -90,7 +90,7 @@ async function getOrganizationCredentials(supabaseClient: SupabaseClient, organi
 
   if (!orgError && orgCreds && orgCreds.length > 0) {
     const creds = orgCreds[0];
-    console.log('Using organization-specific Meta credentials');
+    console.log('Using organization-specific Instagram credentials');
     return {
       app_id: creds.meta_app_id,
       app_secret: creds.meta_app_secret,
@@ -98,10 +98,10 @@ async function getOrganizationCredentials(supabaseClient: SupabaseClient, organi
     };
   }
 
-  console.log('Using global Meta credentials as fallback');
+  console.log('Using global Instagram credentials as fallback');
   return {
-    app_id: Deno.env.get('META_APP_ID'),
-    app_secret: Deno.env.get('META_APP_SECRET'),
+    app_id: Deno.env.get('INSTAGRAM_APP_ID'),
+    app_secret: Deno.env.get('INSTAGRAM_APP_SECRET'),
     webhook_verify_token: Deno.env.get('WEBHOOK_VERIFY_TOKEN')
   };
 }
@@ -206,19 +206,19 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       .eq('auth_user_id', authUser.id)
       .single();
 
-    // Use global Meta App credentials for all users
-    const appId = Deno.env.get('META_APP_ID');
-    const appSecret = Deno.env.get('META_APP_SECRET');
+    // Use global Instagram App credentials for all users
+    const appId = Deno.env.get('INSTAGRAM_APP_ID');
+    const appSecret = Deno.env.get('INSTAGRAM_APP_SECRET');
 
     const REDIRECT_URI = `https://app.evasystem.cl/meta-oauth`;
 
     if (!appId || !appSecret) {
-      console.error('Missing Meta credentials');
+      console.error('Missing Instagram credentials');
       return jsonResponse(
         {
           error: 'configuration_error',
           error_description:
-            'Instagram connection is not available. Meta App credentials are not configured.',
+            'Instagram connection is not available. Instagram App credentials are not configured.',
         },
         { status: 500 }
       );
@@ -271,23 +271,13 @@ async function handleAuthorize(req: Request, supabaseClient: SupabaseClient) {
       );
     }
 
-    const scopes = [
-      'instagram_basic',
-      'instagram_manage_insights',
-      'instagram_manage_messages',
-      'instagram_content_publish',
-      'pages_show_list',         // Required to list user's Pages
-      'pages_read_engagement',   // Required to read Page data
-      'pages_manage_metadata'    // Required for webhook subscriptions
-    ].join(',');
-
     const authUrl =
-      `https://www.facebook.com/v21.0/dialog/oauth?` +
-      `client_id=${encodeURIComponent(appId)}&` +           // Facebook app ID
-      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` + // https://app.evasystem.cl/meta-oauth
-      `state=${encodeURIComponent(state)}&` +
+      `${INSTAGRAM_OAUTH_AUTHORIZE}?` +
+      `client_id=${encodeURIComponent(appId)}&` +
+      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
       `response_type=code&` +
-      `scope=${encodeURIComponent(scopes)}`;
+      `scope=${encodeURIComponent(INSTAGRAM_SCOPES)}&` +
+      `state=${encodeURIComponent(state)}`;
 
 
     return jsonResponse({ authUrl });
@@ -340,12 +330,12 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
   }
 
   if (metaError) {
-    console.error('Meta OAuth error received from frontend:', metaError);
+    console.error('Instagram OAuth error received from frontend:', metaError);
     return jsonResponse(
       {
         success: false,
         error: 'meta_oauth_error',
-        error_description: 'Authorization failed on Meta side',
+        error_description: 'Authorization failed on Instagram side',
         debug_info: metaError,
       },
       { status: 200 },
@@ -588,13 +578,13 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
     if (err?.message?.includes('Short-lived token exchange failed')) {
       errorType = 'meta_api_error';
       errorMsg =
-        'Meta API rejected the authorization code. This could be due to expired state, mismatched redirect URI, or invalid Meta App configuration.';
-      debugInfo = `Meta API Error: ${err.message}`;
+        'Instagram API rejected the authorization code. This could be due to expired state, mismatched redirect URI, or invalid App configuration.';
+      debugInfo = `Instagram API Error: ${err.message}`;
     } else if (err?.message?.includes('Invalid time value')) {
       errorType = 'token_processing_error';
-      errorMsg = 'Error processing token expiration data from Meta API.';
+      errorMsg = 'Error processing token expiration data from Instagram API.';
       debugInfo =
-        'Token expiry calculation failed - Meta API may have returned invalid data';
+        'Token expiry calculation failed - Instagram API may have returned invalid data';
     } else if (err?.message?.includes('Failed to store')) {
       errorType = 'database_error';
       errorMsg = 'Error saving Instagram connection data.';
@@ -615,19 +605,22 @@ async function handleCallback(req: Request, supabaseClient: SupabaseClient) {
 }
 
 async function exchangeCodeForToken(code: string) {
-  const appId = Deno.env.get('META_APP_ID');
-  const appSecret = Deno.env.get('META_APP_SECRET');
+  const appId = Deno.env.get('INSTAGRAM_APP_ID');
+  const appSecret = Deno.env.get('INSTAGRAM_APP_SECRET');
   const REDIRECT_URI = 'https://app.evasystem.cl/meta-oauth';
 
   // Step 1: code -> short-lived user access token
-  const shortUrl =
-    `https://graph.facebook.com/v21.0/oauth/access_token` +
-    `?client_id=${encodeURIComponent(appId)}` +
-    `&client_secret=${encodeURIComponent(appSecret)}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&code=${encodeURIComponent(code)}`;
+  const shortRes = await fetch(INSTAGRAM_OAUTH_TOKEN, {
+    method: 'POST',
+    body: new URLSearchParams({
+      client_id: appId!,
+      client_secret: appSecret!,
+      grant_type: 'authorization_code',
+      redirect_uri: REDIRECT_URI,
+      code: code
+    })
+  });
 
-  const shortRes = await fetch(shortUrl);
   const shortData = await shortRes.json();
 
   if (!shortRes.ok || shortData.error) {
@@ -638,11 +631,10 @@ async function exchangeCodeForToken(code: string) {
 
   // Step 2: short-lived -> long-lived token
   const longUrl =
-    `https://graph.facebook.com/v21.0/oauth/access_token` +
-    `?grant_type=fb_exchange_token` +
-    `&client_id=${encodeURIComponent(appId)}` +
-    `&client_secret=${encodeURIComponent(appSecret)}` +
-    `&fb_exchange_token=${encodeURIComponent(shortData.access_token)}`;
+    `${INSTAGRAM_TOKEN_EXCHANGE}` +
+    `?grant_type=ig_exchange_token` +
+    `&client_secret=${encodeURIComponent(appSecret!)}` +
+    `&access_token=${encodeURIComponent(shortData.access_token)}`;
 
   const longRes = await fetch(longUrl);
   const longData = await longRes.json();
@@ -678,9 +670,10 @@ async function updateAmbassadorInstagramData(
       throw new Error('No access token provided');
     }
 
-    // 1) Get "user" info from Meta
+    // 1) Get "user" info from Instagram
+    // Includes fields to populate our database
     const userResponse = await fetch(
-      `${META_API_BASE}/me?fields=id,name&access_token=${encodeURIComponent(
+      `${INSTAGRAM_API_BASE}/me?fields=user_id,username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(
         tokenData.access_token,
       )}`,
     );
@@ -689,78 +682,16 @@ async function updateAmbassadorInstagramData(
     if (!userResponse.ok || userData.error) {
       console.error('Error fetching /me:', userData.error || userData);
       throw new Error(
-        userData.error?.message || 'Failed to fetch Meta user profile data',
+        userData.error?.message || 'Failed to fetch Instagram user profile data',
       );
     }
 
-    // 2) Get pages/accounts this user manages (to find IG business account if any)
-    const accountsResponse = await fetch(
-      `${META_API_BASE}/me/accounts?access_token=${encodeURIComponent(
-        tokenData.access_token,
-      )}`,
-    );
-    const accountsData = await accountsResponse.json();
-
-    if (!accountsResponse.ok || accountsData.error) {
-      console.warn('Error fetching /me/accounts:', accountsData.error || accountsData);
-      // Not fatal – we can still store basic user info and token
-    }
-
-    let instagramData: InstagramData = {
-      instagram_user_id: userData.id,
+    const instagramData: InstagramData = {
+      instagram_user_id: userData.user_id || userData.id,
+      instagram_user: userData.username,
+      follower_count: userData.followers_count || 0,
+      profile_picture_url: userData.profile_picture_url,
     };
-
-    // Try to get follower count, username, picture from first Instagram business account
-    if (accountsData.data && accountsData.data.length > 0) {
-      for (const page of accountsData.data as Array<{ id: string }>) {
-        try {
-          const igResponse = await fetch(
-            `${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
-              tokenData.access_token,
-            )}`,
-          );
-          const igData = await igResponse.json();
-
-          if (!igResponse.ok || igData.error) {
-            console.warn('Failed to get instagram_business_account for page:', {
-              pageId: page.id,
-              error: igData.error || igData,
-            });
-            continue;
-          }
-
-          if (igData.instagram_business_account) {
-            const igAccountResponse = await fetch(
-              `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count,profile_picture_url&access_token=${encodeURIComponent(
-                tokenData.access_token,
-              )}`,
-            );
-            const igAccountData = await igAccountResponse.json();
-
-            if (!igAccountResponse.ok || igAccountData.error) {
-              console.warn('Failed to get Instagram account data:', {
-                pageId: page.id,
-                error: igAccountData.error || igAccountData,
-              });
-              continue;
-            }
-
-            instagramData = {
-              ...instagramData,
-              instagram_user: igAccountData.username,
-              follower_count: igAccountData.followers_count || 0,
-              profile_picture_url: igAccountData.profile_picture_url,
-            };
-            break; // First valid IG business account is enough
-          }
-        } catch (error) {
-          console.warn('Exception while resolving Instagram data for page:', {
-            pageId: page.id,
-            error,
-          });
-        }
-      }
-    }
 
     // 3) Compute expiry date (Meta sometimes omits expires_in)
     const expiryDate = tokenData.expires_in
@@ -827,113 +758,30 @@ async function updateOrganizationInstagramData(
       throw new Error('No access token provided');
     }
 
-    // 1) Get pages this user manages
-    const pagesResponse = await fetch(
-      `${META_API_BASE}/me/accounts?access_token=${encodeURIComponent(
+    // 1) Get Instagram user info directly
+    const userResponse = await fetch(
+      `${INSTAGRAM_API_BASE}/me?fields=user_id,username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(
         tokenData.access_token,
       )}`,
     );
-    const pagesData = await pagesResponse.json();
+    const userData = await userResponse.json();
 
-    if (!pagesResponse.ok || pagesData.error) {
-      console.error('Error fetching /me/accounts:', pagesData.error || pagesData);
+    if (!userResponse.ok || userData.error) {
+      console.error('Error fetching /me:', userData.error || userData);
       throw new Error(
-        pagesData.error?.message ||
-          'Failed to fetch Facebook pages for this account',
+        userData.error?.message || 'Failed to fetch Instagram user profile data',
       );
     }
 
-    if (!pagesData.data || pagesData.data.length === 0) {
-      throw new Error(
-        'No Facebook pages found. Please ensure you have at least one Facebook Page ' +
-        'linked to your account and that you granted page access during authorization.'
-      );
-    }
-
-    // 2) Scan ALL pages to find one with an Instagram Business Account
-    console.log(`=== OAUTH CALLBACK: Found ${pagesData.data.length} Facebook page(s) ===`);
-    console.log('Page names:', pagesData.data.map((p: { name: string }) => p.name).join(', '));
-    console.log('Scanning for Instagram accounts...');
-    
-    type PageWithIG = {
-      page: { id: string; name: string; access_token: string };
-      instagram?: { id: string; username?: string; followers_count?: number };
+    const instagramData: OrganizationInstagramData = {
+      // No Facebook Page ID needed with Instagram Login
+      facebook_page_id: '', // Optional or remove if schema allows null
+      instagram_business_account_id: userData.user_id || userData.id, // Same ID
+      instagram_username: userData.username,
+      instagram_user_id: userData.user_id || userData.id,
     };
     
-    const pagesWithInstagram: PageWithIG[] = [];
-    const pagesWithoutInstagram: { id: string; name: string }[] = [];
-    
-    for (const pageItem of pagesData.data as Array<{ id: string; name: string; access_token: string }>) {
-      console.log(`Checking page: ${pageItem.name} (${pageItem.id})`);
-      
-      try {
-        const igResponse = await fetch(
-          `${META_API_BASE}/${pageItem.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
-            pageItem.access_token || tokenData.access_token,
-          )}`,
-        );
-        const igData = await igResponse.json();
-        
-        if (igData.instagram_business_account) {
-          // Found Instagram account - get details
-          const igAccountResponse = await fetch(
-            `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count&access_token=${encodeURIComponent(
-              pageItem.access_token || tokenData.access_token,
-            )}`,
-          );
-          const igAccountData = await igAccountResponse.json();
-          
-          console.log(`  → Instagram Business Account found: @${igAccountData.username || igData.instagram_business_account.id}`);
-          
-          pagesWithInstagram.push({
-            page: pageItem,
-            instagram: {
-              id: igData.instagram_business_account.id,
-              username: igAccountData.username,
-              followers_count: igAccountData.followers_count,
-            },
-          });
-        } else {
-          console.log(`  → No Instagram Business Account linked to this page`);
-          pagesWithoutInstagram.push({ id: pageItem.id, name: pageItem.name });
-        }
-      } catch (err) {
-        console.warn(`  → Error checking page ${pageItem.name}:`, err);
-        pagesWithoutInstagram.push({ id: pageItem.id, name: pageItem.name });
-      }
-    }
-    
-    console.log(`Summary: ${pagesWithInstagram.length} page(s) with Instagram, ${pagesWithoutInstagram.length} page(s) without`);
-    
-    // Use the first page WITH Instagram, or fall back to first page without
-    let selectedPage: { id: string; name: string; access_token: string };
-    let instagramData: OrganizationInstagramData;
-    
-    if (pagesWithInstagram.length > 0) {
-      // Use the first page that has an Instagram Business Account
-      const selected = pagesWithInstagram[0];
-      selectedPage = selected.page;
-      instagramData = {
-        facebook_page_id: selected.page.id,
-        instagram_business_account_id: selected.instagram?.id,
-        instagram_username: selected.instagram?.username,
-        instagram_user_id: selected.instagram?.id,
-      };
-      console.log(`Selected page with Instagram: ${selectedPage.name} (@${selected.instagram?.username})`);
-    } else {
-      // No pages have Instagram - use first page anyway (for messaging features)
-      selectedPage = pagesData.data[0] as { id: string; name: string; access_token: string };
-      instagramData = {
-        facebook_page_id: selectedPage.id,
-      };
-      console.warn(`No Instagram Business Accounts found. Using page "${selectedPage.name}" without Instagram.`);
-      console.warn('To link an Instagram account:');
-      console.warn('1. Your Instagram must be a Business or Creator account (not Personal)');
-      console.warn('2. Link it to a Facebook Page in Meta Business Suite');
-    }
-    
-    const page = selectedPage;
-    const pageAccessToken = page.access_token;
+    console.log(`Instagram Business Account connected: @${instagramData.instagram_username} (${instagramData.instagram_user_id})`);
 
     // 4) Compute expiry date
     const expiryDate = tokenData.expires_in
@@ -966,11 +814,10 @@ async function updateOrganizationInstagramData(
       .from('organizations')
       .update({
         last_instagram_sync: new Date().toISOString(),
-        facebook_page_id: instagramData.facebook_page_id,
-        instagram_business_account_id:
-          instagramData.instagram_business_account_id ?? null,
-        instagram_username: instagramData.instagram_username ?? null,
-        instagram_user_id: instagramData.instagram_user_id ?? null,
+        facebook_page_id: null, // Clear FB page ID as it's no longer relevant/available
+        instagram_business_account_id: instagramData.instagram_business_account_id,
+        instagram_username: instagramData.instagram_username,
+        instagram_user_id: instagramData.instagram_user_id,
       })
       .eq('id', organizationId);
 
@@ -979,19 +826,18 @@ async function updateOrganizationInstagramData(
       throw new Error('Failed to update organization data');
     }
 
-    // 7) Subscribe to webhooks (using Page Access Token - required by Meta API)
+    // 7) Subscribe to webhooks (using User Access Token)
+    // Note: With Instagram Login, we use the User Access Token directly
     try {
-      const webhookToken = pageAccessToken || tokenData.access_token;
-      
-      if (instagramData.instagram_business_account_id && pageAccessToken) {
+      if (instagramData.instagram_business_account_id) {
         console.log('Subscribing Instagram Business Account to webhooks...');
         const igWebhookResponse = await fetch(
-          `${META_API_BASE}/${instagramData.instagram_business_account_id}/subscribed_apps`,
+          `${INSTAGRAM_API_BASE}/${instagramData.instagram_business_account_id}/subscribed_apps`,
           {
             method: 'POST',
             body: new URLSearchParams({
               subscribed_fields: 'mentions,comments,story_insights',
-              access_token: pageAccessToken, // Must use Page Access Token
+              access_token: tokenData.access_token,
             }),
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -1005,14 +851,7 @@ async function updateOrganizationInstagramData(
           console.log('Instagram webhook subscription successful:', igWebhookData);
         } else {
           console.warn('Instagram webhook subscription failed:', igWebhookData);
-          // Fallback to page-level subscription
-          await subscribeToPageWebhooks(page.id, webhookToken);
         }
-      } else if (pageAccessToken) {
-        // No Instagram account, just subscribe the page
-        await subscribeToPageWebhooks(page.id, pageAccessToken);
-      } else {
-        console.warn('No page access token available, skipping webhook subscriptions');
       }
     } catch (webhookError) {
       console.warn('Webhook subscription failed:', webhookError);
@@ -1195,7 +1034,7 @@ async function exchangeTokenForLongLived(accessToken: string): Promise<{
   expires_in?: number;
 }> {
   const url =
-    'https://graph.instagram.com/refresh_access_token?' +
+    `${INSTAGRAM_TOKEN_REFRESH}?` +
     `grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`;
 
   const response = await fetch(url);
@@ -1214,33 +1053,10 @@ async function exchangeTokenForLongLived(accessToken: string): Promise<{
 
 
 async function subscribeToPageWebhooks(pageId: string, accessToken: string) {
-  const webhookUrl = `${META_API_BASE}/${encodeURIComponent(pageId)}/subscribed_apps`;
-
-  // Use valid Facebook Page webhook fields (not Instagram fields)
-  // 'feed' covers posts, 'mention' for page mentions, 'messages' for messaging
-  const body = new URLSearchParams({
-    subscribed_fields: 'feed,mention,messages',
-    access_token: accessToken,
-  });
-
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body,
-  });
-
-  const json = await response.json();
-
-  if (!response.ok || json.error) {
-    console.error('Page webhook subscription failed:', json.error || json);
-    // Don't throw - page webhooks are optional, Instagram webhooks are more important
-    console.warn('Continuing without page webhook subscription');
-    return;
-  }
-
-  console.log(`Page webhooks subscribed for page ${pageId}`, json);
+  // This function is less relevant now with Instagram Login which uses the User ID
+  // But kept for compatibility if needed, though Instagram Login doesn't use Page tokens.
+  // This was mainly for Facebook Page subscription.
+  console.log("Skipping Page Webhook subscription (not applicable for Instagram Login flow)");
 }
 
 // Diagnose endpoint - lists all Facebook Pages and their Instagram accounts
@@ -1299,90 +1115,33 @@ async function handleDiagnose(req: Request, supabaseClient: SupabaseClient) {
     const accessToken = await safeDecryptToken(tokenData.access_token);
     console.log('Token decrypted, length:', accessToken?.length || 0);
 
-    // Fetch all Facebook Pages
-    const pagesResponse = await fetch(
-      `${META_API_BASE}/me/accounts?access_token=${encodeURIComponent(accessToken)}`,
+    // New diagnostic: Check /me endpoint directly
+    const meResponse = await fetch(
+      `${INSTAGRAM_API_BASE}/me?fields=id,username,account_type&access_token=${encodeURIComponent(accessToken)}`,
     );
-    const pagesData = await pagesResponse.json();
+    const meData = await meResponse.json();
 
-    console.log('Meta API /me/accounts returned:', pagesData.data?.length || 0, 'pages');
+    console.log('Instagram API /me returned:', meData);
 
-    if (!pagesResponse.ok || pagesData.error) {
+    if (!meResponse.ok || meData.error) {
       return jsonResponse({
         success: false,
-        error: 'meta_api_error',
-        error_description: pagesData.error?.message || 'Failed to fetch Facebook pages',
+        error: 'instagram_api_error',
+        error_description: meData.error?.message || 'Failed to fetch Instagram user',
         token_updated_at: tokenData.updated_at,
       });
     }
 
-    // For each page, check for Instagram Business Account
-    const pages = [];
-    for (const page of (pagesData.data || []) as Array<{ id: string; name: string; access_token: string }>) {
-      const pageInfo: {
-        id: string;
-        name: string;
-        instagram_business_account: {
-          id: string;
-          username?: string;
-          followers_count?: number;
-        } | null;
-      } = {
-        id: page.id,
-        name: page.name,
-        instagram_business_account: null,
-      };
-
-      try {
-        const igResponse = await fetch(
-          `${META_API_BASE}/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(
-            page.access_token || accessToken
-          )}`,
-        );
-        const igData = await igResponse.json();
-
-        if (igData.instagram_business_account) {
-          // Get Instagram account details
-          const igAccountResponse = await fetch(
-            `${META_API_BASE}/${igData.instagram_business_account.id}?fields=username,followers_count,profile_picture_url&access_token=${encodeURIComponent(
-              page.access_token || accessToken
-            )}`,
-          );
-          const igAccountData = await igAccountResponse.json();
-
-          pageInfo.instagram_business_account = {
-            id: igData.instagram_business_account.id,
-            username: igAccountData.username,
-            followers_count: igAccountData.followers_count,
-          };
-        }
-      } catch (err) {
-        console.warn(`Error checking page ${page.name}:`, err);
-      }
-
-      pages.push(pageInfo);
-    }
-
-    const pagesWithIG = pages.filter(p => p.instagram_business_account);
-    const pagesWithoutIG = pages.filter(p => !p.instagram_business_account);
-
     return jsonResponse({
       success: true,
       data: {
-        total_pages: pages.length,
-        pages_with_instagram: pagesWithIG.length,
-        pages_without_instagram: pagesWithoutIG.length,
-        pages,
+        instagram_account: {
+          id: meData.id,
+          username: meData.username,
+          account_type: meData.account_type
+        },
         token_updated_at: tokenData.updated_at,
-        help: pagesWithIG.length === 0 ? {
-          message: 'No Instagram Business Accounts found linked to your Facebook Pages.',
-          steps: [
-            '1. Make sure your Instagram account is a Business or Creator account (not Personal)',
-            '2. Go to Meta Business Suite (business.facebook.com)',
-            '3. Link your Instagram account to one of your Facebook Pages',
-            '4. Reconnect Instagram in this app'
-          ]
-        } : null
+        message: 'Instagram connection is active and valid.'
       }
     });
 

@@ -12,10 +12,24 @@ export const corsHeaders = {
 } as const;
 
 /**
- * Meta/Instagram API configuration
+ * Instagram API with Instagram Login - v24.0
  */
-export const META_API_VERSION = 'v24.0' as const;
-export const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}` as const;
+export const INSTAGRAM_API_VERSION = 'v24.0' as const;
+export const INSTAGRAM_API_BASE = `https://graph.instagram.com/${INSTAGRAM_API_VERSION}` as const;
+
+// Instagram OAuth endpoints
+export const INSTAGRAM_OAUTH_AUTHORIZE = 'https://www.instagram.com/oauth/authorize';
+export const INSTAGRAM_OAUTH_TOKEN = 'https://api.instagram.com/oauth/access_token';
+export const INSTAGRAM_TOKEN_EXCHANGE = `https://graph.instagram.com/access_token`;
+export const INSTAGRAM_TOKEN_REFRESH = `https://graph.instagram.com/refresh_access_token`;
+
+// Instagram scopes (new format as of Jan 27, 2025)
+export const INSTAGRAM_SCOPES = [
+  'instagram_business_basic',           // Required for basic profile access
+  'instagram_business_manage_insights', // Required for insights API
+  'instagram_business_manage_messages', // For messaging features
+  'instagram_business_content_publish'  // For content publishing features
+].join(',');
 
 /**
  * Story insights metrics to fetch from Instagram API
@@ -56,4 +70,3 @@ export const STORY_EXPIRATION_MS = 24 * 60 * 60 * 1000;
  * Default token expiry (60 days in milliseconds) when Meta doesn't provide it
  */
 export const DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000;
-
