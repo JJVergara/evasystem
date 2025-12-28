@@ -4,6 +4,13 @@ import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
+import {
+  determinePartySelectionAction,
+  findPendingMentionForUser,
+  parsePartyResponse,
+  resolveMentionWithParty,
+  PartyOption
+} from '../shared/party-utils.ts';
 
 
 async function getOrganizationWebhookToken(supabaseClient: SupabaseClient, instagramUserId: string): Promise<string | undefined> {
@@ -404,6 +411,71 @@ async function handleMessages(supabase: SupabaseClient, messageData: MessageData
       return;
     }
 
+    // Check if this message is a response to a party selection question
+    if (messageData.sender?.id) {
+      const pendingMention = await findPendingMentionForUser(
+        supabase,
+        organization.id,
+        messageData.sender.id
+      );
+
+      if (pendingMention && pendingMention.party_options_sent) {
+        console.log('Found pending party selection for user:', messageData.sender.id);
+
+        // Extract quick reply payload if available
+        const quickReplyPayload = (messageData as { quick_reply?: { payload?: string } }).quick_reply?.payload;
+        const messageText = messageData.text || '';
+
+        // Try to parse the party response
+        const matchedParty = parsePartyResponse(
+          messageText,
+          quickReplyPayload,
+          pendingMention.party_options_sent as PartyOption[]
+        );
+
+        if (matchedParty) {
+          console.log('Matched party from response:', matchedParty.name, matchedParty.id);
+
+          // Resolve the mention with the matched party
+          const resolved = await resolveMentionWithParty(
+            supabase,
+            pendingMention.id,
+            matchedParty.id
+          );
+
+          if (resolved) {
+            // Create success notification
+            await supabase
+              .from('notifications')
+              .insert({
+                organization_id: organization.id,
+                type: 'party_selection_resolved',
+                message: `Mención asignada a ${matchedParty.name} por @${messageData.sender?.username || 'usuario'}`,
+                target_type: 'social_mention',
+                target_id: pendingMention.id,
+                priority: 'normal'
+              });
+
+            console.log('Party selection resolved for mention:', pendingMention.id);
+
+            // Send confirmation message to user
+            try {
+              await sendConfirmationMessage(supabase, organization.id, messageData.sender.id, matchedParty.name);
+            } catch (confirmError) {
+              console.error('Error sending confirmation message:', confirmError);
+            }
+
+            return; // Don't create a new social_mention for this message
+          }
+        } else {
+          console.log('Could not parse party response, message:', messageText);
+
+          // Optionally send a clarification message
+          // For now, we'll just log and continue to create a regular mention
+        }
+      }
+    }
+
     // Try to find ambassador by user ID if available
     let ambassador: Ambassador | null = null;
     if (messageData.sender?.id) {
@@ -474,6 +546,49 @@ async function handleMessages(supabase: SupabaseClient, messageData: MessageData
   } catch (error) {
     console.error('Error handling message:', error);
   }
+}
+
+/**
+ * Send confirmation message after party selection
+ */
+async function sendConfirmationMessage(
+  supabase: SupabaseClient,
+  organizationId: string,
+  recipientId: string,
+  partyName: string
+): Promise<void> {
+  // Get organization's token
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('facebook_page_id')
+    .eq('id', organizationId)
+    .single();
+
+  if (!org?.facebook_page_id) return;
+
+  const { data: tokenData } = await supabase
+    .from('organization_instagram_tokens')
+    .select('access_token')
+    .eq('organization_id', organizationId)
+    .single();
+
+  if (!tokenData?.access_token) return;
+
+  const decryptedToken = await safeDecryptToken(tokenData.access_token);
+
+  const messagePayload = {
+    recipient: { id: recipientId },
+    message: { text: `¡Perfecto! Tu mención ha sido registrada para ${partyName}. ¡Gracias por compartir! 🎉` }
+  };
+
+  await fetch(`https://graph.facebook.com/v21.0/${org.facebook_page_id}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${decryptedToken}`
+    },
+    body: JSON.stringify(messagePayload)
+  });
 }
 
 async function handleStoryMentionReferral(supabase: SupabaseClient, messageData: MessageData, instagramBusinessAccountId: string): Promise<void> {
@@ -597,9 +712,34 @@ async function handleStoryMentionReferral(supabase: SupabaseClient, messageData:
       inbox_link: inboxLink
     };
 
+    // Determine party selection action BEFORE inserting
+    const partyAction = await determinePartySelectionAction(supabase, organization.id);
+
+    // Set initial party selection status and matched party based on action
+    let partySelectionStatus = 'not_required';
+    let matchedFiestaId: string | null = null;
+
+    if (partyAction.action === 'auto_match' && partyAction.matchedPartyId) {
+      // Only 1 active party - auto match
+      matchedFiestaId = partyAction.matchedPartyId;
+      console.log('Auto-matching to single active party:', matchedFiestaId);
+    } else if (partyAction.action === 'ask_user') {
+      // Multiple active parties - will need to ask user
+      partySelectionStatus = 'pending_response';
+      console.log('Multiple active parties found:', partyAction.parties.length);
+    }
+    // If no_parties, leave as not_required and no match
+
+    // Add party selection fields to mention data
+    const mentionDataWithParty = {
+      ...mentionData,
+      matched_fiesta_id: matchedFiestaId,
+      party_selection_status: partySelectionStatus
+    };
+
     const { data: socialMention, error: mentionError } = await supabase
       .from('social_mentions')
-      .insert(mentionData)
+      .insert(mentionDataWithParty)
       .select()
       .single();
 
@@ -608,23 +748,72 @@ async function handleStoryMentionReferral(supabase: SupabaseClient, messageData:
       return;
     }
 
-    // Always create a notification for story mentions (high priority)
-    const notificationMessage = ambassador 
-      ? `${ambassador.first_name} ${ambassador.last_name} mencionó tu historia y envió un mensaje`
-      : `Nueva mención de historia de @${messageData.sender?.username || 'usuario desconocido'} - Requiere atención`;
+    // If multiple parties, trigger party selection message
+    if (partyAction.action === 'ask_user' && messageData.sender?.id) {
+      console.log('Triggering party selection flow for mention:', socialMention.id);
+
+      // Call the send-party-selection function
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+        const sendPartySelectionUrl = `${supabaseUrl}/functions/v1/send-party-selection`;
+
+        const partySelectionResponse = await fetch(sendPartySelectionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`
+          },
+          body: JSON.stringify({
+            mentionId: socialMention.id,
+            organizationId: organization.id,
+            recipientInstagramUserId: messageData.sender.id
+          })
+        });
+
+        const partySelectionResult = await partySelectionResponse.json();
+        console.log('Party selection message result:', partySelectionResult);
+      } catch (partyError) {
+        console.error('Error sending party selection message:', partyError);
+        // Don't fail the webhook - the mention was still created
+      }
+    }
+
+    // Create notification based on the action taken
+    let notificationMessage: string;
+    let notificationType: string;
+
+    if (partyAction.action === 'auto_match') {
+      const partyName = partyAction.parties[0]?.name || 'fiesta';
+      notificationMessage = ambassador
+        ? `${ambassador.first_name} ${ambassador.last_name} mencionó tu historia - asignado a ${partyName}`
+        : `Nueva mención de @${messageData.sender?.username || 'usuario'} - asignado a ${partyName}`;
+      notificationType = 'story_mention_auto_matched';
+    } else if (partyAction.action === 'ask_user') {
+      notificationMessage = ambassador
+        ? `${ambassador.first_name} ${ambassador.last_name} mencionó tu historia - esperando selección de fiesta`
+        : `Nueva mención de @${messageData.sender?.username || 'usuario'} - esperando selección de fiesta`;
+      notificationType = 'story_mention_pending_selection';
+    } else {
+      notificationMessage = ambassador
+        ? `${ambassador.first_name} ${ambassador.last_name} mencionó tu historia - sin fiesta activa`
+        : `Nueva mención de @${messageData.sender?.username || 'usuario desconocido'} - sin fiesta activa`;
+      notificationType = 'story_mention_no_party';
+    }
 
     await supabase
       .from('notifications')
       .insert({
         organization_id: organization.id,
-        type: 'story_mention_referral',
+        type: notificationType,
         message: notificationMessage,
         target_type: 'story_mention',
         target_id: socialMention.id,
-        priority: 'high' // Story mentions are always high priority
+        priority: 'high'
       });
 
-    console.log('Story mention referral processed successfully for organization:', organization.id);
+    console.log('Story mention referral processed successfully for organization:', organization.id, 'action:', partyAction.action);
 
   } catch (error) {
     console.error('Error handling story mention referral:', error);

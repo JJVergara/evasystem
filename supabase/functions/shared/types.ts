@@ -59,9 +59,15 @@ export interface SocialMention {
   checks_count?: number;
   last_check_at?: string;
   matched_ambassador_id?: string;
+  matched_fiesta_id?: string;
   story_url?: string;
   conversation_id?: string;
   inbox_link?: string;
+  // Party selection fields
+  party_selection_status?: 'not_required' | 'pending_response' | 'resolved' | 'timeout';
+  party_selection_message_sent_at?: string;
+  party_options_sent?: Array<{ id: string; name: string; payload: string }>;
+  party_selection_message_id?: string;
 }
 
 /**
@@ -244,14 +250,24 @@ export interface OrganizationInstagramData {
 }
 
 /**
- * Fiesta (event) data structure
+ * Fiesta (event/party) data structure
  */
 export interface Fiesta {
   id: string;
   organization_id?: string;
   name?: string;
+  description?: string;
+  location?: string;
+  event_date?: string;
+  instagram_handle?: string;
+  status?: 'active' | 'inactive' | 'completed';
   created_at?: string;
 }
+
+/**
+ * Party selection status for social mentions
+ */
+export type PartySelectionStatus = 'not_required' | 'pending_response' | 'resolved' | 'timeout';
 
 
 export interface MediaData {
