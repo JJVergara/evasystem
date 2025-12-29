@@ -9,7 +9,7 @@ async function testCrypto() {
   console.log('🧪 Testing crypto functions...\n');
 
   // Test token
-  const testToken = "7kge2Lm+P8Sb/DjEL3Oz9/uetB8Zywn8EAidvV6ZzfE5Kcmt+QLOPyT76xtCgRdUq+MKgzPsYOCzK1p3YAFc/567nqKW4pa1qS36LJAXisjFS1I8QdJ6mS0SfOjNXrI0HjSYNzzNVYUeYE7enDpu94i9soPd8/Ja1xpblDIL8rng8P87+uGVofRf0+LowBwioPiUi4hB8PODJ/geObPP7KPdTw7mJwnOX8vro/s437uahwsAb5QLAffiPgdtnBbLTVQeOhvvt9seSQ5v0UmaOzd8TECm79czkjsfsV/esHX1/j5Am8EEZLVcctlZryZ4";
+  const testToken = "p96SboOg6zcEJZPHTNahwAm3B5/y65AESw1Jv91Ox4KaCzguWe+X1ihAG21m1YH7qVOZixTQSwJUNZ8nhzwU/rEHXmVAsLpcSeizDZeGAktdS9DvkE2RxKtCKpmIA6sEhU9Jc3qEKEtyVsvIqzUGbGQyKG0ta1d7wKPacFLqFpOZSC+ttixC2pD8qWk6EoMWtDFEoY0l1ASfHFoAkbcTfsweZcPMt1tuwYiXLOTVH3995lNW0KWLUSEfV2MNFuXBi5OD+n58F2/rwH8tL5jC8hvm7KO+aJ1gatI5eGxRAmSY";
 
   try {
     // Test 1: Check if token is encrypted
@@ -34,7 +34,7 @@ async function testCrypto() {
       console.log('Test 4: Decrypting provided token...');
       try {
         const decryptedTest = await decryptToken(testToken);
-        console.log(`   Decrypted: ${decryptedTest.substring(0, 50)}...\n`);
+        console.log(`   Decrypted: ${decryptedTest}\n`);
       } catch (error) {
         console.log(`   ⚠️  Could not decrypt (likely encrypted with different key): ${error instanceof Error ? error.message : String(error)}\n`);
       }

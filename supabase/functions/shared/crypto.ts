@@ -10,7 +10,7 @@ const IV_LENGTH = 12; // 96 bits for GCM
  * Get encryption key from environment
  */
 async function getEncryptionKey(): Promise<CryptoKey> {
-  const keyHex = "40c280da434d3017b4a97ea81014c05466a7dda359e611b98d89addaa5352bce";//Deno.env.get('TOKEN_ENCRYPTION_KEY');
+  const keyHex = Deno.env.get('TOKEN_ENCRYPTION_KEY');
   if (!keyHex) {
     throw new Error('TOKEN_ENCRYPTION_KEY not configured');
   }

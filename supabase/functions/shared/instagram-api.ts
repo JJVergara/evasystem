@@ -3,7 +3,7 @@
  * Centralized Instagram Graph API interactions
  */
 
-import { META_API_BASE, STORY_INSIGHTS_METRICS } from './constants.ts';
+import { INSTAGRAM_API_BASE, STORY_INSIGHTS_METRICS } from './constants.ts';
 import { StoryInsights, MediaItem } from './types.ts';
 
 export class InstagramApiError extends Error {
@@ -24,7 +24,7 @@ export function buildInstagramApiUrl(
   endpoint: string,
   params?: Record<string, string>
 ): string {
-  const url = new URL(`${META_API_BASE}/${endpoint}`);
+  const url = new URL(`${INSTAGRAM_API_BASE}/${endpoint}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.set(key, value);

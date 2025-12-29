@@ -1,4 +1,4 @@
-import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import { MediaItem, SupabaseClient } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     if (mention.instagram_user_id) {
       try {
         const response = await fetch(
-          `${META_API_BASE}/${mention.instagram_user_id}?fields=mentioned_media.media_type,media_product_type,owner,username,timestamp,permalink&access_token=${decryptedToken}`
+          `${INSTAGRAM_API_BASE}/${mention.instagram_user_id}?fields=mentioned_media.media_type,media_product_type,owner,username,timestamp,permalink&access_token=${decryptedToken}`
         );
 
         if (response.ok) {

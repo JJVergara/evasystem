@@ -1,4 +1,4 @@
-import { corsHeaders, META_API_BASE } from '../shared/constants.ts';
+import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse } from '../shared/responses.ts';
 import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
 import { handleError, validateRequired } from '../shared/error-handler.ts';
@@ -90,7 +90,7 @@ async function getInstagramProfile(igUserId: string, accessToken: string) {
   const fields = 'user_id,username,name,account_type,profile_picture_url,followers_count,follows_count,media_count';
   
   const response = await fetch(
-    `https://graph.instagram.com/v22.0/${igUserId}?fields=${fields}&access_token=${accessToken}`
+    `${INSTAGRAM_API_BASE}/${igUserId}?fields=${fields}&access_token=${accessToken}`
   );
 
   const data = await response.json();
@@ -110,7 +110,7 @@ async function getInstagramMedia(igUserId: string, accessToken: string) {
   const fields = 'id,caption,comments_count,like_count,media_type,media_url,owner,permalink,username';
   
   const response = await fetch(
-    `https://graph.instagram.com/v22.0/${igUserId}/media?fields=${fields}&access_token=${accessToken}`
+    `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=${fields}&access_token=${accessToken}`
   );
 
   const data = await response.json();
@@ -130,7 +130,7 @@ async function getInstagramTags(igUserId: string, accessToken: string) {
   const fields = 'id,caption,comments_count,like_count,media_type,media_url,permalink,username';
   
   const response = await fetch(
-    `https://graph.instagram.com/v22.0/${igUserId}/tags?fields=${fields}&access_token=${accessToken}`
+    `${INSTAGRAM_API_BASE}/${igUserId}/tags?fields=${fields}&access_token=${accessToken}`
   );
 
   const data = await response.json();
