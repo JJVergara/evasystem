@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, ExternalLink, Copy, AlertTriangle } from "lucide-react";
+import { CheckCircle, ExternalLink, Copy, AlertTriangle, Instagram } from "lucide-react";
 import { toast } from "sonner";
 
 interface InstagramConfigGuideProps {
@@ -12,7 +12,7 @@ interface InstagramConfigGuideProps {
 }
 
 export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuideProps) {
-  const redirectUri = `${window.location.origin}/api/meta-oauth?action=callback`;
+  const redirectUri = 'https://app.evasystem.cl/meta-oauth';
   const webhookUrl = `https://awpfslcepylnipaolmvv.supabase.co/functions/v1/instagram-webhook`;
 
   const copyToClipboard = (text: string, label: string) => {
@@ -34,33 +34,34 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
       ]
     },
     {
-      title: "2. Configurar Productos",
-      description: "Añade los productos necesarios para Instagram",
+      title: "2. Configurar Instagram API con Instagram Login",
+      description: "Añade el producto de Instagram API",
       details: [
-        "Añadir 'Instagram Basic Display' (para cuentas personales)",
-        "Añadir 'Instagram Graph API' (para cuentas business)",
-        "Añadir 'Webhooks' para notificaciones en tiempo real"
+        "En el panel de tu app, ve a 'Añadir productos'",
+        "Busca y añade 'Instagram API with Instagram Login'",
+        "Este producto permite conectar cuentas Business y Creator directamente",
+        "No necesitas vincular una página de Facebook"
       ]
     },
     {
-      title: "3. Configurar Instagram Basic Display",
-      description: "Configura el acceso básico a Instagram",
+      title: "3. Configurar OAuth de Instagram",
+      description: "Configura los ajustes de autorización",
       details: [
-        "Ve a Instagram Basic Display > Basic Display",
-        "Añade la Redirect URI:",
+        "Ve a Instagram API with Instagram Login > Settings",
+        "Añade la Redirect URI (Valid OAuth Redirect URIs):",
         redirectUri,
         "Guarda los cambios"
       ]
     },
     {
-      title: "4. Configurar Webhooks",
+      title: "4. Configurar Webhooks (Opcional)",
       description: "Configura las notificaciones automáticas",
       details: [
         "Ve a Webhooks en el menú lateral",
         "Crea un nuevo webhook con esta URL:",
         webhookUrl,
         "Usa un Verify Token personalizado (lo necesitarás después)",
-        "Selecciona los campos: feed, messages"
+        "Selecciona los campos: mentions, comments, story_insights"
       ]
     },
     {
@@ -68,9 +69,9 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
       description: "Copia las credenciales de tu app",
       details: [
         "Ve a Configuración > Básica",
-        "Copia el 'ID de la app'",
+        "Copia el 'ID de la app' (Instagram App ID)",
         "Copia el 'Secreto de la app' (haz clic en 'Mostrar')",
-        "También necesitarás el Verify Token que usaste en el paso 4"
+        "También necesitarás el Verify Token si configuraste webhooks"
       ]
     }
   ];
@@ -80,10 +81,8 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-            Guía: Configurar Meta Developers App
+            <Instagram className="h-5 w-5 text-pink-600" />
+            Guía: Configurar Instagram API con Instagram Login
           </DialogTitle>
         </DialogHeader>
 

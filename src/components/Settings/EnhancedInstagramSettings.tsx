@@ -22,21 +22,14 @@ import { useInstagramSync } from "@/hooks/useInstagramSync";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 
-interface PageDiagnostic {
-  id: string;
-  name: string;
-  instagram_business_account: {
-    id: string;
-    username?: string;
-    followers_count?: number;
-  } | null;
-}
-
 interface DiagnosticResult {
-  total_pages: number;
-  pages_with_instagram: number;
-  pages_without_instagram: number;
-  pages: PageDiagnostic[];
+  instagram_account: {
+    id: string;
+    username: string;
+    account_type: string;
+  };
+  token_updated_at: string;
+  message: string;
 }
 
 export function EnhancedInstagramSettings() {
@@ -61,11 +54,7 @@ export function EnhancedInstagramSettings() {
       
       if (data?.success && data?.data) {
         setDiagnosticResult(data.data);
-        if (data.data.pages_with_instagram === 0) {
-          toast.warning('No se encontraron cuentas de Instagram vinculadas');
-        } else {
-          toast.success(`Se encontraron ${data.data.pages_with_instagram} cuenta(s) de Instagram`);
-        }
+        toast.success(`Cuenta conectada: @${data.data.instagram_account?.username || 'desconocido'}`);
       } else {
         toast.error(data?.error_description || 'Error desconocido');
       }
@@ -328,7 +317,7 @@ export function EnhancedInstagramSettings() {
                 {showDiagnostics && (
                   <div className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Diagnóstico de Páginas</h4>
+                      <h4 className="font-medium">Diagnóstico de Instagram</h4>
                       <Button
                         onClick={runAccountDiagnostic}
                         disabled={isDiagnosing}
@@ -341,54 +330,54 @@ export function EnhancedInstagramSettings() {
 
                     {diagnosticResult && (
                       <div className="space-y-3">
-                        <div className="grid grid-cols-3 gap-3 text-sm">
-                          <div className="p-3 bg-muted rounded-lg text-center">
-                            <p className="text-2xl font-bold">{diagnosticResult.total_pages}</p>
-                            <p className="text-muted-foreground">Páginas encontradas</p>
-                          </div>
-                          <div className="p-3 bg-green-50 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-green-600">{diagnosticResult.pages_with_instagram}</p>
-                            <p className="text-green-700">Con Instagram</p>
-                          </div>
-                          <div className="p-3 bg-yellow-50 rounded-lg text-center">
-                            <p className="text-2xl font-bold text-yellow-600">{diagnosticResult.pages_without_instagram}</p>
-                            <p className="text-yellow-700">Sin Instagram</p>
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-green-100 rounded-full">
+                                <Instagram className="h-5 w-5 text-green-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-green-800">
+                                  @{diagnosticResult.instagram_account?.username || 'Usuario no disponible'}
+                                </p>
+                                <p className="text-sm text-green-600">
+                                  {diagnosticResult.instagram_account?.account_type || 'Cuenta de Instagram'}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="default" className="bg-green-600">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Conectada
+                            </Badge>
                           </div>
                         </div>
 
-                        {diagnosticResult.pages.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Detalle:</p>
-                            {diagnosticResult.pages.map((page) => (
-                              <div key={page.id} className="text-sm bg-muted/50 p-3 rounded-lg flex items-center justify-between">
-                                <div>
-                                  <p className="font-medium">{page.name}</p>
-                                  <p className="text-muted-foreground text-xs">ID: {page.id}</p>
-                                </div>
-                                {page.instagram_business_account ? (
-                                  <div className="text-right">
-                                    <Badge variant="default" className="bg-green-600">
-                                      @{page.instagram_business_account.username || page.instagram_business_account.id}
-                                    </Badge>
-                                    {page.instagram_business_account.followers_count && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {page.instagram_business_account.followers_count.toLocaleString()} seguidores
-                                      </p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <Badge variant="secondary">Sin Instagram</Badge>
-                                )}
-                              </div>
-                            ))}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="p-3 bg-muted rounded-lg">
+                            <p className="text-muted-foreground mb-1">ID de cuenta</p>
+                            <p className="font-mono text-xs">{diagnosticResult.instagram_account?.id || 'N/A'}</p>
                           </div>
+                          <div className="p-3 bg-muted rounded-lg">
+                            <p className="text-muted-foreground mb-1">Token actualizado</p>
+                            <p className="text-xs">
+                              {diagnosticResult.token_updated_at 
+                                ? new Date(diagnosticResult.token_updated_at).toLocaleString('es-ES')
+                                : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {diagnosticResult.message && (
+                          <p className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                            {diagnosticResult.message}
+                          </p>
                         )}
                       </div>
                     )}
 
                     {!diagnosticResult && (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        Haz clic en "Ejecutar diagnóstico" para ver las páginas de Facebook disponibles
+                        Haz clic en "Ejecutar diagnóstico" para verificar el estado de tu conexión de Instagram
                       </p>
                     )}
                   </div>
