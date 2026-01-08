@@ -630,17 +630,13 @@ async function exchangeCodeForToken(code: string) {
   }
 
   // Step 2: short-lived -> long-lived token
-  const longRes = await fetch(INSTAGRAM_TOKEN_EXCHANGE, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'ig_exchange_token',
-      client_secret: appSecret!,
-      access_token: shortData.access_token
-    })
-  });
+  const longUrl =
+    `${INSTAGRAM_TOKEN_EXCHANGE}` +
+    `?grant_type=ig_exchange_token` +
+    `&client_secret=${encodeURIComponent(appSecret!)}` +
+    `&access_token=${encodeURIComponent(shortData.access_token)}`;
+
+  const longRes = await fetch(longUrl);
   const longData = await longRes.json();
 
   if (!longRes.ok || longData.error) {
