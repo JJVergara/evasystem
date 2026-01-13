@@ -244,12 +244,14 @@ export interface OrganizationInstagramData {
 }
 
 /**
- * Fiesta (event) data structure
+ * Fiesta (event/party) data structure
  */
 export interface Fiesta {
   id: string;
   organization_id?: string;
-  name?: string;
+  name: string;
+  event_date?: string;
+  status?: string;
   created_at?: string;
 }
 
@@ -290,9 +292,21 @@ export interface MessageData {
     referer_uri?: string;
   };
   timestamp?: number;
+  quick_reply?: {
+    payload: string;
+  };
   [key: string]: unknown;
 }
 
+/**
+ * Instagram Quick Reply button for messaging
+ * See: https://developers.facebook.com/docs/messenger-platform/send-messages/quick-replies
+ */
+export interface QuickReply {
+  content_type: 'text';
+  title: string;
+  payload: string;
+}
 
 export interface SyncResult {
   organization_id: string;

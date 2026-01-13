@@ -335,7 +335,7 @@ export async function sendInstagramMessage(
   const url = buildInstagramApiUrl('me/messages', {
     access_token: accessToken
   });
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -346,7 +346,7 @@ export async function sendInstagramMessage(
       message: { text: messageText }
     })
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new InstagramApiError(
@@ -355,7 +355,68 @@ export async function sendInstagramMessage(
       error
     );
   }
-  
+
+  return await response.json();
+}
+
+/**
+ * Instagram Quick Reply button for messaging
+ */
+interface QuickReply {
+  content_type: 'text';
+  title: string;
+  payload: string;
+}
+
+/**
+ * Send Instagram direct message with quick reply buttons
+ * See: https://developers.facebook.com/docs/messenger-platform/send-messages/quick-replies
+ *
+ * @param recipientId - Instagram user ID to send to
+ * @param messageText - The message text
+ * @param quickReplies - Array of quick reply options (max 13 per Instagram limits)
+ * @param accessToken - Instagram access token
+ */
+export async function sendInstagramMessageWithQuickReplies(
+  recipientId: string,
+  messageText: string,
+  quickReplies: QuickReply[],
+  accessToken: string
+) {
+  const url = buildInstagramApiUrl('me/messages', {
+    access_token: accessToken
+  });
+
+  // Instagram limits quick replies to 13 buttons, titles to 20 chars
+  const limitedReplies = quickReplies.slice(0, 13).map(reply => ({
+    content_type: reply.content_type,
+    title: reply.title.substring(0, 20),
+    payload: reply.payload
+  }));
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      recipient: { id: recipientId },
+      message: {
+        text: messageText,
+        quick_replies: limitedReplies
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new InstagramApiError(
+      `Failed to send message with quick replies: ${error.error?.message || 'Unknown error'}`,
+      response.status,
+      error
+    );
+  }
+
   return await response.json();
 }
 
