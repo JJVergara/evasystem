@@ -1,7 +1,10 @@
-import { corsHeaders } from '../shared/constants.ts';
+import { corsHeaders, TOKEN_REFRESH_THRESHOLD_DAYS } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
+
+// Warning threshold - show warning in UI when token expires within this many days
+const TOKEN_WARNING_THRESHOLD_DAYS = 14;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -99,7 +102,22 @@ Deno.serve(async (req) => {
     console.log('Token status for org', organizationId, ':', hasToken ? 'found' : 'not found');
 
     const isConnected = !!hasToken;
-    const isTokenExpired = hasToken && tokenData.token_expiry ? new Date(tokenData.token_expiry) < new Date() : false;
+    const now = new Date();
+    const tokenExpiryDate = hasToken && tokenData.token_expiry ? new Date(tokenData.token_expiry) : null;
+    const isTokenExpired = tokenExpiryDate ? tokenExpiryDate < now : false;
+
+    // Calculate days until expiry
+    let daysUntilExpiry: number | null = null;
+    if (tokenExpiryDate && !isTokenExpired) {
+      const msUntilExpiry = tokenExpiryDate.getTime() - now.getTime();
+      daysUntilExpiry = Math.ceil(msUntilExpiry / (1000 * 60 * 60 * 24));
+    }
+
+    // Check if token needs refresh (within 7 days of expiry)
+    const needsRefresh = daysUntilExpiry !== null && daysUntilExpiry <= TOKEN_REFRESH_THRESHOLD_DAYS;
+
+    // Check if we should show warning in UI (within 14 days of expiry)
+    const showWarning = daysUntilExpiry !== null && daysUntilExpiry <= TOKEN_WARNING_THRESHOLD_DAYS;
 
     return new Response(
       JSON.stringify({
@@ -109,7 +127,10 @@ Deno.serve(async (req) => {
           isTokenExpired,
           lastSync: orgData.last_instagram_sync,
           username: orgData.instagram_username,
-          tokenExpiryDate: hasToken ? tokenData.token_expiry : null
+          tokenExpiryDate: hasToken ? tokenData.token_expiry : null,
+          daysUntilExpiry,
+          needsRefresh,
+          showWarning
         }
       }),
       {

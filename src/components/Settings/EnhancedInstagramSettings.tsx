@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Instagram, 
-  AlertCircle, 
-  CheckCircle, 
-  RefreshCw, 
+import {
+  Instagram,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
   Eye,
   AlertTriangle,
   Info,
@@ -13,7 +13,8 @@ import {
   Shield,
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calendar
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { useInstagramConnection } from "@/hooks/useInstagramConnection";
 import { useInstagramSync } from "@/hooks/useInstagramSync";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
+import { TokenExpiryWarning } from "@/components/Instagram/TokenExpiryWarning";
 
 interface DiagnosticResult {
   instagram_account: {
@@ -34,7 +36,22 @@ interface DiagnosticResult {
 
 export function EnhancedInstagramSettings() {
   const { organization, loading: orgLoading, refreshOrganization } = useCurrentOrganization();
-  const { isConnected, isTokenExpired, isConnecting, connectInstagram, disconnectInstagram, refreshTokenStatus } = useInstagramConnection();
+  const {
+    isConnected,
+    isTokenExpired,
+    isConnecting,
+    connectInstagram,
+    disconnectInstagram,
+    refreshTokenStatus,
+    // Token expiry fields
+    tokenExpiryDate,
+    daysUntilExpiry,
+    needsRefresh,
+    showWarning,
+    // Token refresh functionality
+    refreshToken: refreshInstagramToken,
+    isRefreshingToken
+  } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
   
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -237,6 +254,17 @@ export function EnhancedInstagramSettings() {
         </CardContent>
       </Card>
 
+      {/* Token Expiry Warning */}
+      {isConnected && !isTokenExpired && (
+        <TokenExpiryWarning
+          daysUntilExpiry={daysUntilExpiry}
+          showWarning={showWarning}
+          needsRefresh={needsRefresh}
+          isRefreshingToken={isRefreshingToken}
+          onRefresh={() => refreshInstagramToken()}
+        />
+      )}
+
       {/* Account Details Card - Only when connected */}
       {isConnected && (
         <Card>
@@ -258,11 +286,11 @@ export function EnhancedInstagramSettings() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Usuario</p>
                 <p className="font-medium">
-                  {instagramUsername ? `@${instagramUsername}` : 
+                  {instagramUsername ? `@${instagramUsername}` :
                     <span className="text-yellow-600">No detectado</span>}
                 </p>
               </div>
@@ -273,12 +301,58 @@ export function EnhancedInstagramSettings() {
                 </Badge>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Expira en
+                </p>
+                <p className={`font-medium ${
+                  daysUntilExpiry !== null && daysUntilExpiry !== undefined
+                    ? daysUntilExpiry <= 7
+                      ? 'text-red-600'
+                      : daysUntilExpiry <= 14
+                        ? 'text-yellow-600'
+                        : 'text-green-600'
+                    : ''
+                }`}>
+                  {daysUntilExpiry !== null && daysUntilExpiry !== undefined
+                    ? `${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'día' : 'días'}`
+                    : isTokenExpired
+                      ? 'Expirado'
+                      : 'Calculando...'}
+                </p>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Cuenta Business</p>
                 <p className={`font-medium ${businessAccountId ? 'text-green-600' : 'text-yellow-600'}`}>
                   {businessAccountId ? '✓ Conectada' : 'No vinculada'}
                 </p>
               </div>
             </div>
+
+            {/* Token Expiry Details */}
+            {tokenExpiryDate && !isTokenExpired && (
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Fecha de expiración: </span>
+                  <span className="font-medium">
+                    {new Date(tokenExpiryDate).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </div>
+                <Button
+                  onClick={() => refreshInstagramToken()}
+                  disabled={isRefreshingToken}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingToken ? 'animate-spin' : ''}`} />
+                  {isRefreshingToken ? 'Renovando...' : 'Renovar (+60 días)'}
+                </Button>
+              </div>
+            )}
 
             {/* Warning and diagnostic option if data seems incomplete */}
             {!businessAccountId && (

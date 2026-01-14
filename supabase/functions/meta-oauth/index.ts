@@ -638,9 +638,15 @@ async function handleTokenRefresh(req, supabaseClient) {
     const { organization_id, ambassador_id } = await req.json();
     // --- ORGANIZATION TOKEN REFRESH ---
     if (organization_id) {
-      // Verify logged-in user belongs to this organization
-      const { data: userData, error: userError } = await supabaseClient.from('users').select('organization_id').eq('auth_user_id', user.id).single();
-      if (userError || !userData || userData.organization_id !== organization_id) {
+      // Verify logged-in user belongs to this organization using organization_members
+      const { data: membership, error: memberError } = await supabaseClient
+        .from('organization_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('organization_id', organization_id)
+        .eq('status', 'active')
+        .single();
+      if (memberError || !membership) {
         throw new Error('Unauthorized to refresh this organization token');
       }
       // Get current token
@@ -680,9 +686,15 @@ async function handleTokenRefresh(req, supabaseClient) {
       if (ambassadorError || !ambassadorData) {
         throw new Error('Ambassador not found');
       }
-      // Verify logged-in user belongs to same org
-      const { data: userData, error: userError } = await supabaseClient.from('users').select('organization_id').eq('auth_user_id', user.id).single();
-      if (userError || !userData || userData.organization_id !== ambassadorData.organization_id) {
+      // Verify logged-in user belongs to same org using organization_members
+      const { data: membership, error: memberError } = await supabaseClient
+        .from('organization_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('organization_id', ambassadorData.organization_id)
+        .eq('status', 'active')
+        .single();
+      if (memberError || !membership) {
         throw new Error('Unauthorized to refresh this ambassador token');
       }
       // Get current token

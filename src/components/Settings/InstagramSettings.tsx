@@ -3,18 +3,35 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Instagram, AlertCircle, CheckCircle, RefreshCw, Settings, BookOpen, Activity, Play, Copy, ExternalLink, Info } from "lucide-react";
+import { Instagram, AlertCircle, CheckCircle, RefreshCw, Settings, BookOpen, Activity, Play, Copy, ExternalLink, Info, Calendar } from "lucide-react";
 import { useInstagramConnection } from "@/hooks/useInstagramConnection";
 import { useInstagramSync } from "@/hooks/useInstagramSync";
 import { useInstagramDiagnostics } from "@/hooks/useInstagramDiagnostics";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { MetaAppCredentialsForm } from "./MetaAppCredentialsForm";
 import { InstagramConfigGuide } from "./InstagramConfigGuide";
+import { TokenExpiryWarning } from "@/components/Instagram/TokenExpiryWarning";
 import { toast } from "sonner";
 
 export function InstagramSettings() {
   const { organization } = useCurrentOrganization();
-  const { isConnected, isTokenExpired, isConnecting, connectInstagram, disconnectInstagram, refreshTokenStatus } = useInstagramConnection();
+  const {
+    isConnected,
+    isTokenExpired,
+    isConnecting,
+    connectInstagram,
+    disconnectInstagram,
+    refreshTokenStatus,
+    // Token expiry fields
+    tokenExpiryDate,
+    daysUntilExpiry,
+    needsRefresh,
+    showWarning,
+    username,
+    // Token refresh functionality
+    refreshToken: refreshInstagramToken,
+    isRefreshingToken
+  } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
   const { isRunning, connectionTests, webhookStatus, runConnectionTests, testWebhookDelivery } = useInstagramDiagnostics();
   
@@ -254,6 +271,17 @@ export function InstagramSettings() {
         </CardContent>
       </Card>
 
+      {/* Token Expiry Warning */}
+      {isConnected && !isTokenExpired && (
+        <TokenExpiryWarning
+          daysUntilExpiry={daysUntilExpiry}
+          showWarning={showWarning}
+          needsRefresh={needsRefresh}
+          isRefreshingToken={isRefreshingToken}
+          onRefresh={() => refreshInstagramToken()}
+        />
+      )}
+
       {/* Instagram Diagnostics Panel */}
       {isConnected && (
         <Card>
@@ -351,24 +379,56 @@ export function InstagramSettings() {
       {isConnected && (
         <Card>
           <CardHeader>
-            <CardTitle>Información de la Cuenta</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Información de la Cuenta
+            </CardTitle>
             <CardDescription>
               Detalles de la cuenta de Instagram conectada
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Estado del Token:</span>
-                <span className="text-sm">
-                  {isTokenExpired ? 'Expirado' : 'Válido'}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Usuario:</span>
+                <span className="text-sm font-mono">
+                  @{username || organization?.instagram_username || 'N/A'}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Usuario:</span>
-                <span className="text-sm">
-                  {organization?.instagram_username || 'N/A'}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Estado del Token:</span>
+                <Badge variant={isTokenExpired ? "destructive" : "default"}>
+                  {isTokenExpired ? 'Expirado' : 'Válido'}
+                </Badge>
+              </div>
+              {tokenExpiryDate && !isTokenExpired && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Expira:</span>
+                  <span className="text-sm">
+                    {new Date(tokenExpiryDate).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                    {daysUntilExpiry !== null && daysUntilExpiry !== undefined && (
+                      <span className="text-muted-foreground ml-1">
+                        ({daysUntilExpiry} {daysUntilExpiry === 1 ? 'día' : 'días'})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              <div className="pt-2 border-t">
+                <Button
+                  onClick={() => refreshInstagramToken()}
+                  disabled={isRefreshingToken || isTokenExpired}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingToken ? 'animate-spin' : ''}`} />
+                  {isRefreshingToken ? 'Renovando...' : 'Renovar Token (+60 días)'}
+                </Button>
               </div>
             </div>
           </CardContent>

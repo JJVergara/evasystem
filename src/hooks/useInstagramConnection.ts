@@ -15,6 +15,9 @@ export function useInstagramConnection() {
   const previousOrgIdRef = useRef<string | undefined>(undefined);
   const isMountedRef = useRef(true);
 
+  // State for token refresh operation
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+
   // Token status now comes from secure edge function
   const [tokenStatus, setTokenStatus] = useState<{
     isConnected: boolean;
@@ -22,6 +25,9 @@ export function useInstagramConnection() {
     lastSync?: string;
     username?: string;
     tokenExpiryDate?: string;
+    daysUntilExpiry?: number | null;
+    needsRefresh?: boolean;
+    showWarning?: boolean;
   }>({
     isConnected: false,
     isTokenExpired: false
@@ -229,7 +235,7 @@ export function useInstagramConnection() {
     try {
       setIsConnecting(true);
       console.log('Disconnecting Instagram...');
-      
+
       const { data, error } = await supabase.functions.invoke('disconnect-instagram');
 
       if (error) {
@@ -239,7 +245,7 @@ export function useInstagramConnection() {
         });
         return;
       }
-      
+
       if (!data?.success) {
         toast.error('Error al desconectar', {
           description: data?.error || 'No se pudo completar la desconexión'
@@ -261,6 +267,64 @@ export function useInstagramConnection() {
     }
   };
 
+  /**
+   * Manually refresh the Instagram access token
+   * This extends the token validity for another 60 days
+   */
+  const refreshToken = async () => {
+    if (!organization) {
+      toast.error('No se encontró organización');
+      return false;
+    }
+
+    if (!tokenStatus.isConnected) {
+      toast.error('Instagram no está conectado');
+      return false;
+    }
+
+    try {
+      setIsRefreshingToken(true);
+      console.log('Refreshing Instagram token for organization:', organization.id);
+
+      const { data, error } = await supabase.functions.invoke('meta-oauth?action=refresh', {
+        body: {
+          organization_id: organization.id
+        }
+      });
+
+      if (error) {
+        console.error('Token refresh error:', error);
+        toast.error('Error al renovar token', {
+          description: error.message || 'No se pudo renovar el token de Instagram'
+        });
+        return false;
+      }
+
+      if (!data?.success) {
+        console.error('Token refresh failed:', data);
+        toast.error('Error al renovar token', {
+          description: data?.error || 'No se pudo renovar el token de Instagram'
+        });
+        return false;
+      }
+
+      // Refresh token status to get new expiry date
+      await refreshTokenStatus();
+      toast.success('Token renovado exitosamente', {
+        description: 'Tu conexión con Instagram se ha extendido por 60 días más'
+      });
+      return true;
+    } catch (error) {
+      console.error('Unexpected error refreshing token:', error);
+      toast.error('Error inesperado', {
+        description: 'No se pudo renovar el token de Instagram'
+      });
+      return false;
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  };
+
   return {
     isConnected,
     isTokenExpired,
@@ -268,6 +332,15 @@ export function useInstagramConnection() {
     connectInstagram,
     disconnectInstagram,
     lastSync: tokenStatus.lastSync,
-    refreshTokenStatus: refreshTokenStatus
+    refreshTokenStatus,
+    // New token expiry fields
+    tokenExpiryDate: tokenStatus.tokenExpiryDate,
+    daysUntilExpiry: tokenStatus.daysUntilExpiry,
+    needsRefresh: tokenStatus.needsRefresh,
+    showWarning: tokenStatus.showWarning,
+    username: tokenStatus.username,
+    // Token refresh functionality
+    refreshToken,
+    isRefreshingToken
   };
 }

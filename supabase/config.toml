@@ -39,3 +39,6 @@ verify_jwt = true
 
 [functions.resolve-story-mentions]
 verify_jwt = true
+
+[functions.refresh-instagram-tokens]
+verify_jwt = false

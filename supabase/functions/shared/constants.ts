@@ -70,3 +70,8 @@ export const STORY_EXPIRATION_MS = 24 * 60 * 60 * 1000;
  * Default token expiry (60 days in milliseconds) when Meta doesn't provide it
  */
 export const DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000;
+
+/**
+ * Token refresh threshold - refresh tokens this many days before expiry
+ */
+export const TOKEN_REFRESH_THRESHOLD_DAYS = 7;
