@@ -199,6 +199,7 @@ evasystem/
 - **Story Sync**: Automated collection of stories with mention/tag detection
 - **Insights Collection**: Story metrics (reach, impressions, replies, shares)
 - **Webhooks**: Real-time notifications from Instagram
+- **Auto Token Refresh**: Automatic refresh of tokens 7 days before expiry (see Token Lifecycle below)
 
 ### 4. Events & Fiestas
 - Event creation and lifecycle management
@@ -252,9 +253,10 @@ evasystem/
 ### OAuth & Connection
 | Function | Purpose |
 |----------|---------|
-| `meta-oauth` | Handle OAuth authorization and token exchange |
-| `instagram-token-status` | Check token validity and expiration |
+| `meta-oauth` | Handle OAuth authorization, token exchange, and manual refresh |
+| `instagram-token-status` | Check token validity, expiration, and days remaining |
 | `disconnect-instagram` | Revoke Instagram connections |
+| `refresh-instagram-tokens` | Automated cron job to refresh expiring tokens |
 
 ### Data Synchronization
 | Function | Purpose |
@@ -348,6 +350,91 @@ corsHeaders: Record<string, string>
 - Row Level Security (RLS) policies on all tables
 - Organization-scoped data access
 - User permissions checked at query level
+
+---
+
+## Instagram Token Lifecycle
+
+### Token Types
+Instagram uses a two-token system:
+1. **Short-lived token** (1 hour): Obtained during OAuth callback
+2. **Long-lived token** (60 days): Exchanged from short-lived token
+
+### Token Flow
+```
+User clicks "Connect Instagram"
+         ↓
+OAuth redirect to Instagram
+         ↓
+User grants permissions
+         ↓
+Callback with authorization code
+         ↓
+Exchange code → Short-lived token (1 hour)
+         ↓
+Exchange short-lived → Long-lived token (60 days)
+         ↓
+Encrypt and store in database
+         ↓
+[Day 53] Auto-refresh cron detects token expiring within 7 days
+         ↓
+Refresh API call → New 60-day token
+         ↓
+(Cycle repeats indefinitely)
+```
+
+### Auto-Refresh System
+The `refresh-instagram-tokens` edge function runs daily at 3 AM UTC via pg_cron:
+- Queries tokens expiring within 7 days
+- Calls Instagram's refresh endpoint: `GET https://graph.instagram.com/refresh_access_token`
+- Re-encrypts and updates the token
+- Creates notifications only on failures
+
+### Key Constants (`/supabase/functions/shared/constants.ts`)
+```typescript
+TOKEN_REFRESH_THRESHOLD_DAYS = 7    // Refresh tokens this many days before expiry
+DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000  // 60 days in milliseconds
+```
+
+### Frontend Token Status
+The `useInstagramConnection` hook provides:
+- `daysUntilExpiry`: Days until token expires
+- `needsRefresh`: True if within 7 days of expiry
+- `showWarning`: True if within 14 days of expiry
+- `refreshToken()`: Manual refresh function
+
+### UI Components
+- `TokenExpiryWarning`: Warning banner (yellow 7-14 days, red <7 days)
+- Settings page shows expiry date and "Renovar (+60 días)" button
+
+---
+
+## Scheduled Jobs (pg_cron)
+
+The following cron jobs are configured in the database:
+
+| Job Name | Schedule | Function | Purpose |
+|----------|----------|----------|---------|
+| `instagram_sync_every_5_min` | `*/5 * * * *` | `instagram-sync` | Sync Instagram data |
+| `verify-story-mentions` | `0 * * * *` | `story-mentions-state-worker` | Hourly verification |
+| `story-mentions-expiry-worker` | `*/10 * * * *` | `story-mentions-state-worker` | Check story expiration |
+| `collect-story-insights-every-2h` | `0 */2 * * *` | `collect-story-insights` | Gather story metrics |
+| `daily-instagram-token-refresh` | `0 3 * * *` | `refresh-instagram-tokens` | Auto-refresh tokens |
+
+### Managing Cron Jobs
+```sql
+-- View all cron jobs
+SELECT * FROM cron.job;
+
+-- View job execution history
+SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
+
+-- Create a new cron job
+SELECT cron.schedule('job-name', '0 * * * *', $$ SELECT ... $$);
+
+-- Delete a cron job
+SELECT cron.unschedule('job-name');
+```
 
 ---
 
@@ -504,3 +591,147 @@ Common scopes in this project:
 2. Write SQL in migration file
 3. Apply: `supabase db push`
 4. Regenerate types: `supabase gen types typescript --local > src/integrations/supabase/types.ts`
+
+---
+
+## Architecture Decisions
+
+### ADR-001: Organization Membership via `organization_members` Table
+**Decision**: Use `organization_members` table for all membership checks, not `users.organization_id`.
+
+**Context**: The app supports multi-tenant organizations where users can belong to multiple organizations.
+
+**Consequence**: All Edge Functions must check membership via:
+```typescript
+const { data: membership } = await supabase
+  .from('organization_members')
+  .select('id')
+  .eq('user_id', user.id)
+  .eq('organization_id', organizationId)
+  .eq('status', 'active')
+  .single();
+```
+
+### ADR-002: Token Storage Separation
+**Decision**: Store Instagram tokens in separate tables (`organization_instagram_tokens`, `ambassador_tokens`) with RLS, not in the main entity tables.
+
+**Context**: Tokens are sensitive and should never be exposed to the frontend.
+
+**Consequence**:
+- Token tables have RLS enabled with NO client policies
+- Only Edge Functions with `service_role` can access tokens
+- Main tables (`organizations`, `embassadors`) store only public profile info
+
+### ADR-003: Token Encryption at Rest
+**Decision**: All Instagram tokens are encrypted using AES-GCM before database storage.
+
+**Context**: Defense in depth - even if database is compromised, tokens are protected.
+
+**Implementation**: `/supabase/functions/shared/crypto.ts`
+```typescript
+encryptToken(token: string): Promise<string>   // Store this
+safeDecryptToken(encrypted: string): Promise<string>  // Use when calling Instagram API
+```
+
+### ADR-004: Cron Jobs via pg_cron
+**Decision**: Use PostgreSQL's pg_cron extension for scheduled tasks, not external schedulers.
+
+**Context**: Keeps all infrastructure within Supabase, reduces external dependencies.
+
+**Consequence**: Jobs are managed via SQL and call Edge Functions via `pg_net.http_post()`.
+
+### ADR-005: Frontend State Management
+**Decision**: Use React Query for server state, React useState for UI state.
+
+**Context**: React Query provides caching, deduplication, and background refetching.
+
+**Pattern**:
+```typescript
+// Server state (data from API)
+const { data, isLoading } = useQuery({ queryKey: ['key'], queryFn: fetchData });
+
+// UI state (local only)
+const [isOpen, setIsOpen] = useState(false);
+```
+
+### ADR-006: Edge Function Authentication
+**Decision**: JWT verification configured per-function in `config.toml`.
+
+**Context**: Some functions need auth (user actions), others don't (webhooks, cron).
+
+**Configuration**:
+```toml
+[functions.meta-oauth]
+verify_jwt = true  # Requires user authentication
+
+[functions.instagram-webhook]
+verify_jwt = false  # Called by Instagram, uses verify_token instead
+
+[functions.refresh-instagram-tokens]
+verify_jwt = false  # Called by cron, uses CRON_SECRET
+```
+
+---
+
+## Design Principles
+
+### 1. Security First
+- Never expose tokens to frontend
+- Always validate organization membership
+- Use encrypted storage for sensitive data
+- Verify all external requests (webhooks, cron)
+
+### 2. Fail Gracefully
+- Create notifications on failures instead of silent errors
+- Provide manual fallbacks for automated processes
+- Log errors with context for debugging
+
+### 3. User Visibility
+- Show token expiry dates and days remaining
+- Display sync status and last update times
+- Provide diagnostic tools in Settings
+
+### 4. Idempotent Operations
+- Upsert instead of insert for token updates
+- Cron jobs should be safe to run multiple times
+- Use unique constraints to prevent duplicates
+
+### 5. Separation of Concerns
+- Edge Functions handle external API calls
+- Frontend handles UI and user interactions
+- Database handles data integrity (RLS, constraints)
+
+---
+
+## Troubleshooting Guide
+
+### Token Refresh Failures
+1. Check `cron.job_run_details` for job execution status
+2. View Edge Function logs in Supabase Dashboard
+3. Verify `CRON_SECRET` matches in secrets and cron job
+4. Check token hasn't already expired (can't refresh expired tokens)
+
+### OAuth Connection Issues
+1. Run diagnostic: `meta-oauth?action=diagnose`
+2. Verify Instagram App credentials in Supabase secrets
+3. Check redirect URI matches in Meta Developer Console
+4. Ensure user has Business/Creator Instagram account
+
+### Missing Token Data
+```sql
+-- Check token status for all organizations
+SELECT
+  o.name,
+  o.instagram_username,
+  t.token_expiry,
+  ROUND(EXTRACT(EPOCH FROM (t.token_expiry - NOW())) / 86400) as days_left
+FROM organization_instagram_tokens t
+JOIN organizations o ON o.id = t.organization_id
+ORDER BY days_left ASC;
+```
+
+### Webhook Not Receiving Events
+1. Verify webhook URL in Meta Developer Console
+2. Check `WEBHOOK_VERIFY_TOKEN` matches
+3. Test with: `instagram-webhook` function logs
+4. Ensure Instagram account is subscribed to webhooks
