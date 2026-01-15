@@ -21,22 +21,21 @@ import { ModernLogo } from "@/components/Logo/ModernLogo";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { OrganizationSwitcher } from "@/components/Organizations/OrganizationSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTranslation } from "react-i18next";
 
 const navigation = [
-  { name: "dashboard", href: "/", icon: LayoutDashboard },
-  { name: "stories", href: "/stories", icon: Instagram },
-  { name: "mentions", href: "/mentions", icon: Hash },
-  { name: "storyMentions", href: "/story-mentions", icon: MessageCircle },
-  { name: "analytics", href: "/analytics", icon: BarChart3 },
-  { name: "events", href: "/events", icon: Calendar },
-  { name: "ambassadors", href: "/ambassadors", icon: Users },
+  { name: "dashboard", label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "stories", label: "Historias", href: "/stories", icon: Instagram },
+  { name: "mentions", label: "Menciones", href: "/mentions", icon: Hash },
+  { name: "storyMentions", label: "Menciones Historias", href: "/story-mentions", icon: MessageCircle },
+  { name: "analytics", label: "Analíticas", href: "/analytics", icon: BarChart3 },
+  { name: "events", label: "Fiestas", href: "/events", icon: Calendar },
+  { name: "ambassadors", label: "Embajadores", href: "/ambassadors", icon: Users },
 ];
 
 const secondaryNavigation = [
-  { name: "settings", href: "/settings", icon: Settings },
-  { name: "importExport", href: "/import-export", icon: Download },
-  { name: "diagnostics", href: "/instagram-diagnostics", icon: Activity },
+  { name: "settings", label: "Configuración", href: "/settings", icon: Settings },
+  { name: "importExport", label: "Import/Export", href: "/import-export", icon: Download },
+  { name: "diagnostics", label: "Diagnósticos", href: "/instagram-diagnostics", icon: Activity },
 ];
 
 interface SidebarProps {
@@ -45,7 +44,6 @@ interface SidebarProps {
 
 function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapsed?: boolean; onNavigate?: () => void; showHeader?: boolean }) {
   const location = useLocation();
-  const { t } = useTranslation('common');
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -83,7 +81,7 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
                 )}
               >
                 <Icon className={cn("flex-shrink-0", collapsed ? "w-5 h-5" : "mr-3 w-5 h-5")} />
-                {!collapsed && <span>{t(item.name)}</span>}
+                {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
@@ -113,7 +111,7 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
                 )}
               >
                 <Icon className={cn("flex-shrink-0", collapsed ? "w-5 h-5" : "mr-3 w-5 h-5")} />
-                {!collapsed && <span>{t(item.name)}</span>}
+                {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}

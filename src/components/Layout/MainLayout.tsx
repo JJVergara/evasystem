@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { FiestaSelector } from "@/components/Fiestas/FiestaSelector";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { AppBackground } from "./AppBackground";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -45,7 +44,6 @@ export function MainLayout({ children }: MainLayoutProps) {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <NotificationDropdown />
-                <LanguageSwitcher />
               </div>
             </div>
           </div>
