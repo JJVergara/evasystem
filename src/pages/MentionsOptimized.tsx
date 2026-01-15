@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { MainLayout } from "@/components/Layout/MainLayout";
+import { useState } from "react";
 import { PageHeader } from "@/components/Layout/PageHeader";
 import { GlassPanel } from "@/components/Layout/GlassPanel";
 import { Button } from "@/components/ui/button";
@@ -44,9 +43,9 @@ export default function MentionsOptimized() {
 
   if (loading) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
         />
         <GlassPanel>
@@ -60,15 +59,15 @@ export default function MentionsOptimized() {
             </div>
           </div>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   if (!organization) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
         />
         <GlassPanel className="flex items-center justify-center min-h-64">
@@ -79,15 +78,15 @@ export default function MentionsOptimized() {
             </p>
           </div>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
         />
         <GlassPanel className="text-center py-12">
@@ -96,12 +95,12 @@ export default function MentionsOptimized() {
             Reintentar
           </Button>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <PageHeader 
         title="Menciones" 
         description={`Monitorea las menciones y hashtags de ${organization?.name}`}
@@ -305,6 +304,6 @@ export default function MentionsOptimized() {
           </div>
         </GlassPanel>
       </div>
-    </MainLayout>
+    </>
   );
 }

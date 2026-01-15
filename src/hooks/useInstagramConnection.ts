@@ -1,106 +1,80 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
 
+interface TokenStatus {
+  isConnected: boolean;
+  isTokenExpired: boolean;
+  lastSync?: string;
+  username?: string;
+  tokenExpiryDate?: string;
+  daysUntilExpiry?: number | null;
+  needsRefresh?: boolean;
+  showWarning?: boolean;
+}
+
+async function fetchTokenStatus(): Promise<TokenStatus> {
+  const { data, error } = await supabase.functions.invoke('instagram-token-status');
+
+  if (error) {
+    console.error('Network error invoking token status:', error);
+    throw error;
+  }
+
+  if (data?.success) {
+    return data.data;
+  } else {
+    console.log('Token status check reported error:', data);
+    return {
+      isConnected: false,
+      isTokenExpired: false
+    };
+  }
+}
+
 export function useInstagramConnection() {
   const { user } = useAuth();
   const { organization, loading, updateOrganization, refreshOrganization } = useCurrentOrganization();
   const [isConnecting, setIsConnecting] = useState(false);
-
-  // Refs to prevent infinite loops
-  const isRefreshingRef = useRef(false);
-  const previousOrgIdRef = useRef<string | undefined>(undefined);
-  const isMountedRef = useRef(true);
-
-  // State for token refresh operation
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Token status now comes from secure edge function
-  const [tokenStatus, setTokenStatus] = useState<{
-    isConnected: boolean;
-    isTokenExpired: boolean;
-    lastSync?: string;
-    username?: string;
-    tokenExpiryDate?: string;
-    daysUntilExpiry?: number | null;
-    needsRefresh?: boolean;
-    showWarning?: boolean;
-  }>({
-    isConnected: false,
-    isTokenExpired: false
+  // Stable query key
+  const queryKey = useMemo(
+    () => ['instagramTokenStatus', organization?.id],
+    [organization?.id]
+  );
+
+  // Use React Query for token status
+  const {
+    data: tokenStatus = { isConnected: false, isTokenExpired: false },
+    isLoading: isLoadingTokenStatus,
+    isFetching,
+    refetch
+  } = useQuery({
+    queryKey,
+    queryFn: fetchTokenStatus,
+    enabled: !!user && !!organization,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    placeholderData: keepPreviousData,
+    retry: 1,
   });
 
-  const refreshTokenStatus = async () => {
-    // Prevent concurrent calls
-    if (isRefreshingRef.current) {
-      console.log('Token status refresh already in progress, skipping...');
-      return;
-    }
-
-    try {
-      isRefreshingRef.current = true;
-      const { data, error } = await supabase.functions.invoke('instagram-token-status');
-      
-      // Handle network/invocation errors (not HTTP errors, since we return 200 always)
-      if (error) {
-        console.error('Network error invoking token status:', error);
-        toast.error('Error de conexión', {
-          description: 'No se pudo conectar con el servidor'
-        });
-        return;
-      }
-      
-      // Handle response data - should always have success field now
-      if (data?.success) {
-        // Only update state if component is still mounted
-        if (isMountedRef.current) {
-          setTokenStatus(data.data);
-          console.log('Token status updated:', data.data);
-        }
-      } else {
-        // This is a server-reported error (but still HTTP 200)
-        console.log('Token status check reported error:', data);
-        // Don't show toast for server errors - they're usually permission-related
-        // Just set disconnected state
-        if (isMountedRef.current) {
-          setTokenStatus({
-            isConnected: false,
-            isTokenExpired: false
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Unexpected error refreshing token status:', error);
-      toast.error('Error de conexión', {
-        description: 'No se pudo conectar con el servidor'
-      });
-    } finally {
-      isRefreshingRef.current = false;
-    }
-  };
-
-  // Fetch token status securely
+  // Handle OAuth callback params
   useEffect(() => {
-    // Guard: Only refresh if user and organization exist
-    if (!user || !organization) {
-      return;
-    }
+    if (!user || !organization) return;
 
-    // Guard: Don't refresh if already in progress
-    if (isRefreshingRef.current) {
-      return;
-    }
-
-    // Check for OAuth callback params FIRST (before org change check)
     const urlParams = new URLSearchParams(window.location.search);
     const hasOAuthParams = urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
-    
+
     if (hasOAuthParams) {
       console.log('OAuth callback detected, refreshing token status...');
-      
+
       // Clean up URL parameters
       try {
         const cleanUrl = window.location.pathname + '?tab=instagram';
@@ -114,34 +88,21 @@ export function useInstagramConnection() {
       } catch (error) {
         console.warn('Could not clean URL parameters:', error);
       }
-      
-      // Refresh token status immediately and again after a delay
-      refreshTokenStatus();
+
+      // Invalidate the query to refetch
+      queryClient.invalidateQueries({ queryKey: ['instagramTokenStatus'] });
+
+      // Refresh again after a delay to ensure token is processed
       setTimeout(() => {
         console.log('Refreshing token status again after OAuth callback...');
-        refreshTokenStatus();
+        queryClient.invalidateQueries({ queryKey: ['instagramTokenStatus'] });
       }, 2000);
-      
-      return;
     }
+  }, [user?.id, organization?.id, queryClient]);
 
-    // Guard: Only refresh if organization ID actually changed (for non-OAuth cases)
-    if (previousOrgIdRef.current === organization.id) {
-      return;
-    }
-
-    console.log('Organization changed, refreshing token status...', organization.id);
-    previousOrgIdRef.current = organization.id;
-    refreshTokenStatus();
-  }, [user?.id, organization?.id]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const refreshTokenStatus = async () => {
+    await refetch();
+  };
 
   const isConnected = tokenStatus.isConnected;
   const isTokenExpired = tokenStatus.isTokenExpired;
@@ -156,7 +117,6 @@ export function useInstagramConnection() {
       toast.info('Preparando organización...');
       try {
         await refreshOrganization();
-        // Give some time for state to update
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         toast.error('No se pudo preparar tu organización. Reintenta.');
@@ -164,7 +124,6 @@ export function useInstagramConnection() {
       }
     }
 
-    // Re-check organization after potential refresh
     if (!organization) {
       toast.error('No se encontró organización');
       return;
@@ -173,26 +132,22 @@ export function useInstagramConnection() {
     try {
       setIsConnecting(true);
 
-      // Try to connect - the meta-oauth function will handle credential validation
       console.log('Attempting Instagram connection for organization:', organization.id);
-      
-      // Call the meta-oauth edge function with action as query parameter
+
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=authorize', {
         body: {
           user_id: user?.id,
           organization_id: organization.id,
           type: 'organization'
-          // redirect_base removed - always using production URL for Meta OAuth
         }
       });
 
       if (error) {
         console.error('Error initiating Instagram connection:', error);
-        
-        // Mensajes de error más específicos
+
         let errorMessage = 'Error al conectar con Instagram';
         let errorDescription = undefined;
-        
+
         if (error.message?.includes('configuration_error')) {
           errorMessage = 'Configuración de Meta App incorrecta';
           errorDescription = 'Verifica App ID, App Secret y configuración de OAuth';
@@ -206,7 +161,7 @@ export function useInstagramConnection() {
             onCredentialsNeeded();
           }
         }
-        
+
         toast.error(errorMessage, {
           description: errorDescription
         });
@@ -214,7 +169,6 @@ export function useInstagramConnection() {
       }
 
       if (data?.authUrl) {
-        // Redirect to Meta OAuth
         window.location.href = data.authUrl;
       } else {
         toast.error('No se pudo obtener URL de autorización', {
@@ -253,8 +207,8 @@ export function useInstagramConnection() {
         return;
       }
 
-      // Refresh token status and organization data
-      await refreshTokenStatus();
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['instagramTokenStatus'] });
       await refreshOrganization();
       toast.success('Instagram desconectado exitosamente');
     } catch (error) {
@@ -267,10 +221,6 @@ export function useInstagramConnection() {
     }
   };
 
-  /**
-   * Manually refresh the Instagram access token
-   * This extends the token validity for another 60 days
-   */
   const refreshToken = async () => {
     if (!organization) {
       toast.error('No se encontró organización');
@@ -308,8 +258,8 @@ export function useInstagramConnection() {
         return false;
       }
 
-      // Refresh token status to get new expiry date
-      await refreshTokenStatus();
+      // Invalidate query to get new expiry date
+      queryClient.invalidateQueries({ queryKey: ['instagramTokenStatus'] });
       toast.success('Token renovado exitosamente', {
         description: 'Tu conexión con Instagram se ha extendido por 60 días más'
       });
@@ -329,17 +279,16 @@ export function useInstagramConnection() {
     isConnected,
     isTokenExpired,
     isConnecting: isConnecting || loading,
+    isLoadingTokenStatus: (isLoadingTokenStatus && !tokenStatus.isConnected) || loading,
     connectInstagram,
     disconnectInstagram,
     lastSync: tokenStatus.lastSync,
     refreshTokenStatus,
-    // New token expiry fields
     tokenExpiryDate: tokenStatus.tokenExpiryDate,
     daysUntilExpiry: tokenStatus.daysUntilExpiry,
     needsRefresh: tokenStatus.needsRefresh,
     showWarning: tokenStatus.showWarning,
     username: tokenStatus.username,
-    // Token refresh functionality
     refreshToken,
     isRefreshingToken
   };

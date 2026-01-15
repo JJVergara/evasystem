@@ -1,4 +1,3 @@
-import { MainLayout } from "@/components/Layout/MainLayout";
 import N8nIntegration from "@/components/N8n/N8nIntegration";
 import { SystemHealthDashboard } from "@/components/System/SystemHealthDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,8 +6,7 @@ import { Settings, Webhook, Database, Shield, Activity } from "lucide-react";
 
 export default function SystemConfig() {
   return (
-    <MainLayout>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <div className="flex items-center gap-3">
           <Settings className="w-8 h-8 text-primary" />
           <div>
@@ -141,7 +139,6 @@ export default function SystemConfig() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

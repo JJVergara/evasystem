@@ -1,7 +1,5 @@
 import { useEffect } from "react";
-import { MainLayout } from "@/components/Layout/MainLayout";
 import AmbassadorManagement from "@/components/Ambassadors/AmbassadorManagement";
-import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
 import { toast } from "sonner";
 
 const Ambassadors = () => {
@@ -15,7 +13,7 @@ const Ambassadors = () => {
       toast.success('Instagram conectado exitosamente', {
         description: 'La cuenta de Instagram del embajador ha sido vinculada correctamente'
       });
-      
+
       // Clean up URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
@@ -24,7 +22,7 @@ const Ambassadors = () => {
       toast.error('Error al conectar Instagram', {
         description: decodeURIComponent(error)
       });
-      
+
       // Clean up URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
@@ -33,13 +31,7 @@ const Ambassadors = () => {
     }
   }, []);
 
-  return (
-    <ProtectedRoute>
-      <MainLayout>
-        <AmbassadorManagement />
-      </MainLayout>
-    </ProtectedRoute>
-  );
+  return <AmbassadorManagement />;
 };
 
 export default Ambassadors;

@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   PartyPopper,
   Users,
   Trophy,
@@ -21,19 +22,54 @@ import { FiestaMetricsCard } from "./FiestaMetricsCard";
 import { MetricCard } from "./MetricCard";
 
 export default function EnhancedDashboardContent() {
-  const { profile } = useUserProfile();
+  const { profile, loading: profileLoading } = useUserProfile();
   const { fiestas, loading: fiestasLoading } = useFiestas();
 
   const handleExportReport = () => {
     console.log('Exportar reporte general');
   };
 
-  if (fiestasLoading) {
+  // Show loading skeleton while data is being fetched
+  if (fiestasLoading || profileLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Cargando dashboard...</p>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-8 w-48" />
+              </div>
+              <Skeleton className="h-5 w-64 mt-2" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+          </div>
+        </div>
+
+        {/* Fiestas section skeleton */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-6 rounded" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-8 w-1/2" />
+                    <div className="grid grid-cols-3 gap-2">
+                      <Skeleton className="h-12 rounded" />
+                      <Skeleton className="h-12 rounded" />
+                      <Skeleton className="h-12 rounded" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );

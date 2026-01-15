@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,15 +68,29 @@ export function UserProfileDropdown() {
     }
   };
 
-  if (loading || !user || !userData) {
+  // Show skeleton while loading
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 p-2">
+        <Skeleton className="w-8 h-8 rounded-full" />
+        <div className="flex flex-col gap-1">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if no user data
+  if (!user || !userData) {
     return null;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="flex items-center gap-2 p-2 h-auto hover:bg-accent rounded-lg"
         >
           <Avatar className="w-8 h-8">

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { toast } from "sonner";
@@ -73,139 +74,148 @@ const defaultSettings: OrganizationSettings = {
   }
 };
 
+interface SettingsRow {
+  general_settings: Record<string, unknown> | null;
+  instagram_settings: Record<string, unknown> | null;
+  notification_settings: Record<string, unknown> | null;
+  permission_settings: Record<string, unknown> | null;
+  appearance_settings: Record<string, unknown> | null;
+  integration_settings: Record<string, unknown> | null;
+}
+
+async function fetchOrganizationSettingsData(organizationId: string): Promise<OrganizationSettings> {
+  const { data, error } = await supabase
+    .from('organization_settings')
+    .select('id, organization_id, general_settings, appearance_settings, notification_settings, instagram_settings, integration_settings, permission_settings, created_at, updated_at')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (data) {
+    const generalSettings = (data.general_settings as Record<string, unknown>) || {};
+    const instagramSettings = (data.instagram_settings as Record<string, unknown>) || {};
+    const notificationSettings = (data.notification_settings as Record<string, unknown>) || {};
+    const permissionSettings = (data.permission_settings as Record<string, unknown>) || {};
+    const appearanceSettings = (data.appearance_settings as Record<string, unknown>) || {};
+    const integrationSettings = (data.integration_settings as Record<string, unknown>) || {};
+
+    return {
+      general_settings: { ...defaultSettings.general_settings, ...generalSettings } as OrganizationSettings['general_settings'],
+      instagram_settings: { ...defaultSettings.instagram_settings, ...instagramSettings } as OrganizationSettings['instagram_settings'],
+      notification_settings: { ...defaultSettings.notification_settings, ...notificationSettings } as OrganizationSettings['notification_settings'],
+      permission_settings: { ...defaultSettings.permission_settings, ...permissionSettings } as OrganizationSettings['permission_settings'],
+      appearance_settings: { ...defaultSettings.appearance_settings, ...appearanceSettings } as OrganizationSettings['appearance_settings'],
+      integration_settings: { ...defaultSettings.integration_settings, ...integrationSettings } as OrganizationSettings['integration_settings']
+    };
+  }
+
+  // Create default settings if none exist
+  const { error: insertError } = await supabase
+    .from('organization_settings')
+    .insert({
+      organization_id: organizationId,
+      general_settings: defaultSettings.general_settings,
+      instagram_settings: defaultSettings.instagram_settings,
+      notification_settings: defaultSettings.notification_settings,
+      permission_settings: defaultSettings.permission_settings,
+      appearance_settings: defaultSettings.appearance_settings,
+      integration_settings: defaultSettings.integration_settings
+    });
+
+  if (insertError) {
+    console.error('Error creating default settings:', insertError);
+  }
+
+  return defaultSettings;
+}
+
 export function useOrganizationSettings() {
-  const { organization } = useCurrentOrganization();
-  const [settings, setSettings] = useState<OrganizationSettings>(defaultSettings);
-  const [loading, setLoading] = useState(true);
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (organization?.id) {
-      loadSettings();
-    }
-  }, [organization?.id]);
+  const queryKey = ['organizationSettings', organization?.id];
 
-  const loadSettings = async () => {
-    if (!organization?.id) return;
+  const { data: settings, isLoading: settingsLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchOrganizationSettingsData(organization!.id),
+    enabled: !!organization?.id,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes cache
+  });
 
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('organization_settings')
-        .select('id, organization_id, general_settings, appearance_settings, notification_settings, instagram_settings, integration_settings, permission_settings, created_at, updated_at')
-        .eq('organization_id', organization.id)
-        .maybeSingle();
+  const updateSettingsMutation = useMutation({
+    mutationFn: async ({ section, newSettings }: { section: keyof OrganizationSettings; newSettings: Record<string, unknown> }) => {
+      const currentSettings = settings || defaultSettings;
+      const updatedSectionSettings = { ...currentSettings[section], ...newSettings };
 
-      if (error) throw error;
-
-      if (data) {
-        const generalSettings = data.general_settings as any || {};
-        const instagramSettings = data.instagram_settings as any || {};
-        const notificationSettings = data.notification_settings as any || {};
-        const permissionSettings = data.permission_settings as any || {};
-        const appearanceSettings = data.appearance_settings as any || {};
-        const integrationSettings = data.integration_settings as any || {};
-        
-        const mergedSettings: OrganizationSettings = {
-          general_settings: { ...defaultSettings.general_settings, ...generalSettings },
-          instagram_settings: { ...defaultSettings.instagram_settings, ...instagramSettings },
-          notification_settings: { ...defaultSettings.notification_settings, ...notificationSettings },
-          permission_settings: { ...defaultSettings.permission_settings, ...permissionSettings },
-          appearance_settings: { ...defaultSettings.appearance_settings, ...appearanceSettings },
-          integration_settings: { ...defaultSettings.integration_settings, ...integrationSettings }
-        };
-        setSettings(mergedSettings);
-      } else {
-        // Create default settings if none exist
-        await createDefaultSettings();
-      }
-    } catch (error) {
-      console.error('Error loading organization settings:', error);
-      toast.error('Error al cargar configuraciones');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createDefaultSettings = async () => {
-    if (!organization?.id) return;
-
-    try {
       const { error } = await supabase
         .from('organization_settings')
-        .insert({
-          organization_id: organization.id,
-          general_settings: defaultSettings.general_settings,
-          instagram_settings: defaultSettings.instagram_settings,
-          notification_settings: defaultSettings.notification_settings,
-          permission_settings: defaultSettings.permission_settings,
-          appearance_settings: defaultSettings.appearance_settings,
-          integration_settings: defaultSettings.integration_settings
-        });
+        .update({ [section]: updatedSectionSettings })
+        .eq('organization_id', organization!.id);
 
       if (error) throw error;
-      
-      setSettings(defaultSettings);
-    } catch (error) {
-      console.error('Error creating default settings:', error);
-    }
-  };
-
-  const updateSettings = async (section: keyof OrganizationSettings, newSettings: any) => {
-    if (!organization?.id) return;
-
-    try {
+      return { section, updatedSectionSettings };
+    },
+    onMutate: () => {
       setSaving(true);
-
-      const updatedSettings = {
-        ...settings,
-        [section]: { ...settings[section], ...newSettings }
-      };
-
-      const { error } = await supabase
-        .from('organization_settings')
-        .update({ [section]: updatedSettings[section] })
-        .eq('organization_id', organization.id);
-
-      if (error) throw error;
-
-      setSettings(updatedSettings);
-      toast.success('Configuración guardada exitosamente');
-    } catch (error) {
-      console.error('Error updating settings:', error);
-      toast.error('Error al guardar configuración');
-    } finally {
+    },
+    onSuccess: ({ section, updatedSectionSettings }) => {
+      // Optimistically update the cache
+      queryClient.setQueryData<OrganizationSettings>(queryKey, (old) => {
+        if (!old) return defaultSettings;
+        return {
+          ...old,
+          [section]: updatedSectionSettings
+        };
+      });
+      toast.success('Configuracion guardada exitosamente');
+    },
+    onError: () => {
+      toast.error('Error al guardar configuracion');
+    },
+    onSettled: () => {
       setSaving(false);
     }
-  };
+  });
 
-  const updateGeneralSettings = (newSettings: Partial<OrganizationSettings['general_settings']>) => {
-    return updateSettings('general_settings', newSettings);
-  };
+  const updateSettings = useCallback(async (section: keyof OrganizationSettings, newSettings: Record<string, unknown>) => {
+    return updateSettingsMutation.mutateAsync({ section, newSettings });
+  }, [updateSettingsMutation]);
 
-  const updateInstagramSettings = (newSettings: Partial<OrganizationSettings['instagram_settings']>) => {
-    return updateSettings('instagram_settings', newSettings);
-  };
+  const updateGeneralSettings = useCallback((newSettings: Partial<OrganizationSettings['general_settings']>) => {
+    return updateSettings('general_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
 
-  const updateNotificationSettings = (newSettings: Partial<OrganizationSettings['notification_settings']>) => {
-    return updateSettings('notification_settings', newSettings);
-  };
+  const updateInstagramSettings = useCallback((newSettings: Partial<OrganizationSettings['instagram_settings']>) => {
+    return updateSettings('instagram_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
 
-  const updatePermissionSettings = (newSettings: Partial<OrganizationSettings['permission_settings']>) => {
-    return updateSettings('permission_settings', newSettings);
-  };
+  const updateNotificationSettings = useCallback((newSettings: Partial<OrganizationSettings['notification_settings']>) => {
+    return updateSettings('notification_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
 
-  const updateAppearanceSettings = (newSettings: Partial<OrganizationSettings['appearance_settings']>) => {
-    return updateSettings('appearance_settings', newSettings);
-  };
+  const updatePermissionSettings = useCallback((newSettings: Partial<OrganizationSettings['permission_settings']>) => {
+    return updateSettings('permission_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
 
-  const updateIntegrationSettings = (newSettings: Partial<OrganizationSettings['integration_settings']>) => {
-    return updateSettings('integration_settings', newSettings);
-  };
+  const updateAppearanceSettings = useCallback((newSettings: Partial<OrganizationSettings['appearance_settings']>) => {
+    return updateSettings('appearance_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
+
+  const updateIntegrationSettings = useCallback((newSettings: Partial<OrganizationSettings['integration_settings']>) => {
+    return updateSettings('integration_settings', newSettings as Record<string, unknown>);
+  }, [updateSettings]);
+
+  const refreshSettings = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
+
+  const loading = orgLoading || (!!organization?.id && settingsLoading);
 
   return {
-    settings,
+    settings: settings || defaultSettings,
     loading,
     saving,
     updateGeneralSettings,
@@ -214,6 +224,6 @@ export function useOrganizationSettings() {
     updatePermissionSettings,
     updateAppearanceSettings,
     updateIntegrationSettings,
-    refreshSettings: loadSettings
+    refreshSettings
   };
 }

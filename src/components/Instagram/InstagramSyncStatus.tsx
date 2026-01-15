@@ -3,15 +3,17 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Zap, RefreshCw, CheckCircle, AlertTriangle } from "lucide-react";
 import { useInstagramSync } from "@/hooks/useInstagramSync";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { supabase } from "@/integrations/supabase/client";
 
 export function InstagramSyncStatus() {
-  const { organization } = useCurrentOrganization();
+  const { organization, loading: orgLoading } = useCurrentOrganization();
   const { isSyncing, syncInstagramData } = useInstagramSync();
   const [lastSync, setLastSync] = useState<string>('');
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [syncStats, setSyncStats] = useState({
     todayMentions: 0,
     todayTags: 0,
@@ -37,7 +39,7 @@ export function InstagramSyncStatus() {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -67,6 +69,8 @@ export function InstagramSyncStatus() {
       });
     } catch (error) {
       console.error('Error loading sync stats:', error);
+    } finally {
+      setIsLoadingStats(false);
     }
   };
 
@@ -101,6 +105,26 @@ export function InstagramSyncStatus() {
     if (diffMinutes <= 60) return 'default';
     return 'warning';
   };
+
+  // Show loading skeleton while data is being fetched
+  if (orgLoading || isLoadingStats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-6 w-16 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -159,7 +183,7 @@ export function InstagramSyncStatus() {
           <RefreshCw className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={handleManualSync}
             disabled={isSyncing}
             size="sm"

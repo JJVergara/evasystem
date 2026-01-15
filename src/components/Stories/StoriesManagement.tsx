@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,103 +11,20 @@ import { TaskFilters } from "./TaskFilters";
 import { TaskStatsCards } from "./TaskStatsCards";
 import { useFiestas } from "@/hooks/useFiestas";
 import { useTasksManagement } from "@/hooks/useTasksManagement";
+import { useStoriesData } from "@/hooks/useStoriesData";
 import { FiestaSelector } from "@/components/Fiestas/FiestaSelector";
 import { CreateTaskModal } from "./CreateTaskModal";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Layout/PageHeader";
 import { GlassPanel } from "@/components/Layout/GlassPanel";
 
-interface Event {
-  id: string;
-  name: string;
-  main_hashtag: string;
-}
-
-interface Ambassador {
-  id: string;
-  first_name: string;
-  last_name: string;
-  instagram_user: string;
-  global_category: string;
-}
-
 export default function StoriesManagement() {
   const { selectedFiesta, selectedFiestaId } = useFiestas();
-  const [ambassadors, setAmbassadors] = useState<Ambassador[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const { ambassadors, events, loading } = useStoriesData();
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (selectedFiestaId) {
-      fetchAmbassadors();
-      fetchEvents();
-    }
-  }, [selectedFiestaId]);
-
-  const fetchAmbassadors = async () => {
-    if (!selectedFiestaId) return;
-
-    try {
-      setLoading(true);
-      // Get organization from fiesta first
-      const { data: fiestaData, error: fiestaError } = await supabase
-        .from('fiestas')
-        .select('organization_id')
-        .eq('id', selectedFiestaId)
-        .single();
-
-      if (fiestaError) throw fiestaError;
-
-      const { data, error } = await supabase
-        .from('embassadors')
-        .select('id, first_name, last_name, instagram_user, global_category')
-        .eq('organization_id', fiestaData.organization_id)
-        .order('first_name', { ascending: true });
-
-      if (error) throw error;
-      setAmbassadors(data || []);
-    } catch (error) {
-      console.error('Error fetching ambassadors:', error);
-      toast.error('Error al cargar embajadores');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchEvents = async () => {
-    if (!selectedFiestaId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('id')
-        .eq('fiesta_id', selectedFiestaId);
-
-      if (error) throw error;
-      
-      // Since events no longer have name, we'll use fiesta data
-      const { data: fiestaData, error: fiestaError } = await supabase
-        .from('fiestas')
-        .select('name, main_hashtag')
-        .eq('id', selectedFiestaId)
-        .single();
-
-      if (fiestaError) throw fiestaError;
-
-      setEvents(data?.map(e => ({
-        id: e.id,
-        name: fiestaData.name,
-        main_hashtag: fiestaData.main_hashtag || ''
-      })) || []);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  };
 
   const {
     tasks,

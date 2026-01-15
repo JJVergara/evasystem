@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { StoryMentionDetails } from "@/components/StoryMentions/StoryMentionDeta
 import { useStoryMentions } from "@/hooks/useStoryMentions";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useToast } from "@/hooks/use-toast";
-import { MainLayout } from "@/components/Layout/MainLayout";
 import { StoryMention } from "@/types/storyMentions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -104,24 +102,21 @@ export default function StoryMentions() {
 
   if (!organization) {
     return (
-      <MainLayout>
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Selecciona una organización para ver las menciones de historias</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-muted-foreground">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Selecciona una organización para ver las menciones de historias</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -232,7 +227,6 @@ export default function StoryMentions() {
           }}
           onCreateLead={handleCreateLead}
         />
-      </div>
-    </MainLayout>
+    </div>
   );
 }

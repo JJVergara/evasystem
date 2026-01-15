@@ -1,99 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAmbassadorRanking } from "@/hooks/useAmbassadorRanking";
 import { toast } from "sonner";
-import { Trophy, RefreshCw, TrendingUp, Eye, MessageSquare, Award, Target } from "lucide-react";
-
-interface AmbassadorRankingData {
-  id: string;
-  first_name: string;
-  last_name: string;
-  instagram_user: string | null;
-  rank: number;
-  global_points: number;
-  global_category: string;
-  events_participated: number;
-  completed_tasks: number;
-  failed_tasks: number;
-  completion_rate: number;
-  total_tasks: number;
-}
+import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from "lucide-react";
 
 export function AmbassadorRanking() {
-  const { organization } = useCurrentOrganization();
-  const [ranking, setRanking] = useState<AmbassadorRankingData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { ranking, loading, refreshRanking } = useAmbassadorRanking();
   const [refreshing, setRefreshing] = useState(false);
-
-  const fetchRanking = useCallback(async () => {
-    if (!organization?.id) return;
-
-    try {
-      setLoading(true);
-
-      // Fetch ambassadors for the organization, ordered by global_points
-      const { data: ambassadors, error: ambassadorsError } = await supabase
-        .from('embassadors')
-        .select('id, first_name, last_name, instagram_user, global_points, global_category, events_participated, completed_tasks, failed_tasks')
-        .eq('organization_id', organization.id)
-        .eq('status', 'active')
-        .order('global_points', { ascending: false });
-
-      if (ambassadorsError) {
-        throw ambassadorsError;
-      }
-
-      if (!ambassadors || ambassadors.length === 0) {
-        setRanking([]);
-        return;
-      }
-
-      // Process and rank ambassadors
-      const rankedAmbassadors: AmbassadorRankingData[] = ambassadors.map((ambassador, index) => {
-        const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
-        const completionRate = totalTasks > 0
-          ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100)
-          : 0;
-
-        return {
-          id: ambassador.id,
-          first_name: ambassador.first_name,
-          last_name: ambassador.last_name,
-          instagram_user: ambassador.instagram_user,
-          rank: index + 1,
-          global_points: ambassador.global_points || 0,
-          global_category: ambassador.global_category || 'bronze',
-          events_participated: ambassador.events_participated || 0,
-          completed_tasks: ambassador.completed_tasks || 0,
-          failed_tasks: ambassador.failed_tasks || 0,
-          completion_rate: completionRate,
-          total_tasks: totalTasks
-        };
-      });
-
-      setRanking(rankedAmbassadors);
-
-    } catch (error) {
-      console.error('Error fetching ambassador ranking:', error);
-      toast.error('Error al cargar el ranking de embajadores');
-    } finally {
-      setLoading(false);
-    }
-  }, [organization?.id]);
-
-  useEffect(() => {
-    if (organization?.id) {
-      fetchRanking();
-    }
-  }, [organization?.id, fetchRanking]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchRanking();
+    await refreshRanking();
     setRefreshing(false);
     toast.success('Ranking actualizado');
   };
@@ -152,8 +73,22 @@ export function AmbassadorRanking() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Cargando ranking...
+          <div className="space-y-4">
+            {/* Skeleton table rows */}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 py-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
           </div>
         ) : ranking.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,9 +62,9 @@ export function NotificationDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+          {!loading && unreadCount > 0 && (
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs flex items-center justify-center"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -76,7 +77,7 @@ export function NotificationDropdown() {
         <div className="px-3 py-2 border-b">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Notificaciones</h3>
-            {unreadCount > 0 && (
+            {!loading && unreadCount > 0 && (
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{unreadCount} nuevas</Badge>
                 <Button
@@ -95,8 +96,16 @@ export function NotificationDropdown() {
         
         <ScrollArea className="h-96">
           {loading ? (
-            <div className="p-4 text-center text-muted-foreground">
-              Cargando...
+            <div className="space-y-1 p-1">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg">
+                  <Skeleton className="h-4 w-4 mt-0.5 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">

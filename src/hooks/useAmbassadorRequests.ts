@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrganization } from "./useCurrentOrganization";
 import { useRealtimeSocialMentions } from "./useRealtimeSocialMentions";
@@ -19,63 +20,57 @@ export interface AmbassadorRequest {
   source_mention_ids: string[];
 }
 
-export function useAmbassadorRequests() {
-  const { organization } = useCurrentOrganization();
-  const [requests, setRequests] = useState<AmbassadorRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+async function fetchRequestsData(organizationId: string): Promise<AmbassadorRequest[]> {
+  const { data, error: fetchError } = await supabase
+    .from('ambassador_requests')
+    .select('id, organization_id, instagram_user_id, instagram_username, bio, follower_count, profile_picture_url, source_mention_ids, total_mentions, last_mention_at, status, processed_by_user_id, processed_at, rejection_reason, notes, created_at')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false });
 
-  useEffect(() => {
-    if (organization) {
-      fetchRequests();
-    }
-  }, [organization]);
+  if (fetchError) {
+    console.error('Error fetching ambassador requests:', fetchError);
+    throw new Error('Error al cargar solicitudes de embajadores');
+  }
+
+  return (data || []).map(req => ({
+    ...req,
+    status: req.status as 'pending' | 'approved' | 'rejected'
+  }));
+}
+
+export function useAmbassadorRequests() {
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+
+  const queryKey = ['ambassadorRequests', organization?.id];
+
+  const { data: requests = [], isLoading: requestsLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchRequestsData(organization!.id),
+    enabled: !!organization?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes cache
+  });
 
   // Setup realtime subscriptions for live updates
   useRealtimeSocialMentions({
     onNewAmbassadorRequest: () => {
       // Refresh requests when new one arrives
-      fetchRequests();
+      queryClient.invalidateQueries({ queryKey });
     }
   });
 
-  const fetchRequests = async () => {
-    if (!organization) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('ambassador_requests')
-        .select('id, organization_id, instagram_user_id, instagram_username, bio, follower_count, profile_picture_url, source_mention_ids, total_mentions, last_mention_at, status, processed_by_user_id, processed_at, rejection_reason, notes, created_at')
-        .eq('organization_id', organization.id)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) {
-        console.error('Error fetching ambassador requests:', fetchError);
-        setError('Error al cargar solicitudes de embajadores');
-        return;
-      }
-
-      setRequests((data || []).map(req => ({...req, status: req.status as 'pending' | 'approved' | 'rejected'})));
-
-    } catch (err) {
-      console.error('Error fetching ambassador requests:', err);
-      setError('Error inesperado al cargar solicitudes');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const approveRequest = async (requestId: string, ambassadorData: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    date_of_birth?: string;
-    rut?: string;
-  }) => {
-    try {
+  const approveMutation = useMutation({
+    mutationFn: async ({ requestId, ambassadorData }: {
+      requestId: string;
+      ambassadorData: {
+        first_name: string;
+        last_name: string;
+        email: string;
+        date_of_birth?: string;
+        rut?: string;
+      };
+    }) => {
       const request = requests.find(r => r.id === requestId);
       if (!request) throw new Error('Solicitud no encontrada');
 
@@ -101,7 +96,7 @@ export function useAmbassadorRequests() {
       // Update all related social mentions to link to this ambassador
       const { error: updateMentionsError } = await supabase
         .from('social_mentions')
-        .update({ 
+        .update({
           matched_ambassador_id: ambassador.id,
           processed: true,
           processed_at: new Date().toISOString()
@@ -115,7 +110,7 @@ export function useAmbassadorRequests() {
       // Update request status
       const { error: updateError } = await supabase
         .from('ambassador_requests')
-        .update({ 
+        .update({
           status: 'approved',
           processed_at: new Date().toISOString()
         })
@@ -123,22 +118,22 @@ export function useAmbassadorRequests() {
 
       if (updateError) throw updateError;
 
-      toast.success('Embajador aprobado exitosamente');
-      fetchRequests(); // Refresh data
-      
       return ambassador;
-    } catch (error) {
-      console.error('Error approving request:', error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Embajador aprobado exitosamente');
+    },
+    onError: () => {
       toast.error('Error al aprobar solicitud');
-      throw error;
     }
-  };
+  });
 
-  const rejectRequest = async (requestId: string, reason?: string) => {
-    try {
+  const rejectMutation = useMutation({
+    mutationFn: async ({ requestId, reason }: { requestId: string; reason?: string }) => {
       const { error } = await supabase
         .from('ambassador_requests')
-        .update({ 
+        .update({
           status: 'rejected',
           rejection_reason: reason,
           processed_at: new Date().toISOString()
@@ -146,26 +141,48 @@ export function useAmbassadorRequests() {
         .eq('id', requestId);
 
       if (error) throw error;
-
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
       toast.success('Solicitud rechazada');
-      fetchRequests(); // Refresh data
-    } catch (error) {
-      console.error('Error rejecting request:', error);
+    },
+    onError: () => {
       toast.error('Error al rechazar solicitud');
     }
-  };
+  });
 
-  const getPendingCount = () => {
+  const approveRequest = useCallback(async (requestId: string, ambassadorData: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    date_of_birth?: string;
+    rut?: string;
+  }) => {
+    return approveMutation.mutateAsync({ requestId, ambassadorData });
+  }, [approveMutation]);
+
+  const rejectRequest = useCallback(async (requestId: string, reason?: string) => {
+    return rejectMutation.mutateAsync({ requestId, reason });
+  }, [rejectMutation]);
+
+  const getPendingCount = useCallback(() => {
     return requests.filter(r => r.status === 'pending').length;
-  };
+  }, [requests]);
+
+  const refreshRequests = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
+
+  const loading = orgLoading || (!!organization?.id && requestsLoading);
 
   return {
     requests,
     loading,
-    error,
+    error: error ? 'Error al cargar solicitudes de embajadores' : null,
     approveRequest,
     rejectRequest,
     getPendingCount,
-    refreshRequests: fetchRequests
+    refreshRequests
   };
 }

@@ -1,14 +1,13 @@
-import { MainLayout } from "@/components/Layout/MainLayout";
 import { PageHeader } from "@/components/Layout/PageHeader";
 import { InstagramDiagnosticsPanel } from "@/components/Settings/InstagramDiagnosticsPanel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Instagram, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Instagram,
+  CheckCircle,
+  XCircle,
   AlertTriangle,
   RefreshCw,
   Activity,
@@ -17,131 +16,17 @@ import {
   Zap,
   Globe
 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
 import { useInstagramConnection } from "@/hooks/useInstagramConnection";
 import { useInstagramSync } from "@/hooks/useInstagramSync";
+import { useSystemChecks, SystemCheck } from "@/hooks/useSystemChecks";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-
-interface SystemCheck {
-  name: string;
-  status: 'success' | 'warning' | 'error';
-  description: string;
-  action?: string;
-}
 
 export default function InstagramDiagnostics() {
   const { organization } = useCurrentOrganization();
-  const { isConnected, isTokenExpired, refreshTokenStatus } = useInstagramConnection();
+  const { isConnected, refreshTokenStatus } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
-  const [systemChecks, setSystemChecks] = useState<SystemCheck[]>([]);
-  const [isRunningSystemCheck, setIsRunningSystemCheck] = useState(false);
-
-  useEffect(() => {
-    runSystemChecks();
-  }, [organization, isConnected, isTokenExpired]);
-
-  const runSystemChecks = async () => {
-    if (!organization) return;
-
-    setIsRunningSystemCheck(true);
-    const checks: SystemCheck[] = [];
-
-    try {
-      // Check 1: Organization setup
-      checks.push({
-        name: "Organización configurada",
-        status: organization ? 'success' : 'error',
-        description: organization 
-          ? `Organización: ${organization.name}` 
-          : "No se encontró organización activa"
-      });
-
-      // Check 2: Instagram connection
-      checks.push({
-        name: "Conexión de Instagram",
-        status: isConnected ? 'success' : 'error',
-        description: isConnected 
-          ? `Conectado como @${organization.instagram_username}` 
-          : "Instagram no está conectado",
-        action: !isConnected ? "Conectar Instagram" : undefined
-      });
-
-      // Check 3: Token status
-      if (isConnected) {
-        checks.push({
-          name: "Estado del token",
-          status: isTokenExpired ? 'error' : 'success',
-          description: isTokenExpired 
-            ? "Token expirado - requiere renovación" 
-            : "Token válido y activo",
-          action: isTokenExpired ? "Renovar token" : undefined
-        });
-      }
-
-      // Check 4: Database tables
-      const { data: socialMentions, error: mentionsError } = await supabase
-        .from('social_mentions')
-        .select('id, created_at')
-        .eq('organization_id', organization.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      checks.push({
-        name: "Base de datos",
-        status: mentionsError ? 'error' : 'success',
-        description: mentionsError 
-          ? `Error de base de datos: ${mentionsError.message}`
-          : socialMentions && socialMentions.length > 0
-            ? `Última actividad: ${new Date(socialMentions[0].created_at).toLocaleString('es-ES')}`
-            : "Base de datos operativa - sin actividad reciente"
-      });
-
-      // Check 5: Credentials
-      const { data: credsStatus } = await supabase
-        .rpc('get_org_meta_credentials_status', { 
-          p_organization_id: organization.id 
-        });
-
-      const hasCredentials = credsStatus && credsStatus.length > 0 && credsStatus[0].has_credentials;
-
-      checks.push({
-        name: "Credenciales de Meta App",
-        status: hasCredentials ? 'success' : 'warning',
-        description: hasCredentials 
-          ? "Credenciales configuradas correctamente" 
-          : "Credenciales no configuradas o faltantes",
-        action: !hasCredentials ? "Configurar credenciales" : undefined
-      });
-
-      // Check 6: Recent sync
-      const lastSync = organization.last_instagram_sync;
-      const syncStatus = lastSync 
-        ? new Date(Date.now() - new Date(lastSync).getTime()).getTime() < 24 * 60 * 60 * 1000
-        : false;
-
-      checks.push({
-        name: "Sincronización reciente",
-        status: syncStatus ? 'success' : 'warning',
-        description: lastSync 
-          ? `Última sincronización: ${new Date(lastSync).toLocaleString('es-ES')}` 
-          : "No se ha sincronizado nunca",
-        action: "Sincronizar ahora"
-      });
-
-    } catch (error) {
-      console.error('Error running system checks:', error);
-      checks.push({
-        name: "Error del sistema",
-        status: 'error',
-        description: `Error al ejecutar diagnósticos: ${error instanceof Error ? error.message : 'Error desconocido'}`
-      });
-    }
-
-    setSystemChecks(checks);
-    setIsRunningSystemCheck(false);
-  };
+  const { systemChecks, isLoading, isFetching, refreshSystemChecks, invalidateSystemChecks } = useSystemChecks();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -173,12 +58,12 @@ export default function InstagramDiagnostics() {
     switch (check.action) {
       case "Sincronizar ahora":
         await syncInstagramData();
-        await runSystemChecks();
+        invalidateSystemChecks();
         break;
       case "Renovar token":
         await refreshToken();
         await refreshTokenStatus();
-        await runSystemChecks();
+        invalidateSystemChecks();
         break;
       default:
         toast.info(`Acción: ${check.action}`);
@@ -186,12 +71,11 @@ export default function InstagramDiagnostics() {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <PageHeader 
-          title="Diagnósticos de Instagram" 
-          description="Herramientas avanzadas para diagnosticar y solucionar problemas de integración con Instagram"
-        />
+    <div className="space-y-6">
+      <PageHeader
+        title="Diagnósticos de Instagram"
+        description="Herramientas avanzadas para diagnosticar y solucionar problemas de integración con Instagram"
+      />
 
         {/* System Status Overview */}
         <Card>
@@ -208,16 +92,20 @@ export default function InstagramDiagnostics() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">
-                  {systemChecks.length > 0 ? `${systemChecks.filter(c => c.status === 'success').length}/${systemChecks.length} componentes funcionando` : 'Ejecutando diagnósticos...'}
+                  {isLoading
+                    ? 'Cargando diagnósticos...'
+                    : systemChecks.length > 0
+                      ? `${systemChecks.filter(c => c.status === 'success').length}/${systemChecks.length} componentes funcionando`
+                      : 'Sin diagnósticos disponibles'}
                 </span>
               </div>
-              <Button 
-                onClick={runSystemChecks}
-                disabled={isRunningSystemCheck}
+              <Button
+                onClick={refreshSystemChecks}
+                disabled={isFetching}
                 variant="outline"
                 size="sm"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isRunningSystemCheck ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Actualizar
               </Button>
             </div>
@@ -247,7 +135,7 @@ export default function InstagramDiagnostics() {
                         onClick={() => handleAction(check)}
                         size="sm"
                         variant="outline"
-                        disabled={isSyncing || isRunningSystemCheck}
+                        disabled={isSyncing || isFetching}
                       >
                         {check.action}
                       </Button>
@@ -354,7 +242,6 @@ export default function InstagramDiagnostics() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

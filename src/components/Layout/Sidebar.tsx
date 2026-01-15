@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
-  Instagram,
   Hash,
   BarChart3,
   Calendar,
@@ -15,11 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Menu,
-  Building2,
   MessageCircle,
   Activity
 } from "lucide-react";
+import { Instagram } from "lucide-react";
 import { ModernLogo } from "@/components/Logo/ModernLogo";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { OrganizationSwitcher } from "@/components/Organizations/OrganizationSwitcher";
@@ -51,23 +48,23 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
   const { t } = useTranslation('common');
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header - only show if showHeader is true */}
       {showHeader && (
-        <div className="flex h-16 items-center justify-center px-4 border-b">
+        <div className="flex h-16 items-center justify-center px-4 border-b shrink-0">
           <ModernLogo size={collapsed ? "sm" : "md"} />
         </div>
       )}
 
       {/* Organization Switcher - only show if not collapsed */}
       {!collapsed && (
-        <div className="px-4 py-3 border-b">
+        <div className="px-4 py-3 border-b shrink-0">
           <OrganizationSwitcher />
         </div>
       )}
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-4">
+      <div className="flex-1 overflow-y-auto py-4 min-h-0">
         <nav className="px-2 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -124,7 +121,7 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t space-y-3">
+      <div className="p-4 border-t space-y-3 shrink-0">
         {/* User Profile */}
         {!collapsed && <UserProfileDropdown />}
         
@@ -141,7 +138,7 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -158,37 +155,19 @@ export function Sidebar({ className }: SidebarProps) {
     localStorage.setItem('eva-sidebar-collapsed', JSON.stringify(collapsed));
   }, [collapsed]);
 
-  // Close mobile menu when route changes and prefetch routes
+  // Close mobile menu when route changes
+  const pathname = location.pathname;
   useEffect(() => {
     setMobileMenuOpen(false);
-    
-    // Prefetch critical routes on idle
-    const prefetchRoutes = () => {
-      const routes = ['/mentions', '/ambassadors', '/events', '/analytics'];
-      routes.forEach(route => {
-        if (location.pathname !== route) {
-          // Prefetch route by creating a temporary link element
-          const link = document.createElement('link');
-          link.rel = 'prefetch';
-          link.href = route;
-          document.head.appendChild(link);
-          setTimeout(() => document.head.removeChild(link), 100);
-        }
-      });
-    };
-
-    // Prefetch after a short delay to not interfere with current navigation
-    const timeout = setTimeout(prefetchRoutes, 1000);
-    return () => clearTimeout(timeout);
-  }, [location.pathname]);
+  }, [pathname]);
 
   // Keyboard shortcut and toggle event handler
   useEffect(() => {
     const handleToggle = () => {
       if (isMobile) {
-        setMobileMenuOpen(prev => !prev);
+        setMobileMenuOpen((prev: boolean) => !prev);
       } else {
-        setCollapsed(prev => {
+        setCollapsed((prev: boolean) => {
           const newValue = !prev;
           localStorage.setItem('eva-sidebar-collapsed', JSON.stringify(newValue));
           return newValue;
@@ -248,13 +227,13 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300",
+        "hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0",
         collapsed ? "w-16" : "w-64",
         className
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b">
+      <div className="flex h-16 items-center justify-between px-4 border-b shrink-0">
         <div className="flex items-center justify-center w-full">
           <ModernLogo size={collapsed ? "sm" : "md"} />
         </div>

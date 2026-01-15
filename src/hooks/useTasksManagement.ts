@@ -1,7 +1,7 @@
-
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserProfile } from "./useUserProfile";
+import { useCurrentOrganization } from "./useCurrentOrganization";
 import { toast } from "sonner";
 
 interface Task {
@@ -46,101 +46,87 @@ interface TaskStats {
   completionRate: number;
 }
 
-export function useTasksManagement() {
-  const { profile } = useUserProfile();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [stats, setStats] = useState<TaskStats>({
-    total: 0,
-    completed: 0,
-    pending: 0,
-    invalid: 0,
-    totalPoints: 0,
-    completionRate: 0
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface TasksData {
+  tasks: Task[];
+  stats: TaskStats;
+}
 
-  useEffect(() => {
-    if (profile?.organization_id) {
-      fetchTasks();
-    }
-  }, [profile?.organization_id]);
+async function fetchTasksData(organizationId: string): Promise<TasksData> {
+  const { data, error: fetchError } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      embassadors (
+        first_name,
+        last_name,
+        instagram_user,
+        organization_id
+      ),
+      events (
+        id,
+        fiesta_id,
+        fiestas (
+          name
+        )
+      )
+    `)
+    .eq('embassadors.organization_id', organizationId)
+    .order('created_at', { ascending: false });
 
-  const fetchTasks = async () => {
-    if (!profile?.organization_id) return;
+  if (fetchError) {
+    console.error('Error fetching tasks:', fetchError);
+    throw fetchError;
+  }
 
-    try {
-      setLoading(true);
-      setError(null);
+  // Type assertion to ensure proper typing
+  const tasksData = (data || []).map(task => ({
+    ...task,
+    task_type: task.task_type as 'story' | 'mention' | 'repost',
+    status: task.status as 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired',
+    completion_method: task.completion_method as '24h_validation' | 'manual'
+  }));
 
-      const { data, error: fetchError } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          embassadors (
-            first_name,
-            last_name,
-            instagram_user,
-            organization_id
-          ),
-          events (
-            id,
-            fiesta_id,
-            fiestas (
-              name
-            )
-          )
-        `)
-        .eq('embassadors.organization_id', profile.organization_id)
-        .order('created_at', { ascending: false });
+  // Calculate stats
+  const completed = tasksData.filter(t => t.status === 'completed').length;
+  const pending = tasksData.filter(t => ['pending', 'uploaded', 'in_progress'].includes(t.status)).length;
+  const invalid = tasksData.filter(t => ['invalid', 'expired'].includes(t.status)).length;
+  const totalPoints = tasksData.reduce((sum, t) => sum + t.points_earned, 0);
+  const completionRate = tasksData.length > 0 ? (completed / tasksData.length) * 100 : 0;
 
-      if (fetchError) {
-        console.error('Error fetching tasks:', fetchError);
-        setError('Error al cargar tareas');
-        return;
-      }
-
-      // Type assertion to ensure proper typing
-      const tasksData = (data || []).map(task => ({
-        ...task,
-        task_type: task.task_type as 'story' | 'mention' | 'repost',
-        status: task.status as 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired',
-        completion_method: task.completion_method as '24h_validation' | 'manual'
-      }));
-      
-      setTasks(tasksData);
-
-      // Calcular estadísticas
-      const completed = tasksData.filter(t => t.status === 'completed').length;
-      const pending = tasksData.filter(t => ['pending', 'uploaded', 'in_progress'].includes(t.status)).length;
-      const invalid = tasksData.filter(t => ['invalid', 'expired'].includes(t.status)).length;
-      const totalPoints = tasksData.reduce((sum, t) => sum + t.points_earned, 0);
-      const completionRate = tasksData.length > 0 ? (completed / tasksData.length) * 100 : 0;
-
-      setStats({
-        total: tasksData.length,
-        completed,
-        pending,
-        invalid,
-        totalPoints,
-        completionRate: Math.round(completionRate * 100) / 100
-      });
-
-    } catch (err) {
-      console.error('Error fetching tasks:', err);
-      setError('Error inesperado al cargar tareas');
-    } finally {
-      setLoading(false);
+  return {
+    tasks: tasksData,
+    stats: {
+      total: tasksData.length,
+      completed,
+      pending,
+      invalid,
+      totalPoints,
+      completionRate: Math.round(completionRate * 100) / 100
     }
   };
+}
 
-  const createTask = async (taskData: {
-    embassador_id: string;
-    event_id: string;
-    task_type: 'story' | 'mention' | 'repost';
-    expected_hashtag?: string;
-  }) => {
-    try {
+export function useTasksManagement() {
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+
+  const queryKey = ['tasks', organization?.id];
+
+  const { data, isLoading: tasksLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchTasksData(organization!.id),
+    enabled: !!organization?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes cache
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData: {
+      embassador_id: string;
+      event_id: string;
+      task_type: 'story' | 'mention' | 'repost';
+      expected_hashtag?: string;
+    }) => {
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -151,25 +137,20 @@ export function useTasksManagement() {
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating task:', error);
-        toast.error('Error al crear tarea');
-        return null;
-      }
-
-      toast.success('Tarea creada exitosamente');
-      fetchTasks(); // Refrescar lista
+      if (error) throw error;
       return data;
-
-    } catch (err) {
-      console.error('Error creating task:', err);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Tarea creada exitosamente');
+    },
+    onError: () => {
       toast.error('Error al crear tarea');
-      return null;
     }
-  };
+  });
 
-  const updateTaskStatus = async (taskId: string, status: Task['status'], points?: number) => {
-    try {
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, status, points }: { taskId: string; status: Task['status']; points?: number }) => {
       const updateData: any = {
         status,
         last_status_update: new Date().toISOString()
@@ -184,55 +165,89 @@ export function useTasksManagement() {
         .update(updateData)
         .eq('id', taskId);
 
-      if (error) {
-        console.error('Error updating task:', error);
-        toast.error('Error al actualizar tarea');
-        return false;
-      }
-
-      toast.success('Tarea actualizada correctamente');
-      fetchTasks(); // Refrescar lista
+      if (error) throw error;
       return true;
-
-    } catch (err) {
-      console.error('Error updating task:', err);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Tarea actualizada correctamente');
+    },
+    onError: () => {
       toast.error('Error al actualizar tarea');
-      return false;
     }
-  };
+  });
 
-  const deleteTask = async (taskId: string) => {
-    try {
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
 
-      if (error) {
-        console.error('Error deleting task:', error);
-        toast.error('Error al eliminar tarea');
-        return false;
-      }
-
-      toast.success('Tarea eliminada correctamente');
-      fetchTasks(); // Refrescar lista
+      if (error) throw error;
       return true;
-
-    } catch (err) {
-      console.error('Error deleting task:', err);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Tarea eliminada correctamente');
+    },
+    onError: () => {
       toast.error('Error al eliminar tarea');
+    }
+  });
+
+  const createTask = useCallback(async (taskData: {
+    embassador_id: string;
+    event_id: string;
+    task_type: 'story' | 'mention' | 'repost';
+    expected_hashtag?: string;
+  }) => {
+    try {
+      return await createTaskMutation.mutateAsync(taskData);
+    } catch {
+      return null;
+    }
+  }, [createTaskMutation]);
+
+  const updateTaskStatus = useCallback(async (taskId: string, status: Task['status'], points?: number) => {
+    try {
+      await updateTaskMutation.mutateAsync({ taskId, status, points });
+      return true;
+    } catch {
       return false;
     }
-  };
+  }, [updateTaskMutation]);
+
+  const deleteTask = useCallback(async (taskId: string) => {
+    try {
+      await deleteTaskMutation.mutateAsync(taskId);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [deleteTaskMutation]);
+
+  const refreshTasks = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
+
+  const loading = orgLoading || (!!organization?.id && tasksLoading);
 
   return {
-    tasks,
-    stats,
+    tasks: data?.tasks || [],
+    stats: data?.stats || {
+      total: 0,
+      completed: 0,
+      pending: 0,
+      invalid: 0,
+      totalPoints: 0,
+      completionRate: 0
+    },
     loading,
-    error,
+    error: error ? 'Error al cargar tareas' : null,
     createTask,
     updateTaskStatus,
     deleteTask,
-    refreshTasks: fetchTasks
+    refreshTasks
   };
 }

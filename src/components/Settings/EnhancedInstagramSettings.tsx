@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Instagram,
   AlertCircle,
@@ -40,6 +41,7 @@ export function EnhancedInstagramSettings() {
     isConnected,
     isTokenExpired,
     isConnecting,
+    isLoadingTokenStatus,
     connectInstagram,
     disconnectInstagram,
     refreshTokenStatus,
@@ -53,10 +55,49 @@ export function EnhancedInstagramSettings() {
     isRefreshingToken
   } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
-  
+
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  // Show loading skeleton while data is being fetched
+  if (isLoadingTokenStatus) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-pink-200 bg-gradient-to-br from-pink-50/30 to-purple-50/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Instagram className="h-5 w-5 text-pink-600" />
+              Conexión de Instagram
+            </CardTitle>
+            <CardDescription>
+              Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar embajadores automáticamente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-10 w-40" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200 bg-green-50/30">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Skeleton className="h-5 w-5 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const runAccountDiagnostic = async () => {
     setIsDiagnosing(true);
