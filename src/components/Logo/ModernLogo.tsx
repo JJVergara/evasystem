@@ -10,16 +10,12 @@ export const ModernLogo: React.FC<ModernLogoProps> = ({ size = 'md', className =
     sm: 'w-8 h-10',
     md: 'w-12 h-16',
     lg: 'w-20 h-24',
-    xl: 'w-32 h-40'
+    xl: 'w-32 h-40',
   };
 
   return (
     <div className={`${sizeClasses[size]} ${className} relative`}>
-      <svg
-        viewBox="0 0 100 120"
-        className="w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg viewBox="0 0 100 120" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         {/* Gradient definitions */}
         <defs>
           <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -33,14 +29,10 @@ export const ModernLogo: React.FC<ModernLogoProps> = ({ size = 'md', className =
             <stop offset="100%" stopColor="hsl(269, 100%, 55%)" />
           </linearGradient>
         </defs>
-        
+
         {/* Left triangle - darker */}
-        <path
-          d="M10 10 L10 110 L60 60 Z"
-          fill="url(#logoGradient)"
-          className="drop-shadow-lg"
-        />
-        
+        <path d="M10 10 L10 110 L60 60 Z" fill="url(#logoGradient)" className="drop-shadow-lg" />
+
         {/* Right section - lighter */}
         <path
           d="M60 60 L60 110 L90 110 L90 10 Z"

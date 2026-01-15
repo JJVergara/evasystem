@@ -1,18 +1,17 @@
-
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { User, Mail, Building2, Calendar, Save, Edit } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { User, Mail, Building2, Calendar, Save, Edit } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface UserData {
   id: string;
@@ -32,8 +31,8 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: '',
+    email: '',
   });
 
   useEffect(() => {
@@ -49,30 +48,33 @@ export default function UserProfile() {
       // First, get user data without nested organization query
       const { data: userRecord, error } = await supabase
         .from('users')
-        .select(`
+        .select(
+          `
           id,
           name,
           email,
           organization_id,
           created_at
-        `)
+        `
+        )
         .eq('auth_user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (userRecord) {
         // Fetch organization info separately if user has organization_id
         let organizationData = null;
         if (userRecord.organization_id) {
-          const { data: orgInfo } = await supabase
-            .rpc('get_organization_safe_info', { org_id: userRecord.organization_id });
+          const { data: orgInfo } = await supabase.rpc('get_organization_safe_info', {
+            org_id: userRecord.organization_id,
+          });
           organizationData = orgInfo?.[0] || null;
         }
 
         const userData = {
           ...userRecord,
-          organization: organizationData ? { name: organizationData.name } : null
+          organization: organizationData ? { name: organizationData.name } : null,
         };
 
         setUserData(userData);
@@ -105,7 +107,7 @@ export default function UserProfile() {
 
       if (error) throw error;
 
-      setUserData(prev => prev ? { ...prev, ...formData } : null);
+      setUserData((prev) => (prev ? { ...prev, ...formData } : null));
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
     } catch (error) {
@@ -157,7 +159,7 @@ export default function UserProfile() {
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
         )}
@@ -170,16 +172,18 @@ export default function UserProfile() {
               <User className="h-5 w-5" />
               Información Personal
             </CardTitle>
-            <CardDescription>
-              Gestiona tu información personal y de contacto
-            </CardDescription>
+            <CardDescription>Gestiona tu información personal y de contacto</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
               <Avatar className="w-16 h-16">
                 <AvatarImage src="" />
                 <AvatarFallback className="text-lg">
-                  {userData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {userData.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -230,16 +234,14 @@ export default function UserProfile() {
               <Building2 className="h-5 w-5" />
               Información de Organización
             </CardTitle>
-            <CardDescription>
-              Detalles de tu organización y cuenta
-            </CardDescription>
+            <CardDescription>Detalles de tu organización y cuenta</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label>Organización</Label>
               <p className="mt-1 text-sm flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                {userData.organization?.name || "Sin organización"}
+                {userData.organization?.name || 'Sin organización'}
               </p>
             </div>
 
@@ -254,9 +256,9 @@ export default function UserProfile() {
               <Label>Miembro desde</Label>
               <p className="mt-1 text-sm flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {formatDistanceToNow(new Date(userData.created_at), { 
-                  locale: es, 
-                  addSuffix: true 
+                {formatDistanceToNow(new Date(userData.created_at), {
+                  locale: es,
+                  addSuffix: true,
                 })}
               </p>
             </div>

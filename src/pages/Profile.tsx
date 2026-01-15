@@ -1,6 +1,6 @@
-import UserProfile from "@/components/Profile/UserProfile";
-import { MembersManagement } from "@/components/Organizations/MembersManagement";
-import { PageHeader } from "@/components/Layout/PageHeader";
+import UserProfile from '@/components/Profile/UserProfile';
+import { MembersManagement } from '@/components/Organizations/MembersManagement';
+import { PageHeader } from '@/components/Layout/PageHeader';
 
 const Profile = () => {
   return (

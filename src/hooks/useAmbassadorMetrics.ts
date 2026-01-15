@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AmbassadorMetrics {
   id: string;
@@ -47,19 +47,21 @@ interface AmbassadorMetrics {
 
 function getTaskTypeLabel(type: string) {
   const labels: Record<string, string> = {
-    'story': 'Historia',
-    'post': 'Publicacion',
-    'mention': 'Mencion',
-    'hashtag': 'Hashtag'
+    story: 'Historia',
+    post: 'Publicacion',
+    mention: 'Mencion',
+    hashtag: 'Hashtag',
   };
   return labels[type] || type;
 }
 
-function generateMonthlyPerformance(tasks: Array<{
-  created_at: string;
-  points_earned?: number;
-  reach_count?: number;
-}>) {
+function generateMonthlyPerformance(
+  tasks: Array<{
+    created_at: string;
+    points_earned?: number;
+    reach_count?: number;
+  }>
+) {
   const monthlyData = new Map();
   const now = new Date();
 
@@ -71,12 +73,12 @@ function generateMonthlyPerformance(tasks: Array<{
       month: date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
       points: 0,
       tasks: 0,
-      reach: 0
+      reach: 0,
     });
   }
 
   // Populate with task data
-  tasks.forEach(task => {
+  tasks.forEach((task) => {
     const taskDate = new Date(task.created_at);
     const key = taskDate.toISOString().slice(0, 7);
 
@@ -91,13 +93,15 @@ function generateMonthlyPerformance(tasks: Array<{
   return Array.from(monthlyData.values());
 }
 
-function generateRecentActivities(tasks: Array<{
-  created_at: string;
-  task_type: string;
-  points_earned?: number;
-  status: string;
-  events?: { name: string } | null;
-}>) {
+function generateRecentActivities(
+  tasks: Array<{
+    created_at: string;
+    task_type: string;
+    points_earned?: number;
+    status: string;
+    events?: { name: string } | null;
+  }>
+) {
   const activities: Array<{
     date: string;
     type: string;
@@ -107,13 +111,13 @@ function generateRecentActivities(tasks: Array<{
   }> = [];
 
   // Add task activities
-  tasks.slice(0, 10).forEach(task => {
+  tasks.slice(0, 10).forEach((task) => {
     activities.push({
       date: task.created_at,
       type: getTaskTypeLabel(task.task_type),
       description: `${getTaskTypeLabel(task.task_type)} para evento ${task.events?.name || 'N/A'}`,
       points: task.points_earned,
-      status: task.status
+      status: task.status,
     });
   });
 
@@ -127,7 +131,9 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
   // Fetch ambassador basic info and stats
   const { data: ambassador, error: ambassadorError } = await supabase
     .from('embassadors')
-    .select('id, first_name, last_name, email, instagram_user, instagram_user_id, follower_count, profile_picture_url, date_of_birth, rut, global_points, global_category, performance_status, events_participated, completed_tasks, failed_tasks, organization_id, created_by_user_id, status, profile_public, last_instagram_sync, created_at')
+    .select(
+      'id, first_name, last_name, email, instagram_user, instagram_user_id, follower_count, profile_picture_url, date_of_birth, rut, global_points, global_category, performance_status, events_participated, completed_tasks, failed_tasks, organization_id, created_by_user_id, status, profile_public, last_instagram_sync, created_at'
+    )
     .eq('id', ambassadorId)
     .single();
 
@@ -136,7 +142,8 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
   // Fetch tasks for this ambassador
   const { data: tasks } = await supabase
     .from('tasks')
-    .select(`
+    .select(
+      `
       id,
       status,
       points_earned,
@@ -145,7 +152,8 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       created_at,
       task_type,
       events (name)
-    `)
+    `
+    )
     .eq('embassador_id', ambassadorId);
 
   // Fetch story insights for this ambassador (wrapped in try-catch to not break main flow)
@@ -165,7 +173,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       console.warn('Error fetching social mentions for story insights:', mentionsError);
     } else if (socialMentions && socialMentions.length > 0) {
       // Then fetch story insights for those mentions
-      const mentionIds = socialMentions.map(m => m.id);
+      const mentionIds = socialMentions.map((m) => m.id);
 
       interface StoryInsightSnapshot {
         id: string;
@@ -177,20 +185,29 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
         snapshot_at: string;
       }
 
-      const { data: storyInsightsData, error: insightsError } = await (supabase as unknown as {
-        from: (table: string) => {
-          select: (columns: string) => {
-            in: (column: string, values: string[]) => {
-              order: (column: string, options: { ascending: boolean }) => Promise<{
-                data: StoryInsightSnapshot[] | null;
-                error: Error | null;
-              }>;
+      const { data: storyInsightsData, error: insightsError } = await (
+        supabase as unknown as {
+          from: (table: string) => {
+            select: (columns: string) => {
+              in: (
+                column: string,
+                values: string[]
+              ) => {
+                order: (
+                  column: string,
+                  options: { ascending: boolean }
+                ) => Promise<{
+                  data: StoryInsightSnapshot[] | null;
+                  error: Error | null;
+                }>;
+              };
             };
           };
-        };
-      })
+        }
+      )
         .from('story_insights_snapshots')
-        .select(`
+        .select(
+          `
           id,
           social_mention_id,
           reach,
@@ -198,7 +215,8 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
           replies,
           shares,
           snapshot_at
-        `)
+        `
+        )
         .in('social_mention_id', mentionIds)
         .order('snapshot_at', { ascending: false });
 
@@ -208,17 +226,18 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       } else if (storyInsightsData && storyInsightsData.length > 0) {
         // Create a map of mention_id -> story_id
         const mentionToStoryMap = new Map<string, string>();
-        socialMentions.forEach(mention => {
+        socialMentions.forEach((mention) => {
           if (mention.instagram_story_id) {
             mentionToStoryMap.set(mention.id, mention.instagram_story_id);
           }
         });
 
         // Group by story ID and get latest snapshot for each
-        const storyMap = new Map<string, typeof storyInsightsData[0]>();
+        const storyMap = new Map<string, (typeof storyInsightsData)[0]>();
 
-        storyInsightsData.forEach(snapshot => {
-          const storyId = mentionToStoryMap.get(snapshot.social_mention_id) || snapshot.social_mention_id;
+        storyInsightsData.forEach((snapshot) => {
+          const storyId =
+            mentionToStoryMap.get(snapshot.social_mention_id) || snapshot.social_mention_id;
           if (!storyMap.has(storyId)) {
             storyMap.set(storyId, snapshot);
           } else {
@@ -247,7 +266,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
           avg_reach_per_story: storyCount > 0 ? Math.round(totalReach / storyCount) : 0,
           avg_impressions_per_story: storyCount > 0 ? Math.round(totalImpressions / storyCount) : 0,
           total_replies: totalReplies,
-          total_shares: totalShares
+          total_shares: totalShares,
         };
       }
     }
@@ -259,18 +278,20 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
   // Calculate metrics
   const totalReach = tasks?.reduce((sum, t) => sum + (t.reach_count || 0), 0) || 0;
-  const avgEngagement = tasks?.length > 0
-    ? tasks.reduce((sum, t) => sum + (t.engagement_score || 0), 0) / tasks.length
-    : 0;
-  const completionRate = ambassador.completed_tasks + ambassador.failed_tasks > 0
-    ? (ambassador.completed_tasks / (ambassador.completed_tasks + ambassador.failed_tasks)) * 100
-    : 0;
+  const avgEngagement =
+    tasks?.length > 0
+      ? tasks.reduce((sum, t) => sum + (t.engagement_score || 0), 0) / tasks.length
+      : 0;
+  const completionRate =
+    ambassador.completed_tasks + ambassador.failed_tasks > 0
+      ? (ambassador.completed_tasks / (ambassador.completed_tasks + ambassador.failed_tasks)) * 100
+      : 0;
 
   // Generate monthly performance (last 6 months)
   const monthlyPerformance = generateMonthlyPerformance(tasks || []);
 
   // Generate recent activities
-  const tasksWithTypedEvents = (tasks || []).map(task => {
+  const tasksWithTypedEvents = (tasks || []).map((task) => {
     const taskEvents = task.events;
     let typedEvents: { name: string } | null = null;
 
@@ -283,15 +304,17 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
     return {
       ...task,
-      events: typedEvents
+      events: typedEvents,
     };
   });
   const recentActivities = generateRecentActivities(tasksWithTypedEvents);
 
   // Find last activity
-  const lastActivity = tasks?.length > 0
-    ? tasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
-    : null;
+  const lastActivity =
+    tasks?.length > 0
+      ? tasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+          .created_at
+      : null;
 
   return {
     id: ambassador.id,
@@ -313,7 +336,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
     monthly_performance: monthlyPerformance,
     recent_activities: recentActivities,
     story_insights: storyInsights,
-    insights_error: insightsErrorFlag
+    insights_error: insightsErrorFlag,
   };
 }
 
@@ -322,7 +345,11 @@ export function useAmbassadorMetrics(ambassadorId?: string) {
 
   const queryKey = ['ambassadorMetrics', ambassadorId];
 
-  const { data: metrics, isLoading, error } = useQuery({
+  const {
+    data: metrics,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchAmbassadorMetricsData(ambassadorId!),
     enabled: !!ambassadorId,
@@ -338,6 +365,6 @@ export function useAmbassadorMetrics(ambassadorId?: string) {
     metrics: metrics || null,
     loading: isLoading,
     error: error ? 'Error al cargar metricas' : null,
-    refreshMetrics
+    refreshMetrics,
   };
 }

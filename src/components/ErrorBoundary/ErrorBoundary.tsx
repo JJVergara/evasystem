@@ -30,11 +30,11 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      
+
       return (
         <ErrorMessage
           title="Error de la aplicación"
-          message={this.state.error?.message || "Ha ocurrido un error inesperado"}
+          message={this.state.error?.message || 'Ha ocurrido un error inesperado'}
           onRetry={() => this.setState({ hasError: false, error: undefined })}
         />
       );

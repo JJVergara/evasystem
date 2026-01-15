@@ -17,7 +17,9 @@ interface Notification {
 async function fetchNotificationsData(organizationId: string): Promise<Notification[]> {
   const { data, error } = await supabase
     .from('notifications')
-    .select('id, organization_id, type, message, target_type, target_id, read_status, priority, created_at')
+    .select(
+      'id, organization_id, type, message, target_type, target_id, read_status, priority, created_at'
+    )
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -41,7 +43,7 @@ export function useRealNotifications() {
   });
 
   // Calculate unread count from notifications
-  const unreadCount = notifications.filter(n => !n.read_status).length;
+  const unreadCount = notifications.filter((n) => !n.read_status).length;
 
   // Setup realtime subscription
   useEffect(() => {
@@ -49,15 +51,19 @@ export function useRealNotifications() {
 
     const subscription = supabase
       .channel(`notifications-${organization.id}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
-        filter: `organization_id=eq.${organization.id}`
-      }, () => {
-        // Invalidate and refetch on any change
-        queryClient.invalidateQueries({ queryKey });
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `organization_id=eq.${organization.id}`,
+        },
+        () => {
+          // Invalidate and refetch on any change
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -65,23 +71,26 @@ export function useRealNotifications() {
     };
   }, [organization?.id, queryClient, queryKey]);
 
-  const markAsRead = useCallback(async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read_status: true })
-        .eq('id', notificationId);
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ read_status: true })
+          .eq('id', notificationId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Optimistically update the cache
-      queryClient.setQueryData<Notification[]>(queryKey, (old) =>
-        old?.map(n => n.id === notificationId ? { ...n, read_status: true } : n)
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  }, [queryClient, queryKey]);
+        // Optimistically update the cache
+        queryClient.setQueryData<Notification[]>(queryKey, (old) =>
+          old?.map((n) => (n.id === notificationId ? { ...n, read_status: true } : n))
+        );
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    },
+    [queryClient, queryKey]
+  );
 
   const markAllAsRead = useCallback(async () => {
     if (!organization?.id) return;
@@ -97,7 +106,7 @@ export function useRealNotifications() {
 
       // Optimistically update the cache
       queryClient.setQueryData<Notification[]>(queryKey, (old) =>
-        old?.map(n => ({ ...n, read_status: true }))
+        old?.map((n) => ({ ...n, read_status: true }))
       );
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -117,6 +126,6 @@ export function useRealNotifications() {
     loading,
     markAsRead,
     markAllAsRead,
-    refreshNotifications
+    refreshNotifications,
   };
 }

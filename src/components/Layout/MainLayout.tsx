@@ -1,12 +1,12 @@
-import { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
-import { FiestaSelector } from "@/components/Fiestas/FiestaSelector";
-import { AppBackground } from "./AppBackground";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { ModernLogo } from "@/components/Logo/ModernLogo";
-import { NotificationDropdown } from "./NotificationDropdown";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { ReactNode } from 'react';
+import { Sidebar } from './Sidebar';
+import { FiestaSelector } from '@/components/Fiestas/FiestaSelector';
+import { AppBackground } from './AppBackground';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import { ModernLogo } from '@/components/Logo/ModernLogo';
+import { NotificationDropdown } from './NotificationDropdown';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -14,7 +14,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
-  
+
   return (
     <AppBackground variant="subtle">
       <div className="flex min-h-screen w-full relative">
@@ -47,10 +47,8 @@ export function MainLayout({ children }: MainLayoutProps) {
               </div>
             </div>
           </div>
-          
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
-            {children}
-          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </AppBackground>

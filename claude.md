@@ -13,11 +13,12 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 | **Frontend** | React 18.3, Vite 5.4, TypeScript 5.9 |
 | **Styling** | Tailwind CSS 3.4, shadcn/ui (Radix-based) |
 | **State Management** | TanStack React Query 5.56 |
-| **Forms** | react-hook-form 7.53 |
+| **Forms** | react-hook-form 7.53, Zod 3.23 |
 | **Backend** | Supabase (PostgreSQL + Edge Functions + Auth) |
 | **Edge Functions** | Deno runtime |
 | **External APIs** | Instagram Graph API v24.0, Meta OAuth |
 | **Automation** | N8n workflows |
+| **Code Quality** | ESLint 9, Prettier 3, Vitest 4 |
 
 ---
 
@@ -475,10 +476,25 @@ CRON_SECRET=xxx
 
 ### Commands
 ```bash
+# Development
 npm run dev          # Start Vite dev server
-npm run build        # Production build
-npm run lint         # Run ESLint
 npm run preview      # Preview production build
+
+# Build
+npm run build        # Production build
+npm run build:dev    # Development build
+
+# Code Quality
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+npm run format       # Format with Prettier
+npm run format:check # Check formatting
+npm run typecheck    # TypeScript type checking
+
+# Testing
+npm run test         # Run tests in watch mode
+npm run test:run     # Run tests once
+npm run test:coverage # Run tests with coverage
 ```
 
 ### Supabase CLI
@@ -627,6 +643,45 @@ import { useHook } from '@/hooks/useHook';
 - **Pages**: PascalCase (`Ambassadors.tsx`)
 - **Utilities**: camelCase (`utils.ts`)
 - **Edge Functions**: kebab-case directories (`meta-oauth/`)
+
+---
+
+## Code Quality Tools
+
+### Prettier
+Code formatting is enforced using Prettier with the following configuration (`.prettierrc`):
+- Semi-colons: enabled
+- Single quotes: enabled
+- Tab width: 2 spaces
+- Trailing commas: ES5
+- Print width: 100 characters
+
+Run `npm run format` to format all files, or `npm run format:check` to verify formatting.
+
+### ESLint
+ESLint is configured with:
+- TypeScript support via `typescript-eslint`
+- React Hooks rules
+- Prettier integration (formatting errors as warnings)
+- `@typescript-eslint/no-explicit-any`: warn
+- `@typescript-eslint/consistent-type-imports`: prefer type imports
+- `no-console`: warn (except `console.warn` and `console.error`)
+
+### JSDoc Documentation
+Key hooks include JSDoc comments with:
+- `@fileoverview` describing the module's purpose
+- `@example` showing usage patterns
+- `@returns` documenting return values
+
+Example:
+```typescript
+/**
+ * Hook for managing ambassadors with full CRUD operations.
+ * @returns Object containing ambassadors, loading state, and CRUD functions
+ * @example
+ * const { ambassadors, createAmbassador } = useAmbassadors();
+ */
+```
 
 ---
 

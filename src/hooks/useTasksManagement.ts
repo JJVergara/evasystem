@@ -62,7 +62,8 @@ interface TasksData {
 async function fetchTasksData(organizationId: string): Promise<TasksData> {
   const { data, error: fetchError } = await supabase
     .from('tasks')
-    .select(`
+    .select(
+      `
       *,
       embassadors (
         first_name,
@@ -77,7 +78,8 @@ async function fetchTasksData(organizationId: string): Promise<TasksData> {
           name
         )
       )
-    `)
+    `
+    )
     .eq('embassadors.organization_id', organizationId)
     .order('created_at', { ascending: false });
 
@@ -86,7 +88,7 @@ async function fetchTasksData(organizationId: string): Promise<TasksData> {
     throw fetchError;
   }
 
-  const tasksData = (data || []).map(task => ({
+  const tasksData = (data || []).map((task) => ({
     ...task,
     task_type: task.task_type as TaskType,
     status: task.status as TaskStatusType,
@@ -94,9 +96,11 @@ async function fetchTasksData(organizationId: string): Promise<TasksData> {
   }));
 
   // Calculate stats
-  const completed = tasksData.filter(t => t.status === 'completed').length;
-  const pending = tasksData.filter(t => ['pending', 'uploaded', 'in_progress'].includes(t.status)).length;
-  const invalid = tasksData.filter(t => ['invalid', 'expired'].includes(t.status)).length;
+  const completed = tasksData.filter((t) => t.status === 'completed').length;
+  const pending = tasksData.filter((t) =>
+    ['pending', 'uploaded', 'in_progress'].includes(t.status)
+  ).length;
+  const invalid = tasksData.filter((t) => ['invalid', 'expired'].includes(t.status)).length;
   const totalPoints = tasksData.reduce((sum, t) => sum + t.points_earned, 0);
   const completionRate = tasksData.length > 0 ? (completed / tasksData.length) * 100 : 0;
 
@@ -108,8 +112,8 @@ async function fetchTasksData(organizationId: string): Promise<TasksData> {
       pending,
       invalid,
       totalPoints,
-      completionRate: Math.round(completionRate * 100) / 100
-    }
+      completionRate: Math.round(completionRate * 100) / 100,
+    },
   };
 }
 
@@ -120,7 +124,11 @@ export function useTasksManagement() {
   const organizationId = organization?.id;
   const queryKey = QUERY_KEYS.tasks(organizationId || '');
 
-  const { data, isLoading: tasksLoading, error } = useQuery({
+  const {
+    data,
+    isLoading: tasksLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchTasksData(organizationId!),
     enabled: !!organizationId,
@@ -140,7 +148,7 @@ export function useTasksManagement() {
         .insert({
           ...taskData,
           status: 'pending',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -154,24 +162,33 @@ export function useTasksManagement() {
     },
     onError: () => {
       toast.error('Error al crear tarea');
-    }
+    },
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ taskId, status, points }: { taskId: string; status: TaskStatusType; points?: number }) => {
-      const updateData: any = {
+    mutationFn: async ({
+      taskId,
+      status,
+      points,
+    }: {
+      taskId: string;
+      status: TaskStatusType;
+      points?: number;
+    }) => {
+      const updateData: {
+        status: TaskStatusType;
+        last_status_update: string;
+        points_earned?: number;
+      } = {
         status,
-        last_status_update: new Date().toISOString()
+        last_status_update: new Date().toISOString(),
       };
 
       if (points !== undefined) {
         updateData.points_earned = points;
       }
 
-      const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', taskId);
+      const { error } = await supabase.from('tasks').update(updateData).eq('id', taskId);
 
       if (error) throw error;
       return true;
@@ -182,15 +199,12 @@ export function useTasksManagement() {
     },
     onError: () => {
       toast.error('Error al actualizar tarea');
-    }
+    },
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
 
       if (error) throw error;
       return true;
@@ -201,11 +215,16 @@ export function useTasksManagement() {
     },
     onError: () => {
       toast.error('Error al eliminar tarea');
-    }
+    },
   });
 
   const createTask = useCallback(
-    async (taskData: { embassador_id: string; event_id: string; task_type: TaskType; expected_hashtag?: string }) => {
+    async (taskData: {
+      embassador_id: string;
+      event_id: string;
+      task_type: TaskType;
+      expected_hashtag?: string;
+    }) => {
       try {
         return await createTaskMutation.mutateAsync(taskData);
       } catch {
@@ -215,23 +234,29 @@ export function useTasksManagement() {
     [createTaskMutation]
   );
 
-  const updateTaskStatus = useCallback(async (taskId: string, status: TaskStatusType, points?: number) => {
-    try {
-      await updateTaskMutation.mutateAsync({ taskId, status, points });
-      return true;
-    } catch {
-      return false;
-    }
-  }, [updateTaskMutation]);
+  const updateTaskStatus = useCallback(
+    async (taskId: string, status: TaskStatusType, points?: number) => {
+      try {
+        await updateTaskMutation.mutateAsync({ taskId, status, points });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [updateTaskMutation]
+  );
 
-  const deleteTask = useCallback(async (taskId: string) => {
-    try {
-      await deleteTaskMutation.mutateAsync(taskId);
-      return true;
-    } catch {
-      return false;
-    }
-  }, [deleteTaskMutation]);
+  const deleteTask = useCallback(
+    async (taskId: string) => {
+      try {
+        await deleteTaskMutation.mutateAsync(taskId);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [deleteTaskMutation]
+  );
 
   const refreshTasks = useCallback(() => {
     return queryClient.invalidateQueries({ queryKey });
@@ -247,13 +272,13 @@ export function useTasksManagement() {
       pending: 0,
       invalid: 0,
       totalPoints: 0,
-      completionRate: 0
+      completionRate: 0,
     },
     loading,
     error: error ? 'Error al cargar tareas' : null,
     createTask,
     updateTaskStatus,
     deleteTask,
-    refreshTasks
+    refreshTasks,
   };
 }

@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building2, Calendar, Users, Target, TrendingUp, Award } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Building2, Calendar, Users, Target, TrendingUp, Award } from 'lucide-react';
 
 interface OrganizationMetrics {
   id: string;
@@ -49,9 +48,7 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
               {metrics.active_events} activos
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Total de eventos creados
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Total de eventos creados</p>
         </CardContent>
       </Card>
 
@@ -68,9 +65,7 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
               {metrics.active_ambassadors} activos
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Embajadores registrados
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Embajadores registrados</p>
         </CardContent>
       </Card>
 
@@ -83,8 +78,14 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         <CardContent>
           <div className="text-2xl font-bold">{metrics.total_tasks}</div>
           <div className="flex items-center gap-2 mt-1">
-            <Badge 
-              variant={metrics.completion_rate >= 80 ? "default" : metrics.completion_rate >= 60 ? "secondary" : "destructive"}
+            <Badge
+              variant={
+                metrics.completion_rate >= 80
+                  ? 'default'
+                  : metrics.completion_rate >= 60
+                    ? 'secondary'
+                    : 'destructive'
+              }
               className="text-xs"
             >
               {metrics.completion_rate.toFixed(0)}% completadas
@@ -104,9 +105,7 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatNumber(metrics.total_reach)}</div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Impresiones totales generadas
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Impresiones totales generadas</p>
         </CardContent>
       </Card>
 
@@ -118,9 +117,7 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{metrics.avg_engagement.toFixed(1)}%</div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Engagement promedio de contenido
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Engagement promedio de contenido</p>
         </CardContent>
       </Card>
 
@@ -136,9 +133,7 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
             Creado: {new Date(metrics.created_at).toLocaleDateString()}
           </p>
           {metrics.description && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {metrics.description}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{metrics.description}</p>
           )}
         </CardContent>
       </Card>

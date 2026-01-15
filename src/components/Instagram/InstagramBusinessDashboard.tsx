@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Instagram, Users, Image, Tag, RefreshCw, ExternalLink } from "lucide-react";
-import { useInstagramSync } from "@/hooks/useInstagramSync";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Instagram, Users, Image, Tag, RefreshCw, ExternalLink } from 'lucide-react';
+import { useInstagramSync } from '@/hooks/useInstagramSync';
+import { toast } from 'sonner';
 
 interface InstagramProfile {
   user_id: string;
@@ -41,7 +41,8 @@ interface InstagramTag {
 }
 
 export function InstagramBusinessDashboard() {
-  const { isSyncing, getInstagramProfile, getInstagramMedia, getInstagramTags } = useInstagramSync();
+  const { isSyncing, getInstagramProfile, getInstagramMedia, getInstagramTags } =
+    useInstagramSync();
   const [profile, setProfile] = useState<InstagramProfile | null>(null);
   const [media, setMedia] = useState<InstagramMedia[]>([]);
   const [tags, setTags] = useState<InstagramTag[]>([]);
@@ -50,7 +51,7 @@ export function InstagramBusinessDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // Cargar perfil
       const profileData = await getInstagramProfile();
       if (profileData?.success && profileData.profile) {
@@ -108,8 +109,7 @@ export function InstagramBusinessDashboard() {
                 />
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Instagram className="w-5 h-5" />
-                    @{profile.username}
+                    <Instagram className="w-5 h-5" />@{profile.username}
                   </CardTitle>
                   <CardDescription>{profile.name}</CardDescription>
                   <Badge variant="outline" className="mt-1">

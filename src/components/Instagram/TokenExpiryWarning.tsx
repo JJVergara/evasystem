@@ -1,6 +1,6 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Clock, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, Clock, RefreshCw } from 'lucide-react';
 
 interface TokenExpiryWarningProps {
   daysUntilExpiry: number | null | undefined;
@@ -15,7 +15,7 @@ export function TokenExpiryWarning({
   showWarning,
   needsRefresh,
   isRefreshingToken,
-  onRefresh
+  onRefresh,
 }: TokenExpiryWarningProps) {
   // Don't show if no warning needed
   if (!showWarning || daysUntilExpiry === null || daysUntilExpiry === undefined) {
@@ -29,8 +29,8 @@ export function TokenExpiryWarning({
     <Alert
       className={
         isCritical
-          ? "border-red-500/50 bg-red-50 dark:bg-red-950/20"
-          : "border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20"
+          ? 'border-red-500/50 bg-red-50 dark:bg-red-950/20'
+          : 'border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20'
       }
     >
       {isCritical ? (
@@ -40,37 +40,33 @@ export function TokenExpiryWarning({
       )}
       <AlertTitle
         className={
-          isCritical
-            ? "text-red-800 dark:text-red-300"
-            : "text-yellow-800 dark:text-yellow-300"
+          isCritical ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'
         }
       >
-        {isCritical ? "Conexión próxima a expirar" : "Token de Instagram expirando pronto"}
+        {isCritical ? 'Conexión próxima a expirar' : 'Token de Instagram expirando pronto'}
       </AlertTitle>
       <AlertDescription
         className={
-          isCritical
-            ? "text-red-700 dark:text-red-400"
-            : "text-yellow-700 dark:text-yellow-400"
+          isCritical ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
         }
       >
         <p className="mb-3">
           {daysUntilExpiry === 1
-            ? "Tu conexión con Instagram expira mañana."
+            ? 'Tu conexión con Instagram expira mañana.'
             : `Tu conexión con Instagram expira en ${daysUntilExpiry} días.`}
           {isCritical
-            ? " El sistema intentará renovarla automáticamente, pero puedes renovarla ahora para asegurar continuidad."
-            : " Considera renovarla pronto para evitar interrupciones."}
+            ? ' El sistema intentará renovarla automáticamente, pero puedes renovarla ahora para asegurar continuidad.'
+            : ' Considera renovarla pronto para evitar interrupciones.'}
         </p>
         <Button
-          variant={isCritical ? "destructive" : "outline"}
+          variant={isCritical ? 'destructive' : 'outline'}
           size="sm"
           onClick={onRefresh}
           disabled={isRefreshingToken}
           className={
             !isCritical
-              ? "border-yellow-500 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-950"
-              : ""
+              ? 'border-yellow-500 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-950'
+              : ''
           }
         >
           {isRefreshingToken ? (

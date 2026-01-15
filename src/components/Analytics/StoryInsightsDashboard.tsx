@@ -1,13 +1,19 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { HelpCircle } from "lucide-react";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { HelpCircle } from 'lucide-react';
 import {
   Eye,
   Users,
@@ -21,7 +27,7 @@ import {
   Activity,
   Target,
   Sparkles,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -35,30 +41,31 @@ import {
   AreaChart,
   Area,
   ReferenceLine,
-  Cell,
   Rectangle,
-} from "recharts";
-import { useStoryInsightsAnalytics } from "@/hooks/useStoryInsightsAnalytics";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+} from 'recharts';
+import { useStoryInsightsAnalytics } from '@/hooks/useStoryInsightsAnalytics';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function StoryInsightsDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState("7d");
+  const [selectedPeriod, setSelectedPeriod] = useState('7d');
   const { data, loading, error, refresh } = useStoryInsightsAnalytics(selectedPeriod);
   const [isCollecting, setIsCollecting] = useState(false);
 
   const handleCollectInsights = async () => {
     setIsCollecting(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke("collect-story-insights");
-      
+      const { data: result, error } = await supabase.functions.invoke('collect-story-insights');
+
       if (error) throw error;
-      
-      toast.success(`Insights recolectados: ${result.totalSnapshotsCreated || 0} snapshots creados`);
+
+      toast.success(
+        `Insights recolectados: ${result.totalSnapshotsCreated || 0} snapshots creados`
+      );
       refresh();
     } catch (err) {
-      console.error("Error collecting insights:", err);
-      toast.error("Error al recolectar insights de Stories");
+      console.error('Error collecting insights:', err);
+      toast.error('Error al recolectar insights de Stories');
     } finally {
       setIsCollecting(false);
     }
@@ -101,10 +108,12 @@ export function StoryInsightsDashboard() {
           <div className="text-center text-muted-foreground py-12">
             <Instagram className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium mb-2">No hay datos de Stories disponibles</p>
-            <p className="text-sm mb-4">Recolecta insights de tus Stories activas para ver métricas</p>
+            <p className="text-sm mb-4">
+              Recolecta insights de tus Stories activas para ver métricas
+            </p>
             <Button onClick={handleCollectInsights} disabled={isCollecting}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${isCollecting ? "animate-spin" : ""}`} />
-              {isCollecting ? "Recolectando..." : "Recolectar Insights"}
+              <RefreshCw className={`w-4 h-4 mr-2 ${isCollecting ? 'animate-spin' : ''}`} />
+              {isCollecting ? 'Recolectando...' : 'Recolectar Insights'}
             </Button>
           </div>
         </GlassPanel>
@@ -113,25 +122,22 @@ export function StoryInsightsDashboard() {
   }
 
   const { summary, daily_metrics, metrics_by_hour, recent_snapshots, max_stories_per_hour } = data;
-  
+
   // Color palette for stacked story bars
   const storyColors = [
-    "#8b5cf6", // Purple
-    "#10b981", // Green
-    "#f59e0b", // Amber
-    "#ef4444", // Red
-    "#3b82f6", // Blue
-    "#ec4899", // Pink
-    "#14b8a6", // Teal
-    "#f97316", // Orange
+    '#8b5cf6', // Purple
+    '#10b981', // Green
+    '#f59e0b', // Amber
+    '#ef4444', // Red
+    '#3b82f6', // Blue
+    '#ec4899', // Pink
+    '#14b8a6', // Teal
+    '#f97316', // Orange
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Story Insights"
-        description="Análisis de rendimiento de Instagram Stories"
-      >
+      <PageHeader title="Story Insights" description="Análisis de rendimiento de Instagram Stories">
         <div className="w-full flex justify-center">
           <div className="flex items-center space-x-3 flex-wrap gap-2">
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -152,8 +158,8 @@ export function StoryInsightsDashboard() {
               onClick={handleCollectInsights}
               disabled={isCollecting}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isCollecting ? "animate-spin" : ""}`} />
-              {isCollecting ? "Recolectando..." : "Actualizar"}
+              <RefreshCw className={`w-4 h-4 mr-2 ${isCollecting ? 'animate-spin' : ''}`} />
+              {isCollecting ? 'Recolectando...' : 'Actualizar'}
             </Button>
           </div>
         </div>
@@ -163,7 +169,10 @@ export function StoryInsightsDashboard() {
         {/* Key Metrics */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-700 border-pink-200">
+            <Badge
+              variant="outline"
+              className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-700 border-pink-200"
+            >
               <Instagram className="w-3 h-3 mr-1" />
               Instagram Stories API v24.0
             </Badge>
@@ -190,19 +199,24 @@ export function StoryInsightsDashboard() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1 cursor-help">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Alcance</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Alcance
+                            </p>
                             <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="max-w-xs">
                           <p className="font-medium">Alcance (Reach)</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Número de <strong>cuentas únicas</strong> que vieron tu Story. Cada persona se cuenta una sola vez, sin importar cuántas veces la vio.
+                            Número de <strong>cuentas únicas</strong> que vieron tu Story. Cada
+                            persona se cuenta una sola vez, sin importar cuántas veces la vio.
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-blue-700">{formatNumber(summary.total_reach)}</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {formatNumber(summary.total_reach)}
+                    </p>
                   </div>
                   <Eye className="w-8 h-8 text-blue-500/50" />
                 </div>
@@ -217,19 +231,25 @@ export function StoryInsightsDashboard() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1 cursor-help">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Vistas</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                              Vistas
+                            </p>
                             <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="max-w-xs">
                           <p className="font-medium">Vistas (Views)</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            <strong>Total de reproducciones</strong> de tu Story. Incluye vistas repetidas de la misma persona. Si alguien ve tu Story 3 veces, cuenta como 3 vistas.
+                            <strong>Total de reproducciones</strong> de tu Story. Incluye vistas
+                            repetidas de la misma persona. Si alguien ve tu Story 3 veces, cuenta
+                            como 3 vistas.
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-emerald-700">{formatNumber(summary.total_views)}</p>
+                    <p className="text-2xl font-bold text-emerald-700">
+                      {formatNumber(summary.total_views)}
+                    </p>
                   </div>
                   <Activity className="w-8 h-8 text-emerald-500/50" />
                 </div>
@@ -240,8 +260,12 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Visitas Perfil</p>
-                    <p className="text-2xl font-bold text-orange-700">{formatNumber(summary.total_profile_visits)}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Visitas Perfil
+                    </p>
+                    <p className="text-2xl font-bold text-orange-700">
+                      {formatNumber(summary.total_profile_visits)}
+                    </p>
                   </div>
                   <Users className="w-8 h-8 text-orange-500/50" />
                 </div>
@@ -252,8 +276,12 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Interacciones</p>
-                    <p className="text-2xl font-bold text-pink-700">{formatNumber(summary.total_interactions)}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Interacciones
+                    </p>
+                    <p className="text-2xl font-bold text-pink-700">
+                      {formatNumber(summary.total_interactions)}
+                    </p>
                   </div>
                   <Sparkles className="w-8 h-8 text-pink-500/50" />
                 </div>
@@ -264,8 +292,12 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Compartidos</p>
-                    <p className="text-2xl font-bold text-indigo-700">{formatNumber(summary.total_shares)}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Compartidos
+                    </p>
+                    <p className="text-2xl font-bold text-indigo-700">
+                      {formatNumber(summary.total_shares)}
+                    </p>
                   </div>
                   <Share2 className="w-8 h-8 text-indigo-500/50" />
                 </div>
@@ -276,8 +308,12 @@ export function StoryInsightsDashboard() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Respuestas</p>
-                    <p className="text-2xl font-bold text-cyan-700">{formatNumber(summary.total_replies)}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      Respuestas
+                    </p>
+                    <p className="text-2xl font-bold text-cyan-700">
+                      {formatNumber(summary.total_replies)}
+                    </p>
                   </div>
                   <MessageCircle className="w-8 h-8 text-cyan-500/50" />
                 </div>
@@ -330,9 +366,7 @@ export function StoryInsightsDashboard() {
                   <TrendingUp className="w-5 h-5 text-primary" />
                   Evolución de Métricas
                 </CardTitle>
-                <CardDescription>
-                  Alcance, vistas y visitas al perfil por día
-                </CardDescription>
+                <CardDescription>Alcance, vistas y visitas al perfil por día</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -359,16 +393,22 @@ export function StoryInsightsDashboard() {
                       />
                       <YAxis className="text-xs" />
                       <RechartsTooltip
-                        labelFormatter={(date) => new Date(date).toLocaleDateString("es-ES", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })}
+                        labelFormatter={(date) =>
+                          new Date(date).toLocaleDateString('es-ES', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                          })
+                        }
                         formatter={(value: number, name: string) => [
                           formatNumber(value),
-                          name === "total_reach" ? "Alcance" :
-                          name === "total_views" ? "Vistas" :
-                          name === "total_profile_visits" ? "Visitas Perfil" : name,
+                          name === 'total_reach'
+                            ? 'Alcance'
+                            : name === 'total_views'
+                              ? 'Vistas'
+                              : name === 'total_profile_visits'
+                                ? 'Visitas Perfil'
+                                : name,
                         ]}
                       />
                       <Area
@@ -423,8 +463,8 @@ export function StoryInsightsDashboard() {
                       />
                       <YAxis className="text-xs" />
                       <RechartsTooltip
-                        labelFormatter={(date) => new Date(date).toLocaleDateString("es-ES")}
-                        formatter={(value: number) => [value, "Stories"]}
+                        labelFormatter={(date) => new Date(date).toLocaleDateString('es-ES')}
+                        formatter={(value: number) => [value, 'Stories']}
                       />
                       <Bar
                         dataKey="stories_count"
@@ -447,7 +487,9 @@ export function StoryInsightsDashboard() {
                   Rendimiento por Hora
                 </CardTitle>
                 <CardDescription>
-                  Cada segmento de color representa una story individual, ordenadas cronológicamente (más antigua a más reciente). La línea punteada muestra el alcance promedio por hora.
+                  Cada segmento de color representa una story individual, ordenadas cronológicamente
+                  (más antigua a más reciente). La línea punteada muestra el alcance promedio por
+                  hora.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -456,7 +498,11 @@ export function StoryInsightsDashboard() {
                     <BarChart data={metrics_by_hour}>
                       <defs>
                         <pattern id="avgPattern" patternUnits="userSpaceOnUse" width="4" height="4">
-                          <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#666" strokeWidth="0.5" />
+                          <path
+                            d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                            stroke="#666"
+                            strokeWidth="0.5"
+                          />
                         </pattern>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -469,16 +515,20 @@ export function StoryInsightsDashboard() {
                       <RechartsTooltip
                         content={({ active, payload, label }) => {
                           if (!active || !payload?.length) return null;
-                          const hourData = metrics_by_hour.find(h => h.hour === label);
+                          const hourData = metrics_by_hour.find((h) => h.hour === label);
                           if (!hourData) return null;
-                          
+
                           return (
                             <div className="bg-popover border rounded-lg p-3 shadow-lg min-w-[200px]">
-                              <p className="font-medium mb-2">{label}:00 - {label}:59</p>
+                              <p className="font-medium mb-2">
+                                {label}:00 - {label}:59
+                              </p>
                               <div className="space-y-1 text-sm border-b pb-2 mb-2">
                                 <p className="flex justify-between">
                                   <span className="text-muted-foreground">Promedio:</span>
-                                  <span className="font-medium">{formatNumber(hourData.avg_reach)} alcance</span>
+                                  <span className="font-medium">
+                                    {formatNumber(hourData.avg_reach)} alcance
+                                  </span>
                                 </p>
                                 <p className="flex justify-between">
                                   <span className="text-muted-foreground">Stories:</span>
@@ -488,24 +538,29 @@ export function StoryInsightsDashboard() {
                               {hourData.stories.length > 0 && (
                                 <div className="space-y-2">
                                   {hourData.stories.map((story, idx) => (
-                                    <div 
-                                      key={story.instagram_story_id} 
+                                    <div
+                                      key={story.instagram_story_id}
                                       className="flex items-center gap-2 text-xs"
                                     >
-                                      <div 
-                                        className="w-3 h-3 rounded-sm flex-shrink-0" 
-                                        style={{ backgroundColor: storyColors[idx % storyColors.length] }}
+                                      <div
+                                        className="w-3 h-3 rounded-sm flex-shrink-0"
+                                        style={{
+                                          backgroundColor: storyColors[idx % storyColors.length],
+                                        }}
                                       />
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                           <span className="text-muted-foreground">
-                                            #{story.instagram_story_id?.slice(-8) || "N/A"}
+                                            #{story.instagram_story_id?.slice(-8) || 'N/A'}
                                           </span>
                                           <span className="text-muted-foreground text-[10px]">
-                                            {new Date(story.created_at).toLocaleTimeString("es-ES", { 
-                                              hour: "2-digit", 
-                                              minute: "2-digit" 
-                                            })}
+                                            {new Date(story.created_at).toLocaleTimeString(
+                                              'es-ES',
+                                              {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                              }
+                                            )}
                                           </span>
                                         </div>
                                       </div>
@@ -536,12 +591,11 @@ export function StoryInsightsDashboard() {
                             }
                           }
                           // Apply rounded corners only to the last non-zero bar
-                          const radius: [number, number, number, number] = i === lastNonZeroIndex 
-                            ? [4, 4, 0, 0] 
-                            : [0, 0, 0, 0];
+                          const radius: [number, number, number, number] =
+                            i === lastNonZeroIndex ? [4, 4, 0, 0] : [0, 0, 0, 0];
                           return <Rectangle {...barProps} radius={radius} />;
                         };
-                        
+
                         return (
                           <Bar
                             key={`story_${i}`}
@@ -554,11 +608,21 @@ export function StoryInsightsDashboard() {
                         );
                       })}
                       {/* Reference line for average - shown as dashed line at avg_reach level */}
-                      <ReferenceLine 
-                        y={Math.round(metrics_by_hour.filter(h => h.avg_reach > 0).reduce((sum, h) => sum + h.avg_reach, 0) / Math.max(1, metrics_by_hour.filter(h => h.avg_reach > 0).length))} 
-                        stroke="#666" 
-                        strokeDasharray="5 5" 
-                        label={{ value: "Promedio global", position: "insideTopRight", fontSize: 10, fill: "#666" }}
+                      <ReferenceLine
+                        y={Math.round(
+                          metrics_by_hour
+                            .filter((h) => h.avg_reach > 0)
+                            .reduce((sum, h) => sum + h.avg_reach, 0) /
+                            Math.max(1, metrics_by_hour.filter((h) => h.avg_reach > 0).length)
+                        )}
+                        stroke="#666"
+                        strokeDasharray="5 5"
+                        label={{
+                          value: 'Promedio global',
+                          position: 'insideTopRight',
+                          fontSize: 10,
+                          fill: '#666',
+                        }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -571,12 +635,18 @@ export function StoryInsightsDashboard() {
                   </span>
                   {Array.from({ length: Math.min(max_stories_per_hour, 8) }, (_, i) => (
                     <div key={i} className="flex items-center gap-1.5">
-                      <div 
-                        className="w-3 h-3 rounded-sm" 
+                      <div
+                        className="w-3 h-3 rounded-sm"
                         style={{ backgroundColor: storyColors[i % storyColors.length] }}
                       />
                       <span className="text-muted-foreground">
-                        {i === 0 ? "1ª story" : i === 1 ? "2ª story" : i === 2 ? "3ª story" : `${i + 1}ª story`}
+                        {i === 0
+                          ? '1ª story'
+                          : i === 1
+                            ? '2ª story'
+                            : i === 2
+                              ? '3ª story'
+                              : `${i + 1}ª story`}
                       </span>
                     </div>
                   ))}
@@ -591,37 +661,50 @@ export function StoryInsightsDashboard() {
                   <h4 className="font-medium mb-2">📊 Mejores Horarios</h4>
                   <div className="flex flex-wrap gap-2">
                     {metrics_by_hour
-                      .filter(h => h.avg_reach > 0)
+                      .filter((h) => h.avg_reach > 0)
                       .sort((a, b) => b.avg_reach - a.avg_reach)
                       .slice(0, 5)
                       .map((h, i) => (
-                        <Badge key={h.hour} variant={i === 0 ? "default" : "outline"}>
-                          {h.hour}:00 - {formatNumber(h.avg_reach)} alcance ({h.stories_count} {h.stories_count === 1 ? 'story' : 'stories'})
+                        <Badge key={h.hour} variant={i === 0 ? 'default' : 'outline'}>
+                          {h.hour}:00 - {formatNumber(h.avg_reach)} alcance ({h.stories_count}{' '}
+                          {h.stories_count === 1 ? 'story' : 'stories'})
                         </Badge>
                       ))}
                   </div>
                 </div>
 
                 {/* Hours with multiple stories */}
-                {metrics_by_hour.filter(h => h.stories_count > 1).length > 0 && (
+                {metrics_by_hour.filter((h) => h.stories_count > 1).length > 0 && (
                   <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <h4 className="font-medium mb-2 text-amber-600">📌 Horas con múltiples Stories</h4>
+                    <h4 className="font-medium mb-2 text-amber-600">
+                      📌 Horas con múltiples Stories
+                    </h4>
                     <div className="space-y-3">
                       {metrics_by_hour
-                        .filter(h => h.stories_count > 1)
+                        .filter((h) => h.stories_count > 1)
                         .sort((a, b) => b.stories_count - a.stories_count)
-                        .map(h => (
+                        .map((h) => (
                           <div key={h.hour} className="text-sm">
-                            <p className="font-medium">{h.hour}:00 - {h.stories_count} stories</p>
+                            <p className="font-medium">
+                              {h.hour}:00 - {h.stories_count} stories
+                            </p>
                             <div className="ml-4 mt-1 space-y-1">
                               {h.stories.map((story, idx) => (
-                                <div key={story.instagram_story_id} className="flex items-center gap-2 text-muted-foreground text-xs">
-                                  <div 
-                                    className="w-2 h-2 rounded-sm" 
-                                    style={{ backgroundColor: storyColors[idx % storyColors.length] }}
+                                <div
+                                  key={story.instagram_story_id}
+                                  className="flex items-center gap-2 text-muted-foreground text-xs"
+                                >
+                                  <div
+                                    className="w-2 h-2 rounded-sm"
+                                    style={{
+                                      backgroundColor: storyColors[idx % storyColors.length],
+                                    }}
                                   />
-                                  <span>#{story.instagram_story_id?.slice(-8) || "N/A"}</span>
-                                  <span className="ml-auto">{formatNumber(story.reach)} alcance / {formatNumber(story.views)} vistas</span>
+                                  <span>#{story.instagram_story_id?.slice(-8) || 'N/A'}</span>
+                                  <span className="ml-auto">
+                                    {formatNumber(story.reach)} alcance /{' '}
+                                    {formatNumber(story.views)} vistas
+                                  </span>
                                 </div>
                               ))}
                             </div>
@@ -641,9 +724,7 @@ export function StoryInsightsDashboard() {
                   <Instagram className="w-5 h-5 text-primary" />
                   Stories Recientes
                 </CardTitle>
-                <CardDescription>
-                  Últimos snapshots de insights recolectados
-                </CardDescription>
+                <CardDescription>Últimos snapshots de insights recolectados</CardDescription>
               </CardHeader>
               <CardContent>
                 {recent_snapshots.length === 0 ? (
@@ -657,9 +738,11 @@ export function StoryInsightsDashboard() {
                       // Calculate story creation date from snapshot_at minus story_age_hours
                       const snapshotDate = new Date(snapshot.snapshot_at);
                       const storyCreatedAt = snapshot.story_age_hours
-                        ? new Date(snapshotDate.getTime() - snapshot.story_age_hours * 60 * 60 * 1000)
+                        ? new Date(
+                            snapshotDate.getTime() - snapshot.story_age_hours * 60 * 60 * 1000
+                          )
                         : snapshotDate;
-                      
+
                       return (
                         <div
                           key={snapshot.id}
@@ -674,12 +757,13 @@ export function StoryInsightsDashboard() {
                                 Story #{snapshot.instagram_story_id?.slice(-8) || 'N/A'}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                📅 {storyCreatedAt.toLocaleDateString("es-ES", {
-                                  weekday: "short",
-                                  day: "numeric",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
+                                📅{' '}
+                                {storyCreatedAt.toLocaleDateString('es-ES', {
+                                  weekday: 'short',
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
                                 })}
                               </p>
                               {snapshot.story_age_hours && (
@@ -724,4 +808,3 @@ export function StoryInsightsDashboard() {
     </div>
   );
 }
-

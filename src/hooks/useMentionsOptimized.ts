@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { useDebounce } from "./useDebounce";
-import { toast } from "sonner";
+import { useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { useDebounce } from './useDebounce';
+import { toast } from 'sonner';
 
 interface SocialMention {
   id: string;
@@ -41,20 +41,15 @@ interface PaginatedMentions {
 const MENTIONS_PER_PAGE = 50;
 
 export function useMentionsOptimized(
-  searchTerm: string = "",
-  typeFilter: string = "all", 
-  statusFilter: string = "all"
+  searchTerm: string = '',
+  typeFilter: string = 'all',
+  statusFilter: string = 'all'
 ) {
   const { organization } = useCurrentOrganization();
   const queryClient = useQueryClient();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['social_mentions', organization?.id, debouncedSearchTerm, typeFilter, statusFilter],
     queryFn: async (): Promise<PaginatedMentions> => {
       if (!organization?.id) {
@@ -63,7 +58,8 @@ export function useMentionsOptimized(
 
       let query = supabase
         .from('social_mentions')
-        .select(`
+        .select(
+          `
           id,
           instagram_username,
           content,
@@ -87,20 +83,24 @@ export function useMentionsOptimized(
           events:matched_event_id (
             id
           )
-        `, { count: 'exact' })
+        `,
+          { count: 'exact' }
+        )
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false })
         .limit(MENTIONS_PER_PAGE);
 
       // Apply filters
       if (debouncedSearchTerm) {
-        query = query.or(`instagram_username.ilike.%${debouncedSearchTerm}%,content.ilike.%${debouncedSearchTerm}%`);
+        query = query.or(
+          `instagram_username.ilike.%${debouncedSearchTerm}%,content.ilike.%${debouncedSearchTerm}%`
+        );
       }
-      
+
       if (typeFilter !== 'all') {
         query = query.eq('mention_type', typeFilter);
       }
-      
+
       if (statusFilter === 'assigned') {
         query = query.not('matched_ambassador_id', 'is', null);
       } else if (statusFilter === 'unassigned') {
@@ -115,7 +115,7 @@ export function useMentionsOptimized(
       }
 
       // Transform data
-      const mentions: SocialMention[] = (mentionsData || []).map(mention => ({
+      const mentions: SocialMention[] = (mentionsData || []).map((mention) => ({
         id: mention.id,
         instagram_username: mention.instagram_username || 'Usuario desconocido',
         content: mention.content || '',
@@ -126,38 +126,36 @@ export function useMentionsOptimized(
         created_at: mention.created_at || new Date().toISOString(),
         processed: mention.processed || false,
         matched_ambassador_id: mention.matched_ambassador_id,
-        ambassador_name: mention.embassadors ? 
-          `${mention.embassadors.first_name} ${mention.embassadors.last_name}` : 
-          undefined,
+        ambassador_name: mention.embassadors
+          ? `${mention.embassadors.first_name} ${mention.embassadors.last_name}`
+          : undefined,
         fiesta_name: mention.fiestas?.name || undefined,
         story_url: mention.story_url || undefined,
         hashtag: mention.hashtag || undefined,
-        raw_data: mention.raw_data
+        raw_data: mention.raw_data,
       }));
 
       // Calculate statistics
       const totalReach = mentions.reduce((sum, m) => sum + m.reach_count, 0);
-      const avgEngagement = mentions.length > 0 ? 
-        mentions.reduce((sum, m) => sum + m.engagement_score, 0) / mentions.length : 0;
-      const uniqueHashtags = new Set(
-        mentions
-          .filter(m => m.hashtag)
-          .map(m => m.hashtag)
-      ).size;
-      const unassignedCount = mentions.filter(m => !m.matched_ambassador_id).length;
+      const avgEngagement =
+        mentions.length > 0
+          ? mentions.reduce((sum, m) => sum + m.engagement_score, 0) / mentions.length
+          : 0;
+      const uniqueHashtags = new Set(mentions.filter((m) => m.hashtag).map((m) => m.hashtag)).size;
+      const unassignedCount = mentions.filter((m) => !m.matched_ambassador_id).length;
 
       const stats: MentionStats = {
         total: count || 0,
         reach: totalReach,
         engagement: Math.round(avgEngagement * 100) / 100,
         unique_hashtags: uniqueHashtags,
-        unassigned: unassignedCount
+        unassigned: unassignedCount,
       };
 
       return {
         mentions,
         stats,
-        count: count || 0
+        count: count || 0,
       };
     },
     enabled: !!organization?.id,
@@ -170,17 +168,17 @@ export function useMentionsOptimized(
     try {
       const { error } = await supabase
         .from('social_mentions')
-        .update({ 
-          matched_ambassador_id: ambassadorId, 
+        .update({
+          matched_ambassador_id: ambassadorId,
           processed: true,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
         })
         .eq('id', mentionId);
 
       if (error) throw error;
 
       toast.success('Mención asignada exitosamente');
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['social_mentions', organization?.id] });
     } catch (error) {
@@ -192,17 +190,18 @@ export function useMentionsOptimized(
   // Memoized client-side filtering for search responsiveness
   const filteredMentions = useMemo(() => {
     if (!data?.mentions) return [];
-    
+
     let filtered = data.mentions;
-    
+
     // Additional client-side filtering for immediate responsiveness
     if (searchTerm && searchTerm !== debouncedSearchTerm) {
-      filtered = filtered.filter(mention => 
-        mention.instagram_username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mention.content.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (mention) =>
+          mention.instagram_username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          mention.content.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return filtered;
   }, [data?.mentions, searchTerm, debouncedSearchTerm]);
 
@@ -213,11 +212,11 @@ export function useMentionsOptimized(
       reach: 0,
       engagement: 0,
       unique_hashtags: 0,
-      unassigned: 0
+      unassigned: 0,
     },
     loading: isLoading,
     error: error?.message || null,
     assignToAmbassador,
-    refreshMentions: refetch
+    refreshMentions: refetch,
   };
 }

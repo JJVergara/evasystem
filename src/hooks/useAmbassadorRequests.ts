@@ -38,7 +38,11 @@ export function useAmbassadorRequests() {
   const organizationId = organization?.id;
   const queryKey = QUERY_KEYS.ambassadorRequests(organizationId || '');
 
-  const { data: requests = [], isLoading: requestsLoading, error } = useQuery({
+  const {
+    data: requests = [],
+    isLoading: requestsLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchRequests(organizationId!),
     enabled: !!organizationId,
@@ -51,15 +55,18 @@ export function useAmbassadorRequests() {
     onNewAmbassadorRequest: () => {
       // Refresh requests when new one arrives
       queryClient.invalidateQueries({ queryKey });
-    }
+    },
   });
 
   const approveMutation = useMutation({
-    mutationFn: async ({ requestId, ambassadorData }: {
+    mutationFn: async ({
+      requestId,
+      ambassadorData,
+    }: {
       requestId: string;
       ambassadorData: ApproveRequestInput;
     }) => {
-      const request = requests.find(r => r.id === requestId);
+      const request = requests.find((r) => r.id === requestId);
       if (!request) throw new Error('Solicitud no encontrada');
 
       const { data: ambassador, error: ambassadorError } = await supabase
@@ -121,7 +128,7 @@ export function useAmbassadorRequests() {
         .update({
           status: 'rejected',
           rejection_reason: reason,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
         })
         .eq('id', requestId);
 
@@ -134,7 +141,7 @@ export function useAmbassadorRequests() {
     },
     onError: () => {
       toast.error('Error al rechazar solicitud');
-    }
+    },
   });
 
   const approveRequest = useCallback(
@@ -144,13 +151,12 @@ export function useAmbassadorRequests() {
   );
 
   const rejectRequest = useCallback(
-    (requestId: string, reason?: string) =>
-      rejectMutation.mutateAsync({ requestId, reason }),
+    (requestId: string, reason?: string) => rejectMutation.mutateAsync({ requestId, reason }),
     [rejectMutation]
   );
 
   const getPendingCount = useCallback(
-    () => requests.filter(r => r.status === 'pending').length,
+    () => requests.filter((r) => r.status === 'pending').length,
     [requests]
   );
 

@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorMessageProps {
   title?: string;
@@ -9,11 +9,11 @@ interface ErrorMessageProps {
   onRetry?: () => void;
 }
 
-export function ErrorMessage({ 
-  title = "Error", 
-  message, 
-  showRetry = true, 
-  onRetry 
+export function ErrorMessage({
+  title = 'Error',
+  message,
+  showRetry = true,
+  onRetry,
 }: ErrorMessageProps) {
   return (
     <div className="flex items-center justify-center p-8">
@@ -27,7 +27,7 @@ export function ErrorMessage({
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">{message}</p>
           {showRetry && (
-            <Button 
+            <Button
               onClick={onRetry || (() => window.location.reload())}
               variant="outline"
               className="gap-2"

@@ -1,13 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Calendar, Users, Activity } from "lucide-react";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { AmbassadorRanking } from "./AmbassadorRanking";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Building2, Calendar, Users, Activity } from 'lucide-react';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { AmbassadorRanking } from './AmbassadorRanking';
 
 export function SimpleDashboardContent() {
   const { stats, loading } = useDashboardStats();
 
-  const StatCard = ({ title, value, icon: Icon, description }: {
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
+    description,
+  }: {
     title: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
@@ -33,9 +38,7 @@ export function SimpleDashboardContent() {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Resumen de tu actividad en el sistema EVA
-        </p>
+        <p className="text-muted-foreground">Resumen de tu actividad en el sistema EVA</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -57,12 +60,7 @@ export function SimpleDashboardContent() {
           icon={Users}
           description="Personas registradas"
         />
-        <StatCard
-          title="Sistema"
-          value={1}
-          icon={Activity}
-          description="EVA funcionando"
-        />
+        <StatCard title="Sistema" value={1} icon={Activity} description="EVA funcionando" />
       </div>
 
       {stats.totalOrganizations === 0 && !loading && (
@@ -79,9 +77,7 @@ export function SimpleDashboardContent() {
         </Card>
       )}
 
-      {stats.totalOrganizations > 0 && (
-        <AmbassadorRanking />
-      )}
+      {stats.totalOrganizations > 0 && <AmbassadorRanking />}
     </div>
   );
 }

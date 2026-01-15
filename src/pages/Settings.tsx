@@ -1,6 +1,6 @@
-import SettingsContent from "@/components/Settings/SettingsContent";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { ErrorBoundary } from "@/components/ErrorBoundary/ErrorBoundary";
+import SettingsContent from '@/components/Settings/SettingsContent';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 
 const Settings = () => {
   return (

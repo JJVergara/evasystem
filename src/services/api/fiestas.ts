@@ -14,11 +14,13 @@ import type { Fiesta, CreateFiestaInput, UpdateFiestaInput } from '@/types';
 export async function getFiestas(organizationId: string): Promise<Fiesta[]> {
   const { data, error } = await supabase
     .from('fiestas')
-    .select(`
+    .select(
+      `
       id, organization_id, name, description, location, event_date,
       main_hashtag, secondary_hashtags, instagram_handle, status,
       created_at, updated_at
-    `)
+    `
+    )
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false });
 

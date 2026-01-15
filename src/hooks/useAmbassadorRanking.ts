@@ -35,22 +35,25 @@ export function useAmbassadorRanking() {
   const organizationId = organization?.id;
   const queryKey = QUERY_KEYS.ambassadorRanking(organizationId || '');
 
-  const { data: ranking = [], isLoading: rankingLoading, error } = useQuery({
+  const {
+    data: ranking = [],
+    isLoading: rankingLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: async (): Promise<AmbassadorRankingData[]> => {
       const ambassadors = await getAmbassadors(organizationId!);
 
       // Filter active ambassadors and sort by points
       const activeAmbassadors = ambassadors
-        .filter(a => a.status === 'active')
+        .filter((a) => a.status === 'active')
         .sort((a, b) => (b.global_points || 0) - (a.global_points || 0));
 
       // Compute ranking data
       return activeAmbassadors.map((ambassador, index) => {
         const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
-        const completionRate = totalTasks > 0
-          ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100)
-          : 0;
+        const completionRate =
+          totalTasks > 0 ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100) : 0;
 
         return {
           id: ambassador.id,

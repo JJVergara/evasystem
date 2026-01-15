@@ -1,21 +1,27 @@
-import { useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { useToast } from "@/hooks/use-toast";
-import { StoryMention } from "@/types/storyMentions";
+import { useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { useToast } from '@/hooks/use-toast';
+import { StoryMention } from '@/types/storyMentions';
 
 type StoryMentionState = 'new' | 'flagged_early_delete' | 'completed' | 'expired_unknown';
 
 const validateState = (state: unknown): StoryMentionState => {
-  const validStates: StoryMentionState[] = ['new', 'flagged_early_delete', 'completed', 'expired_unknown'];
+  const validStates: StoryMentionState[] = [
+    'new',
+    'flagged_early_delete',
+    'completed',
+    'expired_unknown',
+  ];
   return validStates.includes(state as StoryMentionState) ? (state as StoryMentionState) : 'new';
 };
 
 async function fetchStoryMentionsData(organizationId: string): Promise<StoryMention[]> {
   const { data, error } = await supabase
     .from('social_mentions')
-    .select(`
+    .select(
+      `
       id,
       instagram_username,
       instagram_user_id,
@@ -39,7 +45,8 @@ async function fetchStoryMentionsData(organizationId: string): Promise<StoryMent
         first_name,
         last_name
       )
-    `)
+    `
+    )
     .eq('organization_id', organizationId)
     .eq('mention_type', 'story_referral')
     .order('mentioned_at', { ascending: false });
@@ -49,7 +56,7 @@ async function fetchStoryMentionsData(organizationId: string): Promise<StoryMent
     throw error;
   }
 
-  return (data || []).map(mention => ({
+  return (data || []).map((mention) => ({
     id: mention.id,
     instagram_username: mention.instagram_username || 'unknown',
     instagram_user_id: mention.instagram_user_id || '',
@@ -71,7 +78,7 @@ async function fetchStoryMentionsData(organizationId: string): Promise<StoryMent
     checks_count: mention.checks_count || 0,
     last_check_at: mention.last_check_at || undefined,
     conversation_id: mention.conversation_id || undefined,
-    inbox_link: mention.inbox_link || undefined
+    inbox_link: mention.inbox_link || undefined,
   }));
 }
 
@@ -82,7 +89,11 @@ export function useStoryMentions() {
 
   const queryKey = ['storyMentions', organization?.id];
 
-  const { data: mentions = [], isLoading: mentionsLoading, error } = useQuery({
+  const {
+    data: mentions = [],
+    isLoading: mentionsLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchStoryMentionsData(organization!.id),
     enabled: !!organization?.id,
@@ -102,15 +113,15 @@ export function useStoryMentions() {
           event: 'INSERT',
           schema: 'public',
           table: 'social_mentions',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
           console.log('New story mention received:', payload);
           if (payload.new.mention_type === 'story_referral') {
             queryClient.invalidateQueries({ queryKey });
             toast({
-              title: "Nueva mención de historia",
-              description: `@${payload.new.instagram_username || 'Usuario desconocido'} mencionó tu historia`
+              title: 'Nueva mención de historia',
+              description: `@${payload.new.instagram_username || 'Usuario desconocido'} mencionó tu historia`,
             });
           }
         }
@@ -121,7 +132,7 @@ export function useStoryMentions() {
           event: 'UPDATE',
           schema: 'public',
           table: 'social_mentions',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
           console.log('Story mention updated:', payload);
@@ -137,115 +148,120 @@ export function useStoryMentions() {
     };
   }, [organization?.id, queryClient, queryKey, toast]);
 
-  const markAsProcessed = useCallback(async (mentionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('social_mentions')
-        .update({
-          processed: true,
-          processed_at: new Date().toISOString()
-        })
-        .eq('id', mentionId);
+  const markAsProcessed = useCallback(
+    async (mentionId: string) => {
+      try {
+        const { error } = await supabase
+          .from('social_mentions')
+          .update({
+            processed: true,
+            processed_at: new Date().toISOString(),
+          })
+          .eq('id', mentionId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Optimistically update the cache
-      queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
-        old?.map(mention =>
-          mention.id === mentionId
-            ? { ...mention, processed: true }
-            : mention
-        )
-      );
+        // Optimistically update the cache
+        queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
+          old?.map((mention) =>
+            mention.id === mentionId ? { ...mention, processed: true } : mention
+          )
+        );
 
-      toast({
-        title: "Mención actualizada",
-        description: "La mención ha sido marcada como atendida"
-      });
-    } catch (error) {
-      console.error('Error marking mention as processed:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la mención",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  }, [queryClient, queryKey, toast]);
+        toast({
+          title: 'Mención actualizada',
+          description: 'La mención ha sido marcada como atendida',
+        });
+      } catch (error) {
+        console.error('Error marking mention as processed:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar la mención',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [queryClient, queryKey, toast]
+  );
 
-  const flagAsEarlyDelete = useCallback(async (mentionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('social_mentions')
-        .update({
-          state: 'flagged_early_delete',
-          processed: true,
-          processed_at: new Date().toISOString()
-        })
-        .eq('id', mentionId);
+  const flagAsEarlyDelete = useCallback(
+    async (mentionId: string) => {
+      try {
+        const { error } = await supabase
+          .from('social_mentions')
+          .update({
+            state: 'flagged_early_delete',
+            processed: true,
+            processed_at: new Date().toISOString(),
+          })
+          .eq('id', mentionId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Optimistically update the cache
-      queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
-        old?.map(mention =>
-          mention.id === mentionId
-            ? { ...mention, state: 'flagged_early_delete', processed: true }
-            : mention
-        )
-      );
+        // Optimistically update the cache
+        queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
+          old?.map((mention) =>
+            mention.id === mentionId
+              ? { ...mention, state: 'flagged_early_delete', processed: true }
+              : mention
+          )
+        );
 
-      // Create notification for early deletion
-      await supabase
-        .from('notifications')
-        .insert({
+        // Create notification for early deletion
+        await supabase.from('notifications').insert({
           organization_id: organization?.id,
           type: 'story_early_delete',
           message: `Historia marcada como borrada antes de 24h`,
           target_type: 'story_mention',
           target_id: mentionId,
-          priority: 'medium'
+          priority: 'medium',
         });
 
-      toast({
-        title: "Mención marcada",
-        description: "La historia ha sido marcada como borrada antes de 24h"
-      });
-    } catch (error) {
-      console.error('Error flagging mention as early delete:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo marcar la mención",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  }, [organization?.id, queryClient, queryKey, toast]);
+        toast({
+          title: 'Mención marcada',
+          description: 'La historia ha sido marcada como borrada antes de 24h',
+        });
+      } catch (error) {
+        console.error('Error flagging mention as early delete:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudo marcar la mención',
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    },
+    [organization?.id, queryClient, queryKey, toast]
+  );
 
-  const sendReply = useCallback(async (mention: StoryMention, message: string) => {
-    if (!organization?.id) {
-      throw new Error('Organization not found');
-    }
+  const sendReply = useCallback(
+    async (mention: StoryMention, message: string) => {
+      if (!organization?.id) {
+        throw new Error('Organization not found');
+      }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('instagram-send-message', {
-        body: {
-          recipientId: mention.instagram_user_id,
-          message: message,
-          organizationId: organization.id
-        }
-      });
+      try {
+        const { data, error } = await supabase.functions.invoke('instagram-send-message', {
+          body: {
+            recipientId: mention.instagram_user_id,
+            message: message,
+            organizationId: organization.id,
+          },
+        });
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error || 'Failed to send message');
+        if (error) throw error;
+        if (!data.success) throw new Error(data.error || 'Failed to send message');
 
-      await markAsProcessed(mention.id);
-      return data;
-    } catch (error) {
-      console.error('Error sending reply:', error);
-      throw error;
-    }
-  }, [organization?.id, markAsProcessed]);
+        await markAsProcessed(mention.id);
+        return data;
+      } catch (error) {
+        console.error('Error sending reply:', error);
+        throw error;
+      }
+    },
+    [organization?.id, markAsProcessed]
+  );
 
   const fetchStoryMentions = useCallback(() => {
     return queryClient.invalidateQueries({ queryKey });
@@ -260,6 +276,6 @@ export function useStoryMentions() {
     fetchStoryMentions,
     markAsProcessed,
     flagAsEarlyDelete,
-    sendReply
+    sendReply,
   };
 }

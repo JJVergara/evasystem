@@ -1,10 +1,9 @@
-
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { toast } from "sonner";
-import { useAuth } from "./useAuth";
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { toast } from 'sonner';
+import { useAuth } from './useAuth';
 
 interface TokenStatus {
   isConnected: boolean;
@@ -31,30 +30,28 @@ async function fetchTokenStatus(): Promise<TokenStatus> {
     console.log('Token status check reported error:', data);
     return {
       isConnected: false,
-      isTokenExpired: false
+      isTokenExpired: false,
     };
   }
 }
 
 export function useInstagramConnection() {
   const { user } = useAuth();
-  const { organization, loading, updateOrganization, refreshOrganization } = useCurrentOrganization();
+  const { organization, loading, updateOrganization, refreshOrganization } =
+    useCurrentOrganization();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
   const queryClient = useQueryClient();
 
   // Stable query key
-  const queryKey = useMemo(
-    () => ['instagramTokenStatus', organization?.id],
-    [organization?.id]
-  );
+  const queryKey = useMemo(() => ['instagramTokenStatus', organization?.id], [organization?.id]);
 
   // Use React Query for token status
   const {
     data: tokenStatus = { isConnected: false, isTokenExpired: false },
     isLoading: isLoadingTokenStatus,
     isFetching,
-    refetch
+    refetch,
   } = useQuery({
     queryKey,
     queryFn: fetchTokenStatus,
@@ -70,7 +67,8 @@ export function useInstagramConnection() {
     if (!user || !organization) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const hasOAuthParams = urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
+    const hasOAuthParams =
+      urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
 
     if (hasOAuthParams) {
       console.log('OAuth callback detected, refreshing token status...');
@@ -117,7 +115,7 @@ export function useInstagramConnection() {
       toast.info('Preparando organización...');
       try {
         await refreshOrganization();
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         toast.error('No se pudo preparar tu organización. Reintenta.');
         return;
@@ -138,8 +136,8 @@ export function useInstagramConnection() {
         body: {
           user_id: user?.id,
           organization_id: organization.id,
-          type: 'organization'
-        }
+          type: 'organization',
+        },
       });
 
       if (error) {
@@ -151,19 +149,26 @@ export function useInstagramConnection() {
         if (error.message?.includes('configuration_error')) {
           errorMessage = 'Configuración de Meta App incorrecta';
           errorDescription = 'Verifica App ID, App Secret y configuración de OAuth';
-        } else if (error.message?.includes('unauthorized') || error.message?.includes('forbidden')) {
+        } else if (
+          error.message?.includes('unauthorized') ||
+          error.message?.includes('forbidden')
+        ) {
           errorMessage = 'Sin permisos para conectar Instagram';
           errorDescription = 'Verifica que seas miembro de esta organización';
-        } else if (error.message?.includes('credentials') || error.message?.includes('configuration_error')) {
+        } else if (
+          error.message?.includes('credentials') ||
+          error.message?.includes('configuration_error')
+        ) {
           errorMessage = 'Credenciales de Meta no encontradas';
-          errorDescription = 'Configura las credenciales de Meta App primero. Asegúrate de que el redirect URI en Meta Developers sea: https://app.evasystem.cl/api/meta-oauth?action=callback';
+          errorDescription =
+            'Configura las credenciales de Meta App primero. Asegúrate de que el redirect URI en Meta Developers sea: https://app.evasystem.cl/api/meta-oauth?action=callback';
           if (onCredentialsNeeded) {
             onCredentialsNeeded();
           }
         }
 
         toast.error(errorMessage, {
-          description: errorDescription
+          description: errorDescription,
         });
         return;
       }
@@ -172,7 +177,7 @@ export function useInstagramConnection() {
         window.location.href = data.authUrl;
       } else {
         toast.error('No se pudo obtener URL de autorización', {
-          description: 'Verifica la configuración de Meta App'
+          description: 'Verifica la configuración de Meta App',
         });
       }
     } catch (error) {
@@ -195,14 +200,14 @@ export function useInstagramConnection() {
       if (error) {
         console.error('Disconnect error:', error);
         toast.error('Error al desconectar', {
-          description: error.message || 'No se pudo desconectar Instagram'
+          description: error.message || 'No se pudo desconectar Instagram',
         });
         return;
       }
 
       if (!data?.success) {
         toast.error('Error al desconectar', {
-          description: data?.error || 'No se pudo completar la desconexión'
+          description: data?.error || 'No se pudo completar la desconexión',
         });
         return;
       }
@@ -214,7 +219,7 @@ export function useInstagramConnection() {
     } catch (error) {
       console.error('Error disconnecting Instagram:', error);
       toast.error('Error inesperado', {
-        description: 'No se pudo completar la desconexión'
+        description: 'No se pudo completar la desconexión',
       });
     } finally {
       setIsConnecting(false);
@@ -238,14 +243,14 @@ export function useInstagramConnection() {
 
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=refresh', {
         body: {
-          organization_id: organization.id
-        }
+          organization_id: organization.id,
+        },
       });
 
       if (error) {
         console.error('Token refresh error:', error);
         toast.error('Error al renovar token', {
-          description: error.message || 'No se pudo renovar el token de Instagram'
+          description: error.message || 'No se pudo renovar el token de Instagram',
         });
         return false;
       }
@@ -253,7 +258,7 @@ export function useInstagramConnection() {
       if (!data?.success) {
         console.error('Token refresh failed:', data);
         toast.error('Error al renovar token', {
-          description: data?.error || 'No se pudo renovar el token de Instagram'
+          description: data?.error || 'No se pudo renovar el token de Instagram',
         });
         return false;
       }
@@ -261,13 +266,13 @@ export function useInstagramConnection() {
       // Invalidate query to get new expiry date
       queryClient.invalidateQueries({ queryKey: ['instagramTokenStatus'] });
       toast.success('Token renovado exitosamente', {
-        description: 'Tu conexión con Instagram se ha extendido por 60 días más'
+        description: 'Tu conexión con Instagram se ha extendido por 60 días más',
       });
       return true;
     } catch (error) {
       console.error('Unexpected error refreshing token:', error);
       toast.error('Error inesperado', {
-        description: 'No se pudo renovar el token de Instagram'
+        description: 'No se pudo renovar el token de Instagram',
       });
       return false;
     } finally {
@@ -290,6 +295,6 @@ export function useInstagramConnection() {
     showWarning: tokenStatus.showWarning,
     username: tokenStatus.username,
     refreshToken,
-    isRefreshingToken
+    isRefreshingToken,
   };
 }

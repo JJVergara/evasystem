@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface ActivityTimelineProps {
   activities: Array<{
@@ -33,12 +32,12 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
 
   const getStatusLabel = (status?: string) => {
     const labels: Record<string, string> = {
-      'completed': 'Completada',
-      'invalid': 'Inválida',
-      'expired': 'Expirada',
-      'pending': 'Pendiente',
-      'uploaded': 'Subida',
-      'in_progress': 'En Progreso'
+      completed: 'Completada',
+      invalid: 'Inválida',
+      expired: 'Expirada',
+      pending: 'Pendiente',
+      uploaded: 'Subida',
+      in_progress: 'En Progreso',
     };
     return labels[status || ''] || status;
   };
@@ -47,14 +46,14 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
     const date = new Date(dateStr);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Hoy';
     if (diffDays === 1) return 'Ayer';
     if (diffDays < 7) return `Hace ${diffDays} días`;
-    return date.toLocaleDateString('es-ES', { 
-      day: 'numeric', 
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
       month: 'short',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   };
 
@@ -71,16 +70,15 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
             </div>
           ) : (
             activities.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3 pb-4 border-b border-border last:border-b-0">
-                <div className="flex-shrink-0 mt-0.5">
-                  {getStatusIcon(activity.status)}
-                </div>
-                
+              <div
+                key={index}
+                className="flex items-start space-x-3 pb-4 border-b border-border last:border-b-0"
+              >
+                <div className="flex-shrink-0 mt-0.5">{getStatusIcon(activity.status)}</div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">
-                      {activity.description}
-                    </p>
+                    <p className="text-sm font-medium text-foreground">{activity.description}</p>
                     <div className="flex items-center space-x-2">
                       {activity.points && activity.points > 0 && (
                         <Badge variant="outline" className="text-xs">
@@ -88,7 +86,7 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
                         </Badge>
                       )}
                       {activity.status && (
-                        <Badge 
+                        <Badge
                           variant={activity.status === 'completed' ? 'default' : 'secondary'}
                           className="text-xs"
                         >
@@ -97,14 +95,10 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-muted-foreground">
-                      {activity.type}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(activity.date)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{activity.type}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(activity.date)}</p>
                   </div>
                 </div>
               </div>

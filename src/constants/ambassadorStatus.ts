@@ -12,7 +12,7 @@ export const PERFORMANCE_STATUS = {
   EXCLUSIVO: 'exclusivo',
 } as const;
 
-export type PerformanceStatus = typeof PERFORMANCE_STATUS[keyof typeof PERFORMANCE_STATUS];
+export type PerformanceStatus = (typeof PERFORMANCE_STATUS)[keyof typeof PERFORMANCE_STATUS];
 
 export const AMBASSADOR_STATUS = {
   ACTIVE: 'active',
@@ -20,7 +20,7 @@ export const AMBASSADOR_STATUS = {
   DELETED: 'deleted',
 } as const;
 
-export type AmbassadorStatus = typeof AMBASSADOR_STATUS[keyof typeof AMBASSADOR_STATUS];
+export type AmbassadorStatus = (typeof AMBASSADOR_STATUS)[keyof typeof AMBASSADOR_STATUS];
 
 export const REQUEST_STATUS = {
   PENDING: 'pending',
@@ -28,4 +28,4 @@ export const REQUEST_STATUS = {
   REJECTED: 'rejected',
 } as const;
 
-export type RequestStatus = typeof REQUEST_STATUS[keyof typeof REQUEST_STATUS];
+export type RequestStatus = (typeof REQUEST_STATUS)[keyof typeof REQUEST_STATUS];

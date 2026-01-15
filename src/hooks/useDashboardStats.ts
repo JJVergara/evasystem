@@ -30,7 +30,7 @@ async function fetchDashboardStats(userId: string): Promise<DashboardStats> {
 
   if (orgError) throw orgError;
 
-  const organizationIds = organizations?.map(org => org.id) || [];
+  const organizationIds = organizations?.map((org) => org.id) || [];
 
   if (organizationIds.length === 0) {
     return { ...DEFAULT_STATS, totalOrganizations: 0 };
@@ -59,7 +59,11 @@ export function useDashboardStats() {
   const userId = user?.id;
   const queryKey = QUERY_KEYS.dashboardStats(userId || '');
 
-  const { data: stats, isLoading, error } = useQuery({
+  const {
+    data: stats,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchDashboardStats(userId!),
     enabled: !!userId,

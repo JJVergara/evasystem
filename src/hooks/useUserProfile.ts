@@ -1,8 +1,8 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
-import { toast } from "sonner";
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 interface UserProfile {
   id: string;
@@ -24,11 +24,16 @@ interface UserProfile {
   } | null;
 }
 
-async function fetchUserProfileData(userId: string, userEmail: string | undefined, userMetadata: any): Promise<UserProfile> {
+async function fetchUserProfileData(
+  userId: string,
+  userEmail: string | undefined,
+  userMetadata: { full_name?: string } | null
+): Promise<UserProfile> {
   // First, get user profile without nested organization query
   const { data, error: fetchError } = await supabase
     .from('users')
-    .select(`
+    .select(
+      `
       id,
       name,
       full_name,
@@ -37,7 +42,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
       organization_id,
       last_login,
       created_at
-    `)
+    `
+    )
     .eq('auth_user_id', userId)
     .maybeSingle();
 
@@ -56,9 +62,10 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
         name: userMetadata?.full_name || userEmail?.split('@')[0] || 'Usuario',
         email: userEmail || '',
         full_name: userMetadata?.full_name || null,
-        role: 'user'
+        role: 'user',
       })
-      .select(`
+      .select(
+        `
         id,
         name,
         full_name,
@@ -67,7 +74,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
         organization_id,
         last_login,
         created_at
-      `)
+      `
+      )
       .single();
 
     if (createError) {
@@ -82,7 +90,7 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
         .insert({
           name: 'Mi Organización',
           description: `Organización de ${createdUser.name}`,
-          created_by: userId
+          created_by: userId,
         })
         .select()
         .single();
@@ -108,8 +116,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
               timezone: orgData.timezone || 'America/Santiago',
               logo_url: orgData.logo_url,
               plan_type: orgData.plan_type || 'free',
-              instagram_connected: !!orgData.meta_token
-            }
+              instagram_connected: !!orgData.meta_token,
+            },
           };
         }
       }
@@ -119,7 +127,7 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
       return {
         ...createdUser,
         role: createdUser.role as 'admin' | 'user' | 'viewer',
-        organization: null
+        organization: null,
       };
     }
 
@@ -128,7 +136,9 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
 
   // If user exists but doesn't have organization_id assigned, check if they have organizations
   if (!data.organization_id) {
-    console.log('User exists but no organization assigned, checking for available organizations...');
+    console.log(
+      'User exists but no organization assigned, checking for available organizations...'
+    );
 
     const { data: userOrganizations, error: orgError } = await supabase
       .from('organizations')
@@ -146,7 +156,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
         .from('users')
         .update({ organization_id: firstOrg.id })
         .eq('auth_user_id', userId)
-        .select(`
+        .select(
+          `
           id,
           name,
           full_name,
@@ -155,27 +166,31 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
           organization_id,
           last_login,
           created_at
-        `)
+        `
+        )
         .single();
 
       if (!updateError && updatedUser) {
-        const { data: orgInfo } = await supabase
-          .rpc('get_organization_safe_info', { org_id: firstOrg.id });
+        const { data: orgInfo } = await supabase.rpc('get_organization_safe_info', {
+          org_id: firstOrg.id,
+        });
 
         const orgData = orgInfo?.[0];
         toast.success(`Organización "${firstOrg.name}" asignada automáticamente`);
         return {
           ...updatedUser,
           role: updatedUser.role as 'admin' | 'user' | 'viewer',
-          organization: orgData ? {
-            id: orgData.id,
-            name: orgData.name,
-            description: orgData.description,
-            timezone: orgData.timezone,
-            logo_url: orgData.logo_url,
-            plan_type: orgData.plan_type,
-            instagram_connected: orgData.instagram_connected
-          } : null
+          organization: orgData
+            ? {
+                id: orgData.id,
+                name: orgData.name,
+                description: orgData.description,
+                timezone: orgData.timezone,
+                logo_url: orgData.logo_url,
+                plan_type: orgData.plan_type,
+                instagram_connected: orgData.instagram_connected,
+              }
+            : null,
         };
       }
     } else if (!orgError) {
@@ -189,7 +204,7 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
           description: `Organización de ${data.name}`,
           created_by: userId,
           timezone: 'America/Santiago',
-          plan_type: 'free'
+          plan_type: 'free',
         })
         .select()
         .single();
@@ -201,7 +216,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
           .from('users')
           .update({ organization_id: newOrg.id })
           .eq('auth_user_id', userId)
-          .select(`
+          .select(
+            `
             id,
             name,
             full_name,
@@ -210,7 +226,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
             organization_id,
             last_login,
             created_at
-          `)
+          `
+          )
           .single();
 
         if (!updateError && updatedUser) {
@@ -225,8 +242,8 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
               timezone: newOrg.timezone || 'America/Santiago',
               logo_url: newOrg.logo_url || '',
               plan_type: newOrg.plan_type || 'free',
-              instagram_connected: !!newOrg.meta_token
-            }
+              instagram_connected: !!newOrg.meta_token,
+            },
           };
         }
       }
@@ -236,8 +253,9 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
   // Fetch organization info separately if user has organization_id
   let organizationData = null;
   if (data.organization_id) {
-    const { data: orgInfo } = await supabase
-      .rpc('get_organization_safe_info', { org_id: data.organization_id });
+    const { data: orgInfo } = await supabase.rpc('get_organization_safe_info', {
+      org_id: data.organization_id,
+    });
     organizationData = orgInfo?.[0] || null;
   }
 
@@ -255,15 +273,17 @@ async function fetchUserProfileData(userId: string, userEmail: string | undefine
   return {
     ...data,
     role: data.role as 'admin' | 'user' | 'viewer',
-    organization: organizationData ? {
-      id: organizationData.id,
-      name: organizationData.name,
-      description: organizationData.description,
-      timezone: organizationData.timezone,
-      logo_url: organizationData.logo_url,
-      plan_type: organizationData.plan_type,
-      instagram_connected: organizationData.instagram_connected
-    } : null
+    organization: organizationData
+      ? {
+          id: organizationData.id,
+          name: organizationData.name,
+          description: organizationData.description,
+          timezone: organizationData.timezone,
+          logo_url: organizationData.logo_url,
+          plan_type: organizationData.plan_type,
+          instagram_connected: organizationData.instagram_connected,
+        }
+      : null,
   };
 }
 
@@ -273,7 +293,12 @@ export function useUserProfile() {
 
   const queryKey = ['userProfile', user?.id];
 
-  const { data: profile, isLoading, error, refetch } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchUserProfileData(user!.id, user!.email, user!.user_metadata),
     enabled: !!user?.id,
@@ -294,6 +319,6 @@ export function useUserProfile() {
     loading: isLoading,
     error: error ? (error as Error).message : null,
     refreshProfile,
-    retryFetch
+    retryFetch,
   };
 }

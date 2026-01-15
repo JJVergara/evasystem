@@ -1,29 +1,45 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Filter, Download, Search, Eye, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import { TaskStatusBadge } from "./TaskStatusBadge";
-import { TaskFilters } from "./TaskFilters";
-import { TaskStatsCards } from "./TaskStatsCards";
-import { useFiestas } from "@/hooks/useFiestas";
-import { useTasksManagement } from "@/hooks/useTasksManagement";
-import { useStoriesData } from "@/hooks/useStoriesData";
-import { FiestaSelector } from "@/components/Fiestas/FiestaSelector";
-import { CreateTaskModal } from "./CreateTaskModal";
-import { toast } from "sonner";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Plus,
+  Filter,
+  Download,
+  Search,
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+} from 'lucide-react';
+import { TaskStatusBadge } from './TaskStatusBadge';
+import { TaskFilters } from './TaskFilters';
+import { TaskStatsCards } from './TaskStatsCards';
+import { useFiestas } from '@/hooks/useFiestas';
+import { useTasksManagement } from '@/hooks/useTasksManagement';
+import { useStoriesData } from '@/hooks/useStoriesData';
+import { FiestaSelector } from '@/components/Fiestas/FiestaSelector';
+import { CreateTaskModal } from './CreateTaskModal';
+import { toast } from 'sonner';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
 
 export default function StoriesManagement() {
   const { selectedFiesta, selectedFiestaId } = useFiestas();
   const { ambassadors, events, loading } = useStoriesData();
-  const [selectedEventId, setSelectedEventId] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedEventId, setSelectedEventId] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const {
@@ -32,33 +48,34 @@ export default function StoriesManagement() {
     loading: tasksLoading,
     refreshTasks,
     updateTaskStatus,
-    deleteTask
+    deleteTask,
   } = useTasksManagement();
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = searchTerm === "" || 
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      searchTerm === '' ||
       task.embassadors?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.embassadors?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.embassadors?.instagram_user?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-    
+
+    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
   const exportTasks = async () => {
     try {
-      toast.success("Funcionalidad de exportación en desarrollo");
+      toast.success('Funcionalidad de exportación en desarrollo');
     } catch (error) {
-      toast.error("Error al exportar tareas");
+      toast.error('Error al exportar tareas');
     }
   };
 
   if (!selectedFiestaId) {
     return (
       <div className="space-y-6">
-        <PageHeader 
-          title="Historias" 
+        <PageHeader
+          title="Historias"
           description="Gestiona y monitorea las historias de tus embajadores"
         />
         <GlassPanel>
@@ -73,8 +90,8 @@ export default function StoriesManagement() {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Gestión de Historias" 
+      <PageHeader
+        title="Gestión de Historias"
         description={`Gestión de historias de ${selectedFiesta?.name || 'la fiesta'}`}
       >
         <div className="flex items-center space-x-2 flex-wrap gap-2">
@@ -89,12 +106,14 @@ export default function StoriesManagement() {
         </div>
       </PageHeader>
 
-                <TaskStatsCards stats={{
-                  uploaded: stats.pending,
-                  completed: stats.completed,
-                  in_progress: stats.pending,
-                  invalid: stats.invalid
-                }} />
+      <TaskStatsCards
+        stats={{
+          uploaded: stats.pending,
+          completed: stats.completed,
+          in_progress: stats.pending,
+          invalid: stats.invalid,
+        }}
+      />
 
       <div className="grid gap-6">
         <Card>
@@ -114,7 +133,7 @@ export default function StoriesManagement() {
                   />
                 </div>
               </div>
-              
+
               <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Todos los eventos" />
@@ -175,16 +194,18 @@ export default function StoriesManagement() {
                 ) : (
                   <div className="space-y-4">
                     {filteredTasks.map((task) => (
-                      <div key={task.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                      <div
+                        key={task.id}
+                        className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3">
                               <div>
                                 <h4 className="font-medium">
-                                  {task.embassadors ? 
-                                    `${task.embassadors.first_name} ${task.embassadors.last_name}` : 
-                                    'Embajador no encontrado'
-                                  }
+                                  {task.embassadors
+                                    ? `${task.embassadors.first_name} ${task.embassadors.last_name}`
+                                    : 'Embajador no encontrado'}
                                 </h4>
                                 <p className="text-sm text-muted-foreground">
                                   @{task.embassadors?.instagram_user || 'usuario_no_encontrado'}
@@ -200,7 +221,9 @@ export default function StoriesManagement() {
                                 <span className="mr-4">Hashtag: {task.expected_hashtag}</span>
                               )}
                               {task.upload_time && (
-                                <span>Subida: {new Date(task.upload_time).toLocaleDateString()}</span>
+                                <span>
+                                  Subida: {new Date(task.upload_time).toLocaleDateString()}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -260,10 +283,10 @@ export default function StoriesManagement() {
       </div>
 
       <CreateTaskModal
-        ambassadors={ambassadors.map(amb => ({
+        ambassadors={ambassadors.map((amb) => ({
           id: amb.id,
           name: `${amb.first_name} ${amb.last_name}`,
-          instagram_user: amb.instagram_user
+          instagram_user: amb.instagram_user,
         }))}
         events={events}
       />

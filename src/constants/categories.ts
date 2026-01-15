@@ -12,4 +12,4 @@ export const AMBASSADOR_CATEGORY = {
   DIAMOND: 'diamond',
 } as const;
 
-export type AmbassadorCategory = typeof AMBASSADOR_CATEGORY[keyof typeof AMBASSADOR_CATEGORY];
+export type AmbassadorCategory = (typeof AMBASSADOR_CATEGORY)[keyof typeof AMBASSADOR_CATEGORY];

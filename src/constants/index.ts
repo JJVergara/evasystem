@@ -16,10 +16,7 @@ export {
   type RequestStatus,
 } from './ambassadorStatus';
 
-export {
-  AMBASSADOR_CATEGORY,
-  type AmbassadorCategory,
-} from './categories';
+export { AMBASSADOR_CATEGORY, type AmbassadorCategory } from './categories';
 
 export {
   FIESTA_STATUS,

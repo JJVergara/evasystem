@@ -1,46 +1,52 @@
-import { useState, useRef } from "react";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, Download, FileSpreadsheet, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useState, useRef } from 'react';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Upload, Download, FileSpreadsheet, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
 interface ImportExportRealProps {}
 
 export default function ImportExportReal({}: ImportExportRealProps) {
   const { organization } = useCurrentOrganization();
-  const [activeTab, setActiveTab] = useState("import");
+  const [activeTab, setActiveTab] = useState('import');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [exportConfig, setExportConfig] = useState({
-    entity: "ambassadors",
-    format: "excel",
-    fields: [] as string[]
+    entity: 'ambassadors',
+    format: 'excel',
+    fields: [] as string[],
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportFields = {
     ambassadors: [
-      { key: "first_name", label: "Nombre" },
-      { key: "last_name", label: "Apellido" },
-      { key: "email", label: "Email" },
-      { key: "instagram_user", label: "Usuario Instagram" },
-      { key: "status", label: "Estado" }
+      { key: 'first_name', label: 'Nombre' },
+      { key: 'last_name', label: 'Apellido' },
+      { key: 'email', label: 'Email' },
+      { key: 'instagram_user', label: 'Usuario Instagram' },
+      { key: 'status', label: 'Estado' },
     ],
     events: [
-      { key: "name", label: "Nombre" },
-      { key: "description", label: "Descripción" },
-      { key: "event_date", label: "Fecha" },
-      { key: "location", label: "Ubicación" },
-      { key: "active", label: "Activo" }
-    ]
+      { key: 'name', label: 'Nombre' },
+      { key: 'description', label: 'Descripción' },
+      { key: 'event_date', label: 'Fecha' },
+      { key: 'location', label: 'Ubicación' },
+      { key: 'active', label: 'Activo' },
+    ],
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +66,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       setIsProcessing(true);
 
       // Simulamos el proceso de importación
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuario no autenticado');
@@ -91,7 +97,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       if (!user.user) throw new Error('Usuario no autenticado');
 
       // Simulamos exportación sin consultas complejas de Supabase por ahora
-      const data: any[] = [];
+      const data: Record<string, unknown>[] = [];
 
       if (exportConfig.entity === 'ambassadors') {
         // Datos simulados para evitar tipos complejos de Supabase
@@ -101,7 +107,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
           last_name: 'Pérez',
           email: 'juan@ejemplo.com',
           instagram_user: 'juan_p',
-          status: 'active'
+          status: 'active',
         });
       } else if (exportConfig.entity === 'events') {
         data.push({
@@ -110,7 +116,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
           description: 'Descripción del evento',
           event_date: '2024-12-01',
           location: 'Santiago',
-          active: true
+          active: true,
         });
       } else {
         throw new Error('Tipo de entidad no soportado');
@@ -138,11 +144,9 @@ export default function ImportExportReal({}: ImportExportRealProps) {
   };
 
   const handleFieldToggle = (field: string, checked: boolean) => {
-    setExportConfig(prev => ({
+    setExportConfig((prev) => ({
       ...prev,
-      fields: checked 
-        ? [...prev.fields, field]
-        : prev.fields.filter(f => f !== field)
+      fields: checked ? [...prev.fields, field] : prev.fields.filter((f) => f !== field),
     }));
   };
 
@@ -150,16 +154,16 @@ export default function ImportExportReal({}: ImportExportRealProps) {
     // Crear plantilla de ejemplo para embajadores
     const template = [
       {
-        first_name: "María",
-        last_name: "González",
-        email: "maria@ejemplo.com",
-        instagram_user: "maria_g"
-      }
+        first_name: 'María',
+        last_name: 'González',
+        email: 'maria@ejemplo.com',
+        instagram_user: 'maria_g',
+      },
     ];
 
     const csv = [
       Object.keys(template[0]).join(','),
-      ...template.map(row => Object.values(row).join(','))
+      ...template.map((row) => Object.values(row).join(',')),
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -197,7 +201,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
               <Upload className="w-5 h-5" />
               <h4 className="font-semibold">Importar Embajadores</h4>
             </div>
-            
+
             <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-white/20">
               <input
                 ref={fileInputRef}
@@ -206,7 +210,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              
+
               {importFile ? (
                 <div className="space-y-2">
                   <FileSpreadsheet className="w-12 h-12 text-primary mx-auto" />
@@ -215,10 +219,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                     {(importFile.size / 1024).toFixed(1)} KB
                   </p>
                   <div className="flex gap-2 justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                       Cambiar archivo
                     </Button>
                     <Button onClick={processImport} disabled={isProcessing}>
@@ -233,9 +234,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                   <p className="text-sm text-muted-foreground">
                     Soporta archivos Excel (.xlsx, .xls) y CSV
                   </p>
-                  <Button onClick={() => fileInputRef.current?.click()}>
-                    Seleccionar archivo
-                  </Button>
+                  <Button onClick={() => fileInputRef.current?.click()}>Seleccionar archivo</Button>
                 </div>
               )}
             </div>
@@ -260,14 +259,16 @@ export default function ImportExportReal({}: ImportExportRealProps) {
               <Download className="w-5 h-5" />
               <h4 className="font-semibold">Configurar Exportación</h4>
             </div>
-            
+
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de datos</Label>
-                  <Select 
-                    value={exportConfig.entity} 
-                    onValueChange={(value) => setExportConfig(prev => ({ ...prev, entity: value, fields: [] }))}
+                  <Select
+                    value={exportConfig.entity}
+                    onValueChange={(value) =>
+                      setExportConfig((prev) => ({ ...prev, entity: value, fields: [] }))
+                    }
                   >
                     <SelectTrigger className="bg-white/50">
                       <SelectValue />
@@ -281,9 +282,11 @@ export default function ImportExportReal({}: ImportExportRealProps) {
 
                 <div>
                   <Label>Formato</Label>
-                  <Select 
-                    value={exportConfig.format} 
-                    onValueChange={(value) => setExportConfig(prev => ({ ...prev, format: value }))}
+                  <Select
+                    value={exportConfig.format}
+                    onValueChange={(value) =>
+                      setExportConfig((prev) => ({ ...prev, format: value }))
+                    }
                   >
                     <SelectTrigger className="bg-white/50">
                       <SelectValue />
@@ -305,7 +308,9 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                       <Checkbox
                         id={field.key}
                         checked={exportConfig.fields.includes(field.key)}
-                        onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleFieldToggle(field.key, checked as boolean)
+                        }
                       />
                       <Label htmlFor={field.key} className="text-sm font-normal">
                         {field.label}

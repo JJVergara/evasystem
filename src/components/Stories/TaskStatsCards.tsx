@@ -1,6 +1,5 @@
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Clock, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { Card, CardContent } from '@/components/ui/card';
+import { Clock, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 
 interface TaskStatsCardsProps {
   stats: {
@@ -25,7 +24,7 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
@@ -37,7 +36,7 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
@@ -49,7 +48,7 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">

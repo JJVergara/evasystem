@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Webhook, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 import { toast } from 'sonner';
@@ -12,7 +12,9 @@ export function N8nConfigurationSection() {
   const { settings, updateIntegrationSettings, saving } = useOrganizationSettings();
   const [n8nUrl, setN8nUrl] = useState('');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'success' | 'error'>('unknown');
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'success' | 'error'>(
+    'unknown'
+  );
 
   useEffect(() => {
     if (settings.integration_settings.n8n_webhook_url) {
@@ -23,9 +25,11 @@ export function N8nConfigurationSection() {
   const validateN8nUrl = (url: string): boolean => {
     try {
       const parsedUrl = new URL(url);
-      return parsedUrl.protocol === 'https:' && 
-             (parsedUrl.hostname.includes('n8n.cloud') || 
-              parsedUrl.hostname.includes('rquevedos.app.n8n.cloud'));
+      return (
+        parsedUrl.protocol === 'https:' &&
+        (parsedUrl.hostname.includes('n8n.cloud') ||
+          parsedUrl.hostname.includes('rquevedos.app.n8n.cloud'))
+      );
     } catch {
       return false;
     }
@@ -48,7 +52,7 @@ export function N8nConfigurationSection() {
       const testPayload = {
         test: true,
         message: 'Health check from EVA System',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       const response = await fetch(`${n8nUrl}/webhook/health-check`, {
@@ -87,7 +91,7 @@ export function N8nConfigurationSection() {
 
     try {
       await updateIntegrationSettings({
-        n8n_webhook_url: n8nUrl
+        n8n_webhook_url: n8nUrl,
       });
       toast.success('Configuración guardada exitosamente');
     } catch (error) {
@@ -99,10 +103,14 @@ export function N8nConfigurationSection() {
     if (!settings.integration_settings.n8n_webhook_url) {
       return <Badge variant="secondary">No Configurado</Badge>;
     }
-    
+
     switch (connectionStatus) {
       case 'success':
-        return <Badge variant="default" className="bg-green-500">Conectado</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Conectado
+          </Badge>
+        );
       case 'error':
         return <Badge variant="destructive">Error</Badge>;
       default:
@@ -114,7 +122,7 @@ export function N8nConfigurationSection() {
     if (!settings.integration_settings.n8n_webhook_url) {
       return <Settings className="w-5 h-5 text-muted-foreground" />;
     }
-    
+
     switch (connectionStatus) {
       case 'success':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -157,14 +165,14 @@ export function N8nConfigurationSection() {
         </div>
 
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={testConnection}
             disabled={isTestingConnection || !n8nUrl}
           >
             {isTestingConnection ? 'Probando...' : 'Probar Conexión'}
           </Button>
-          <Button 
+          <Button
             onClick={saveConfiguration}
             disabled={saving || !n8nUrl || n8nUrl === settings.integration_settings.n8n_webhook_url}
           >
@@ -176,16 +184,22 @@ export function N8nConfigurationSection() {
           <div className="p-4 border rounded-lg bg-muted/50">
             <h4 className="font-medium mb-2">Webhooks Configurados</h4>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <div>• {settings.integration_settings.n8n_webhook_url}/webhook/auth-user-registration</div>
+              <div>
+                • {settings.integration_settings.n8n_webhook_url}/webhook/auth-user-registration
+              </div>
               <div>• {settings.integration_settings.n8n_webhook_url}/webhook/event-management</div>
               <div>• {settings.integration_settings.n8n_webhook_url}/webhook/crear-embajador</div>
-              <div>• {settings.integration_settings.n8n_webhook_url}/webhook/ambassador-management</div>
+              <div>
+                • {settings.integration_settings.n8n_webhook_url}/webhook/ambassador-management
+              </div>
             </div>
           </div>
         )}
 
         <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950">
-          <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-200">Información Importante</h4>
+          <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-200">
+            Información Importante
+          </h4>
           <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>• Todas las llamadas a n8n pasan por el proxy seguro</li>
             <li>• Se incluye contexto de organización y usuario automáticamente</li>

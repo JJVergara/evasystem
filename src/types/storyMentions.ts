@@ -1,4 +1,3 @@
-
 export interface StoryMention {
   id: string;
   instagram_username: string;

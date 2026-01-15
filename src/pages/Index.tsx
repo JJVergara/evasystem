@@ -1,5 +1,5 @@
-import { EVABrandedDashboard } from "@/components/Dashboard/EVABrandedDashboard";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { EVABrandedDashboard } from '@/components/Dashboard/EVABrandedDashboard';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
 export default function Index() {
   const { loading: orgLoading } = useCurrentOrganization();

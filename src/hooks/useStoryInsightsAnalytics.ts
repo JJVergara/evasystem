@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentOrganization } from './useCurrentOrganization';
 
 // Database row type (not in generated Supabase types yet)
 interface StoryInsightsSnapshotRow {
@@ -81,30 +81,38 @@ export interface StoryInsightsData {
 
 function getPeriodDays(period: string): number {
   switch (period) {
-    case "24h": return 1;
-    case "7d": return 7;
-    case "30d": return 30;
-    case "90d": return 90;
-    default: return 7;
+    case '24h':
+      return 1;
+    case '7d':
+      return 7;
+    case '30d':
+      return 30;
+    case '90d':
+      return 90;
+    default:
+      return 7;
   }
 }
 
-async function fetchStoryInsightsData(organizationId: string, selectedPeriod: string): Promise<StoryInsightsData> {
+async function fetchStoryInsightsData(
+  organizationId: string,
+  selectedPeriod: string
+): Promise<StoryInsightsData> {
   const days = getPeriodDays(selectedPeriod);
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
   // Fetch all snapshots for the period
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: snapshots, error: snapshotsError } = await (supabase as any)
-    .from("story_insights_snapshots")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .gte("snapshot_at", startDate.toISOString())
-    .order("snapshot_at", { ascending: false }) as {
-      data: StoryInsightsSnapshotRow[] | null;
-      error: { message: string } | null
-    };
+  const { data: snapshots, error: snapshotsError } = (await (supabase as any)
+    .from('story_insights_snapshots')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .gte('snapshot_at', startDate.toISOString())
+    .order('snapshot_at', { ascending: false })) as {
+    data: StoryInsightsSnapshotRow[] | null;
+    error: { message: string } | null;
+  };
 
   if (snapshotsError) {
     throw new Error(snapshotsError.message);
@@ -129,25 +137,34 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
     total_interactions: latestSnapshots.reduce((sum, s) => sum + (s.total_interactions || 0), 0),
     total_shares: latestSnapshots.reduce((sum, s) => sum + (s.shares || 0), 0),
     total_replies: latestSnapshots.reduce((sum, s) => sum + (s.replies || 0), 0),
-    avg_reach_per_story: latestSnapshots.length > 0
-      ? Math.round(latestSnapshots.reduce((sum, s) => sum + (s.reach || 0), 0) / latestSnapshots.length)
-      : 0,
-    avg_views_per_story: latestSnapshots.length > 0
-      ? Math.round(latestSnapshots.reduce((sum, s) => sum + (s.views || 0), 0) / latestSnapshots.length)
-      : 0,
+    avg_reach_per_story:
+      latestSnapshots.length > 0
+        ? Math.round(
+            latestSnapshots.reduce((sum, s) => sum + (s.reach || 0), 0) / latestSnapshots.length
+          )
+        : 0,
+    avg_views_per_story:
+      latestSnapshots.length > 0
+        ? Math.round(
+            latestSnapshots.reduce((sum, s) => sum + (s.views || 0), 0) / latestSnapshots.length
+          )
+        : 0,
   };
 
   // Group by date for daily metrics
-  const dailyMap = new Map<string, {
-    stories: Set<string>;
-    reach: number;
-    views: number;
-    profile_visits: number;
-    interactions: number;
-  }>();
+  const dailyMap = new Map<
+    string,
+    {
+      stories: Set<string>;
+      reach: number;
+      views: number;
+      profile_visits: number;
+      interactions: number;
+    }
+  >();
 
   for (const snapshot of snapshots || []) {
-    const date = new Date(snapshot.snapshot_at).toISOString().split("T")[0];
+    const date = new Date(snapshot.snapshot_at).toISOString().split('T')[0];
     if (!dailyMap.has(date)) {
       dailyMap.set(date, {
         stories: new Set(),
@@ -172,7 +189,7 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = date.toISOString().split('T')[0];
     const dayData = dailyMap.get(dateStr);
 
     daily_metrics.push({
@@ -182,24 +199,24 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
       total_views: dayData?.views || 0,
       total_profile_visits: dayData?.profile_visits || 0,
       total_interactions: dayData?.interactions || 0,
-      avg_reach: dayData && dayData.stories.size > 0
-        ? Math.round(dayData.reach / dayData.stories.size)
-        : 0,
+      avg_reach:
+        dayData && dayData.stories.size > 0 ? Math.round(dayData.reach / dayData.stories.size) : 0,
     });
   }
 
   // Group by hour for optimal posting time analysis
-  const hourMap = new Map<number, {
-    reach: number;
-    views: number;
-    stories: StoryByHour[];
-  }>();
+  const hourMap = new Map<
+    number,
+    {
+      reach: number;
+      views: number;
+      stories: StoryByHour[];
+    }
+  >();
 
   for (const snapshot of latestSnapshots) {
     const snapshotDate = new Date(snapshot.snapshot_at);
-    const storyAgeMs = snapshot.story_age_hours
-      ? snapshot.story_age_hours * 60 * 60 * 1000
-      : 0;
+    const storyAgeMs = snapshot.story_age_hours ? snapshot.story_age_hours * 60 * 60 * 1000 : 0;
     const storyCreatedAt = new Date(snapshotDate.getTime() - storyAgeMs);
     const hour = storyCreatedAt.getHours();
 
@@ -228,8 +245,8 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
   const metrics_by_hour: HourlyMetrics[] = Array.from({ length: 24 }, (_, hour) => {
     const data = hourMap.get(hour) || { reach: 0, views: 0, stories: [] };
     const count = data.stories.length;
-    const sortedStories = data.stories.sort((a, b) =>
-      a.created_at.getTime() - b.created_at.getTime()
+    const sortedStories = data.stories.sort(
+      (a, b) => a.created_at.getTime() - b.created_at.getTime()
     );
 
     const metrics: HourlyMetrics = {
@@ -259,7 +276,7 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
       return bCreatedAt - aCreatedAt;
     })
     .slice(0, 10)
-    .map(s => ({
+    .map((s) => ({
       id: s.id,
       instagram_story_id: s.instagram_story_id,
       snapshot_at: s.snapshot_at,
@@ -282,13 +299,17 @@ async function fetchStoryInsightsData(organizationId: string, selectedPeriod: st
   };
 }
 
-export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
+export function useStoryInsightsAnalytics(selectedPeriod: string = '7d') {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();
 
   const queryKey = ['storyInsightsAnalytics', organization?.id, selectedPeriod];
 
-  const { data, isLoading: insightsLoading, error } = useQuery({
+  const {
+    data,
+    isLoading: insightsLoading,
+    error,
+  } = useQuery({
     queryKey,
     queryFn: () => fetchStoryInsightsData(organization!.id, selectedPeriod),
     enabled: !!organization?.id,
@@ -305,7 +326,11 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = "7d") {
   return {
     data: data || null,
     loading,
-    error: error ? (error instanceof Error ? error.message : "Error al cargar insights de Stories") : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : 'Error al cargar insights de Stories'
+      : null,
     refresh,
   };
 }

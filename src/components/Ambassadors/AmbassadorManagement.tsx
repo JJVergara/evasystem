@@ -1,8 +1,8 @@
-import { EnhancedAmbassadorDashboard } from "./EnhancedAmbassadorDashboard";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { useAmbassadors } from "@/hooks/useAmbassadors";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EnhancedAmbassadorDashboard } from './EnhancedAmbassadorDashboard';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { useAmbassadors } from '@/hooks/useAmbassadors';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AmbassadorManagement() {
   const { ambassadors, loading, refreshAmbassadors } = useAmbassadors();
@@ -39,10 +39,7 @@ export default function AmbassadorManagement() {
         title="Embajadores"
         description="Gestiona y monitorea el rendimiento de tus embajadores"
       />
-      <EnhancedAmbassadorDashboard
-        ambassadors={ambassadors}
-        onRefresh={refreshAmbassadors}
-      />
+      <EnhancedAmbassadorDashboard ambassadors={ambassadors} onRefresh={refreshAmbassadors} />
     </div>
   );
 }

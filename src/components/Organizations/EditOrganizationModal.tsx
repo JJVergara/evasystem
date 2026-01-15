@@ -1,14 +1,13 @@
-
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { InstagramConnect } from "@/components/Instagram/InstagramConnect";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Building2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { InstagramConnect } from '@/components/Instagram/InstagramConnect';
 
 interface EditOrganizationModalProps {
   isOpen: boolean;
@@ -33,8 +32,8 @@ export default function EditOrganizationModal({
   organization,
 }: EditOrganizationModalProps) {
   const [formData, setFormData] = useState<OrganizationFormData>({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +41,7 @@ export default function EditOrganizationModal({
     if (organization && isOpen) {
       setFormData({
         name: organization.name,
-        description: organization.description || "",
+        description: organization.description || '',
       });
     }
   }, [organization, isOpen]);
@@ -50,7 +49,7 @@ export default function EditOrganizationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!organization) return;
-    
+
     setIsLoading(true);
 
     try {
@@ -92,8 +91,8 @@ export default function EditOrganizationModal({
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      description: "",
+      name: '',
+      description: '',
     });
   };
 
@@ -158,12 +157,7 @@ export default function EditOrganizationModal({
 
           {/* Botones */}
           <div className="flex justify-end gap-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose} 
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>

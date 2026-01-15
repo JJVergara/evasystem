@@ -1,15 +1,24 @@
-
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MessageCircle, ExternalLink, Instagram, Calendar, User, Hash, AlertTriangle, CheckCircle, Clock } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { es } from "date-fns/locale";
-import { useToast } from "@/hooks/use-toast";
-import { StoryMention } from "@/types/storyMentions";
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  MessageCircle,
+  ExternalLink,
+  Instagram,
+  Calendar,
+  User,
+  Hash,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+} from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
+import { StoryMention } from '@/types/storyMentions';
 
 interface StoryMentionDetailsProps {
   mention: StoryMention | null;
@@ -28,9 +37,9 @@ export function StoryMentionDetails({
   onMarkAsProcessed,
   onFlagAsEarlyDelete,
   onReply,
-  onCreateLead
+  onCreateLead,
 }: StoryMentionDetailsProps) {
-  const [replyMessage, setReplyMessage] = useState("");
+  const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
 
@@ -40,16 +49,16 @@ export function StoryMentionDetails({
     try {
       setSending(true);
       await onReply(mention, replyMessage.trim());
-      setReplyMessage("");
+      setReplyMessage('');
       toast({
-        title: "Respuesta enviada",
-        description: "Tu mensaje ha sido enviado correctamente"
+        title: 'Respuesta enviada',
+        description: 'Tu mensaje ha sido enviado correctamente',
       });
     } catch (error) {
       toast({
-        title: "Error al enviar",
-        description: "No se pudo enviar la respuesta",
-        variant: "destructive"
+        title: 'Error al enviar',
+        description: 'No se pudo enviar la respuesta',
+        variant: 'destructive',
       });
     } finally {
       setSending(false);
@@ -62,7 +71,11 @@ export function StoryMentionDetails({
     } else if (mention?.story_url) {
       window.open(mention.story_url, '_blank', 'noopener,noreferrer');
     } else if (mention?.instagram_username) {
-      window.open(`https://instagram.com/${mention.instagram_username}`, '_blank', 'noopener,noreferrer');
+      window.open(
+        `https://instagram.com/${mention.instagram_username}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
     }
   };
 
@@ -103,18 +116,18 @@ export function StoryMentionDetails({
 
   const getTimeRemaining = () => {
     if (!mention?.expires_at) return null;
-    
+
     const now = new Date();
     const expires = new Date(mention.expires_at);
-    
+
     if (now > expires) {
-      return "Historia expirada";
+      return 'Historia expirada';
     }
-    
+
     const diffMs = expires.getTime() - now.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffHours > 0) {
       return `${diffHours}h ${diffMinutes}m restantes`;
     } else {
@@ -143,9 +156,7 @@ export function StoryMentionDetails({
             <div className="flex items-center gap-2">
               {getStateBadge(mention.state)}
               {mention.ambassador_name && (
-                <Badge variant="outline">
-                  Embajador: {mention.ambassador_name}
-                </Badge>
+                <Badge variant="outline">Embajador: {mention.ambassador_name}</Badge>
               )}
             </div>
             <span className="text-sm text-muted-foreground flex items-center gap-1">
@@ -176,7 +187,9 @@ export function StoryMentionDetails({
             {mention.instagram_user_id && (
               <div className="flex items-center gap-2">
                 <Hash className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">ID: {mention.instagram_user_id}</span>
+                <span className="text-sm text-muted-foreground">
+                  ID: {mention.instagram_user_id}
+                </span>
               </div>
             )}
           </div>
@@ -184,20 +197,14 @@ export function StoryMentionDetails({
           {/* Content */}
           <div>
             <h3 className="font-semibold mb-2">Contenido del mensaje:</h3>
-            <p className="text-muted-foreground p-3 bg-muted/30 rounded-lg">
-              {mention.content}
-            </p>
+            <p className="text-muted-foreground p-3 bg-muted/30 rounded-lg">{mention.content}</p>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={handleViewStory}
-              className="flex items-center gap-2"
-            >
+            <Button variant="outline" onClick={handleViewStory} className="flex items-center gap-2">
               <ExternalLink className="w-4 h-4" />
-              {mention.deep_link ? "Ver historia" : "Ver perfil"}
+              {mention.deep_link ? 'Ver historia' : 'Ver perfil'}
             </Button>
 
             {mention.inbox_link && (
@@ -212,23 +219,17 @@ export function StoryMentionDetails({
             )}
 
             {!mention.ambassador_name && (
-              <Button
-                variant="outline"
-                onClick={() => onCreateLead(mention)}
-              >
+              <Button variant="outline" onClick={() => onCreateLead(mention)}>
                 Crear lead en CRM
               </Button>
             )}
 
             {isNew && (
               <>
-                <Button
-                  variant="secondary"
-                  onClick={() => onMarkAsProcessed(mention.id)}
-                >
+                <Button variant="secondary" onClick={() => onMarkAsProcessed(mention.id)}>
                   Marcar como procesada
                 </Button>
-                
+
                 <Button
                   variant="destructive"
                   onClick={() => onFlagAsEarlyDelete(mention.id)}
@@ -249,7 +250,7 @@ export function StoryMentionDetails({
               <MessageCircle className="w-4 h-4" />
               Responder por mensaje directo
             </h3>
-            
+
             <Textarea
               placeholder="Escribe tu respuesta aquí..."
               value={replyMessage}
@@ -257,16 +258,13 @@ export function StoryMentionDetails({
               rows={4}
               className="resize-none"
             />
-            
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button 
-                onClick={handleSendReply}
-                disabled={!replyMessage.trim() || sending}
-              >
-                {sending ? "Enviando..." : "Enviar respuesta"}
+              <Button onClick={handleSendReply} disabled={!replyMessage.trim() || sending}>
+                {sending ? 'Enviando...' : 'Enviar respuesta'}
               </Button>
             </div>
           </div>
@@ -275,8 +273,8 @@ export function StoryMentionDetails({
           {mention.deep_link && !mention.deep_link.includes('instagram.com') && (
             <div className="p-3 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                <strong>Nota:</strong> El enlace directo a la historia puede no funcionar en todos los navegadores. 
-                Si no funciona, se abrirá el perfil del usuario.
+                <strong>Nota:</strong> El enlace directo a la historia puede no funcionar en todos
+                los navegadores. Si no funciona, se abrirá el perfil del usuario.
               </p>
             </div>
           )}

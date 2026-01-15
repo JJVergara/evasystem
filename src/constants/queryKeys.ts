@@ -20,7 +20,8 @@ export const QUERY_KEYS = {
   currentOrganization: (userId: string) => ['currentOrganization', userId] as const,
   organizations: (userId: string) => ['organizations', userId] as const,
   organizationMembers: (organizationId: string) => ['organizationMembers', organizationId] as const,
-  organizationSettings: (organizationId: string) => ['organizationSettings', organizationId] as const,
+  organizationSettings: (organizationId: string) =>
+    ['organizationSettings', organizationId] as const,
 
   // Event/Fiesta-related queries
   events: (organizationId: string) => ['events', organizationId] as const,
@@ -30,7 +31,8 @@ export const QUERY_KEYS = {
   fiestaMetrics: (fiestaId: string) => ['fiestaMetrics', fiestaId] as const,
 
   // Instagram-related queries
-  instagramTokenStatus: (organizationId: string) => ['instagramTokenStatus', organizationId] as const,
+  instagramTokenStatus: (organizationId: string) =>
+    ['instagramTokenStatus', organizationId] as const,
   instagramConnection: (organizationId: string) => ['instagramConnection', organizationId] as const,
   instagramProfile: (organizationId: string) => ['instagramProfile', organizationId] as const,
 
@@ -58,4 +60,4 @@ export const QUERY_KEYS = {
 /**
  * Type helper for query key tuples
  */
-export type QueryKey = ReturnType<typeof QUERY_KEYS[keyof typeof QUERY_KEYS]>;
+export type QueryKey = ReturnType<(typeof QUERY_KEYS)[keyof typeof QUERY_KEYS]>;

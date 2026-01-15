@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { useMemo, useRef, useEffect } from "react";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { useInstagramConnection } from "./useInstagramConnection";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useMemo, useRef, useEffect } from 'react';
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { useInstagramConnection } from './useInstagramConnection';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface SystemCheck {
   name: string;
@@ -12,7 +12,12 @@ export interface SystemCheck {
 }
 
 async function fetchSystemChecks(
-  organization: { id: string; name: string; instagram_username: string | null; last_instagram_sync: string | null } | null,
+  organization: {
+    id: string;
+    name: string;
+    instagram_username: string | null;
+    last_instagram_sync: string | null;
+  } | null,
   isConnected: boolean,
   isTokenExpired: boolean
 ): Promise<SystemCheck[]> {
@@ -23,32 +28,32 @@ async function fetchSystemChecks(
   try {
     // Check 1: Organization setup
     checks.push({
-      name: "Organización configurada",
+      name: 'Organización configurada',
       status: organization ? 'success' : 'error',
       description: organization
         ? `Organización: ${organization.name}`
-        : "No se encontró organización activa"
+        : 'No se encontró organización activa',
     });
 
     // Check 2: Instagram connection
     checks.push({
-      name: "Conexión de Instagram",
+      name: 'Conexión de Instagram',
       status: isConnected ? 'success' : 'error',
       description: isConnected
         ? `Conectado como @${organization.instagram_username}`
-        : "Instagram no está conectado",
-      action: !isConnected ? "Conectar Instagram" : undefined
+        : 'Instagram no está conectado',
+      action: !isConnected ? 'Conectar Instagram' : undefined,
     });
 
     // Check 3: Token status
     if (isConnected) {
       checks.push({
-        name: "Estado del token",
+        name: 'Estado del token',
         status: isTokenExpired ? 'error' : 'success',
         description: isTokenExpired
-          ? "Token expirado - requiere renovación"
-          : "Token válido y activo",
-        action: isTokenExpired ? "Renovar token" : undefined
+          ? 'Token expirado - requiere renovación'
+          : 'Token válido y activo',
+        action: isTokenExpired ? 'Renovar token' : undefined,
       });
     }
 
@@ -61,30 +66,29 @@ async function fetchSystemChecks(
       .limit(1);
 
     checks.push({
-      name: "Base de datos",
+      name: 'Base de datos',
       status: mentionsError ? 'error' : 'success',
       description: mentionsError
         ? `Error de base de datos: ${mentionsError.message}`
         : socialMentions && socialMentions.length > 0
           ? `Última actividad: ${new Date(socialMentions[0].created_at).toLocaleString('es-ES')}`
-          : "Base de datos operativa - sin actividad reciente"
+          : 'Base de datos operativa - sin actividad reciente',
     });
 
     // Check 5: Credentials
-    const { data: credsStatus } = await supabase
-      .rpc('get_org_meta_credentials_status', {
-        p_organization_id: organization.id
-      });
+    const { data: credsStatus } = await supabase.rpc('get_org_meta_credentials_status', {
+      p_organization_id: organization.id,
+    });
 
     const hasCredentials = credsStatus && credsStatus.length > 0 && credsStatus[0].has_credentials;
 
     checks.push({
-      name: "Credenciales de Meta App",
+      name: 'Credenciales de Meta App',
       status: hasCredentials ? 'success' : 'warning',
       description: hasCredentials
-        ? "Credenciales configuradas correctamente"
-        : "Credenciales no configuradas o faltantes",
-      action: !hasCredentials ? "Configurar credenciales" : undefined
+        ? 'Credenciales configuradas correctamente'
+        : 'Credenciales no configuradas o faltantes',
+      action: !hasCredentials ? 'Configurar credenciales' : undefined,
     });
 
     // Check 6: Recent sync
@@ -94,20 +98,19 @@ async function fetchSystemChecks(
       : false;
 
     checks.push({
-      name: "Sincronización reciente",
+      name: 'Sincronización reciente',
       status: syncStatus ? 'success' : 'warning',
       description: lastSync
         ? `Última sincronización: ${new Date(lastSync).toLocaleString('es-ES')}`
-        : "No se ha sincronizado nunca",
-      action: "Sincronizar ahora"
+        : 'No se ha sincronizado nunca',
+      action: 'Sincronizar ahora',
     });
-
   } catch (error) {
     console.error('Error running system checks:', error);
     checks.push({
-      name: "Error del sistema",
+      name: 'Error del sistema',
       status: 'error',
-      description: `Error al ejecutar diagnósticos: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      description: `Error al ejecutar diagnósticos: ${error instanceof Error ? error.message : 'Error desconocido'}`,
     });
   }
 
@@ -126,23 +129,29 @@ export function useSystemChecks() {
   }, [isConnected, isTokenExpired]);
 
   // Stable queryKey - only changes when organization changes
-  const queryKey = useMemo(
-    () => ['systemChecks', organization?.id],
-    [organization?.id]
-  );
+  const queryKey = useMemo(() => ['systemChecks', organization?.id], [organization?.id]);
 
-  const { data: systemChecks = [], isLoading, isFetching, error, refetch } = useQuery({
+  const {
+    data: systemChecks = [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
     queryKey,
-    queryFn: () => fetchSystemChecks(
-      organization ? {
-        id: organization.id,
-        name: organization.name,
-        instagram_username: organization.instagram_username,
-        last_instagram_sync: organization.last_instagram_sync
-      } : null,
-      connectionRef.current.isConnected,
-      connectionRef.current.isTokenExpired
-    ),
+    queryFn: () =>
+      fetchSystemChecks(
+        organization
+          ? {
+              id: organization.id,
+              name: organization.name,
+              instagram_username: organization.instagram_username,
+              last_instagram_sync: organization.last_instagram_sync,
+            }
+          : null,
+        connectionRef.current.isConnected,
+        connectionRef.current.isTokenExpired
+      ),
     enabled: !!organization,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes

@@ -1,12 +1,11 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Instagram, Calendar, Users, Settings, CheckCircle, AlertCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { SimpleDashboardContent } from "./SimpleDashboardContent";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Instagram, Calendar, Users, Settings, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { SimpleDashboardContent } from './SimpleDashboardContent';
 
 export function EVABrandedDashboard() {
   const navigate = useNavigate();
@@ -14,7 +13,7 @@ export function EVABrandedDashboard() {
   const { organization } = useCurrentOrganization();
 
   // Filtrar pasos recomendados que no están completados
-  const pendingRecommendedSteps = steps.filter(step => !step.required && !step.completed);
+  const pendingRecommendedSteps = steps.filter((step) => !step.required && !step.completed);
 
   return (
     <div className="space-y-6">
@@ -29,10 +28,14 @@ export function EVABrandedDashboard() {
                   Completa la configuración de tu sistema
                 </CardTitle>
                 <CardDescription className="text-blue-600 dark:text-blue-500">
-                  Tienes {pendingRecommendedSteps.length} paso{pendingRecommendedSteps.length !== 1 ? 's' : ''} recomendado{pendingRecommendedSteps.length !== 1 ? 's' : ''} pendiente{pendingRecommendedSteps.length !== 1 ? 's' : ''} para aprovechar al máximo EVA System
+                  Tienes {pendingRecommendedSteps.length} paso
+                  {pendingRecommendedSteps.length !== 1 ? 's' : ''} recomendado
+                  {pendingRecommendedSteps.length !== 1 ? 's' : ''} pendiente
+                  {pendingRecommendedSteps.length !== 1 ? 's' : ''} para aprovechar al máximo EVA
+                  System
                 </CardDescription>
               </div>
-              <Button 
+              <Button
                 onClick={() => navigate('/onboarding')}
                 className="gap-2 w-full sm:w-auto text-sm sm:text-base shrink-0"
               >
@@ -48,22 +51,22 @@ export function EVABrandedDashboard() {
                 const getStepInfo = (stepId: string) => {
                   switch (stepId) {
                     case 'instagram':
-                      return { 
-                        icon: Instagram, 
+                      return {
+                        icon: Instagram,
                         label: 'Conectar Instagram',
-                        action: () => navigate('/settings')
+                        action: () => navigate('/settings'),
                       };
                     case 'fiesta':
-                      return { 
-                        icon: Calendar, 
+                      return {
+                        icon: Calendar,
                         label: 'Crear Primera Fiesta',
-                        action: () => navigate('/events')
+                        action: () => navigate('/events'),
                       };
                     case 'ambassadors':
-                      return { 
-                        icon: Users, 
+                      return {
+                        icon: Users,
                         label: 'Añadir Embajadores',
-                        action: () => navigate('/ambassadors')
+                        action: () => navigate('/ambassadors'),
                       };
                     default:
                       return { icon: AlertCircle, label: step.title, action: () => {} };
@@ -98,16 +101,14 @@ export function EVABrandedDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">Progreso de Configuración</CardTitle>
-                <CardDescription>
-                  {Math.round(overallProgress)}% completado
-                </CardDescription>
+                <CardDescription>{Math.round(overallProgress)}% completado</CardDescription>
               </div>
-              <Badge variant={overallProgress === 100 ? "default" : "secondary"}>
+              <Badge variant={overallProgress === 100 ? 'default' : 'secondary'}>
                 {Math.round(overallProgress)}%
               </Badge>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
-              <div 
+              <div
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${overallProgress}%` }}
               />

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   LayoutDashboard,
   Hash,
@@ -14,35 +14,48 @@ import {
   ChevronRight,
   Download,
   MessageCircle,
-  Activity
-} from "lucide-react";
-import { Instagram } from "lucide-react";
-import { ModernLogo } from "@/components/Logo/ModernLogo";
-import { UserProfileDropdown } from "./UserProfileDropdown";
-import { OrganizationSwitcher } from "@/components/Organizations/OrganizationSwitcher";
-import { useIsMobile } from "@/hooks/use-mobile";
+  Activity,
+} from 'lucide-react';
+import { Instagram } from 'lucide-react';
+import { ModernLogo } from '@/components/Logo/ModernLogo';
+import { UserProfileDropdown } from './UserProfileDropdown';
+import { OrganizationSwitcher } from '@/components/Organizations/OrganizationSwitcher';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navigation = [
-  { name: "dashboard", label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "stories", label: "Historias", href: "/stories", icon: Instagram },
-  { name: "mentions", label: "Menciones", href: "/mentions", icon: Hash },
-  { name: "storyMentions", label: "Menciones Historias", href: "/story-mentions", icon: MessageCircle },
-  { name: "analytics", label: "Analíticas", href: "/analytics", icon: BarChart3 },
-  { name: "events", label: "Fiestas", href: "/events", icon: Calendar },
-  { name: "ambassadors", label: "Embajadores", href: "/ambassadors", icon: Users },
+  { name: 'dashboard', label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'stories', label: 'Historias', href: '/stories', icon: Instagram },
+  { name: 'mentions', label: 'Menciones', href: '/mentions', icon: Hash },
+  {
+    name: 'storyMentions',
+    label: 'Menciones Historias',
+    href: '/story-mentions',
+    icon: MessageCircle,
+  },
+  { name: 'analytics', label: 'Analíticas', href: '/analytics', icon: BarChart3 },
+  { name: 'events', label: 'Fiestas', href: '/events', icon: Calendar },
+  { name: 'ambassadors', label: 'Embajadores', href: '/ambassadors', icon: Users },
 ];
 
 const secondaryNavigation = [
-  { name: "settings", label: "Configuración", href: "/settings", icon: Settings },
-  { name: "importExport", label: "Import/Export", href: "/import-export", icon: Download },
-  { name: "diagnostics", label: "Diagnósticos", href: "/instagram-diagnostics", icon: Activity },
+  { name: 'settings', label: 'Configuración', href: '/settings', icon: Settings },
+  { name: 'importExport', label: 'Import/Export', href: '/import-export', icon: Download },
+  { name: 'diagnostics', label: 'Diagnósticos', href: '/instagram-diagnostics', icon: Activity },
 ];
 
 interface SidebarProps {
   className?: string;
 }
 
-function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapsed?: boolean; onNavigate?: () => void; showHeader?: boolean }) {
+function SidebarContent({
+  collapsed,
+  onNavigate,
+  showHeader = true,
+}: {
+  collapsed?: boolean;
+  onNavigate?: () => void;
+  showHeader?: boolean;
+}) {
   const location = useLocation();
 
   return (
@@ -50,7 +63,7 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
       {/* Header - only show if showHeader is true */}
       {showHeader && (
         <div className="flex h-16 items-center justify-center px-4 border-b shrink-0">
-          <ModernLogo size={collapsed ? "sm" : "md"} />
+          <ModernLogo size={collapsed ? 'sm' : 'md'} />
         </div>
       )}
 
@@ -67,20 +80,20 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
-            
+
             return (
               <Link
                 key={item.name}
                 to={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                   isActive
-                    ? "sidebar-item-active"
-                    : "text-muted-foreground hover:text-foreground sidebar-item-hover"
+                    ? 'sidebar-item-active'
+                    : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
                 )}
               >
-                <Icon className={cn("flex-shrink-0", collapsed ? "w-5 h-5" : "mr-3 w-5 h-5")} />
+                <Icon className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -97,20 +110,20 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
           {secondaryNavigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
-            
+
             return (
               <Link
                 key={item.name}
                 to={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                   isActive
-                    ? "sidebar-item-active"
-                    : "text-muted-foreground hover:text-foreground sidebar-item-hover"
+                    ? 'sidebar-item-active'
+                    : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
                 )}
               >
-                <Icon className={cn("flex-shrink-0", collapsed ? "w-5 h-5" : "mr-3 w-5 h-5")} />
+                <Icon className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -122,14 +135,12 @@ function SidebarContent({ collapsed, onNavigate, showHeader = true }: { collapse
       <div className="p-4 border-t space-y-3 shrink-0">
         {/* User Profile */}
         {!collapsed && <UserProfileDropdown />}
-        
+
         {/* Instagram Status */}
         {!collapsed && (
           <div className="bg-gradient-card rounded-lg p-3 border border-primary/20">
             <div className="text-sm font-medium">Conectado a Instagram</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Token válido hasta: 30 días
-            </div>
+            <div className="text-xs text-muted-foreground mt-1">Token válido hasta: 30 días</div>
             <div className="w-full bg-secondary rounded-full h-2 mt-2">
               <div className="bg-gradient-primary h-2 rounded-full w-4/5" />
             </div>
@@ -211,9 +222,9 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Mobile menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetContent side="left" className="p-0 w-64">
-            <SidebarContent 
-              collapsed={false} 
-              onNavigate={() => setMobileMenuOpen(false)} 
+            <SidebarContent
+              collapsed={false}
+              onNavigate={() => setMobileMenuOpen(false)}
               showHeader={true}
             />
           </SheetContent>
@@ -225,15 +236,15 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0",
-        collapsed ? "w-16" : "w-64",
+        'hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0',
+        collapsed ? 'w-16' : 'w-64',
         className
       )}
     >
       {/* Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b shrink-0">
         <div className="flex items-center justify-center w-full">
-          <ModernLogo size={collapsed ? "sm" : "md"} />
+          <ModernLogo size={collapsed ? 'sm' : 'md'} />
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -242,11 +253,7 @@ export function Sidebar({ className }: SidebarProps) {
             onClick={() => setCollapsed(!collapsed)}
             className="h-8 w-8"
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
       </div>

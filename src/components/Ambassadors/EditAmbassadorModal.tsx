@@ -1,13 +1,19 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { InstagramConnect } from "@/components/Instagram/InstagramConnect";
-import { useAmbassadorInstagramStatus } from "@/hooks/useAmbassadorInstagramStatus";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { InstagramConnect } from '@/components/Instagram/InstagramConnect';
+import { useAmbassadorInstagramStatus } from '@/hooks/useAmbassadorInstagramStatus';
 
 interface Ambassador {
   id: string;
@@ -29,36 +35,36 @@ interface EditAmbassadorModalProps {
   onAmbassadorUpdated: () => void;
 }
 
-export function EditAmbassadorModal({ 
-  isOpen, 
-  onClose, 
-  ambassador, 
-  onAmbassadorUpdated 
+export function EditAmbassadorModal({
+  isOpen,
+  onClose,
+  ambassador,
+  onAmbassadorUpdated,
 }: EditAmbassadorModalProps) {
   const instagramStatus = useAmbassadorInstagramStatus(ambassador?.id ?? null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    instagram_user: "",
-    status: "active",
-    performance_status: "cumple",
-    date_of_birth: "",
-    rut: ""
+    first_name: '',
+    last_name: '',
+    email: '',
+    instagram_user: '',
+    status: 'active',
+    performance_status: 'cumple',
+    date_of_birth: '',
+    rut: '',
   });
 
   useEffect(() => {
     if (ambassador) {
       setFormData({
-        first_name: ambassador.first_name || "",
-        last_name: ambassador.last_name || "",
-        email: ambassador.email || "",
-        instagram_user: ambassador.instagram_user || "",
-        status: ambassador.status || "active",
-        performance_status: ambassador.performance_status || "cumple",
-        date_of_birth: ambassador.date_of_birth || "",
-        rut: ambassador.rut || ""
+        first_name: ambassador.first_name || '',
+        last_name: ambassador.last_name || '',
+        email: ambassador.email || '',
+        instagram_user: ambassador.instagram_user || '',
+        status: ambassador.status || 'active',
+        performance_status: ambassador.performance_status || 'cumple',
+        date_of_birth: ambassador.date_of_birth || '',
+        rut: ambassador.rut || '',
       });
     }
   }, [ambassador]);
@@ -71,15 +77,20 @@ export function EditAmbassadorModal({
       setLoading(true);
 
       // Validate required fields
-      if (!formData.first_name || !formData.last_name || !formData.email || !formData.instagram_user) {
-        toast.error("Por favor completa todos los campos requeridos");
+      if (
+        !formData.first_name ||
+        !formData.last_name ||
+        !formData.email ||
+        !formData.instagram_user
+      ) {
+        toast.error('Por favor completa todos los campos requeridos');
         return;
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error("Por favor ingresa un email válido");
+        toast.error('Por favor ingresa un email válido');
         return;
       }
 
@@ -96,18 +107,18 @@ export function EditAmbassadorModal({
           status: formData.status,
           performance_status: formData.performance_status,
           date_of_birth: formData.date_of_birth || null,
-          rut: formData.rut || null
+          rut: formData.rut || null,
         })
         .eq('id', ambassador.id);
 
       if (error) throw error;
 
-      toast.success("Embajador actualizado exitosamente");
+      toast.success('Embajador actualizado exitosamente');
       onAmbassadorUpdated();
       onClose();
     } catch (error) {
       console.error('Error updating ambassador:', error);
-      toast.error("Error al actualizar embajador");
+      toast.error('Error al actualizar embajador');
     } finally {
       setLoading(false);
     }
@@ -115,7 +126,7 @@ export function EditAmbassadorModal({
 
   const handleInstagramChange = (value: string) => {
     const cleanValue = value.startsWith('@') ? value.slice(1) : value;
-    setFormData(prev => ({ ...prev, instagram_user: cleanValue }));
+    setFormData((prev) => ({ ...prev, instagram_user: cleanValue }));
   };
 
   if (!ambassador) return null;
@@ -134,7 +145,7 @@ export function EditAmbassadorModal({
               <Input
                 id="first_name"
                 value={formData.first_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, first_name: e.target.value }))}
                 placeholder="Nombre"
                 required
               />
@@ -144,7 +155,7 @@ export function EditAmbassadorModal({
               <Input
                 id="last_name"
                 value={formData.last_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, last_name: e.target.value }))}
                 placeholder="Apellido"
                 required
               />
@@ -157,7 +168,7 @@ export function EditAmbassadorModal({
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
               placeholder="correo@ejemplo.com"
               required
             />
@@ -180,7 +191,7 @@ export function EditAmbassadorModal({
               <Input
                 id="rut"
                 value={formData.rut}
-                onChange={(e) => setFormData(prev => ({ ...prev, rut: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, rut: e.target.value }))}
                 placeholder="12.345.678-9"
               />
             </div>
@@ -190,7 +201,9 @@ export function EditAmbassadorModal({
                 id="date_of_birth"
                 type="date"
                 value={formData.date_of_birth}
-                onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, date_of_birth: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -198,7 +211,10 @@ export function EditAmbassadorModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="status">Estado</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -211,7 +227,12 @@ export function EditAmbassadorModal({
             </div>
             <div>
               <Label htmlFor="performance_status">Estado de Performance</Label>
-              <Select value={formData.performance_status} onValueChange={(value) => setFormData(prev => ({ ...prev, performance_status: value }))}>
+              <Select
+                value={formData.performance_status}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, performance_status: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -242,7 +263,7 @@ export function EditAmbassadorModal({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Actualizando..." : "Actualizar Embajador"}
+              {loading ? 'Actualizando...' : 'Actualizar Embajador'}
             </Button>
           </div>
         </form>

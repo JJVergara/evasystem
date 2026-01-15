@@ -1,16 +1,14 @@
-
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Copy, ExternalLink, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, CheckCircle, Copy, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { toast } from 'sonner';
 
 interface MetaAppCredentialsFormProps {
   isOpen: boolean;
@@ -18,21 +16,21 @@ interface MetaAppCredentialsFormProps {
   onCredentialsSaved: () => void;
 }
 
-export function MetaAppCredentialsForm({ 
-  isOpen, 
-  onClose, 
-  onCredentialsSaved 
+export function MetaAppCredentialsForm({
+  isOpen,
+  onClose,
+  onCredentialsSaved,
 }: MetaAppCredentialsFormProps) {
   const { organization } = useCurrentOrganization();
   const [loading, setLoading] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
   const [hasCredentials, setHasCredentials] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
-    metaAppId: "",
-    metaAppSecret: "",
-    webhookVerifyToken: ""
+    metaAppId: '',
+    metaAppSecret: '',
+    webhookVerifyToken: '',
   });
 
   // URLs que el usuario necesita para configurar su app
@@ -50,7 +48,7 @@ export function MetaAppCredentialsForm({
 
     try {
       const { data, error } = await supabase.rpc('get_org_meta_credentials_status', {
-        p_organization_id: organization.id
+        p_organization_id: organization.id,
       });
 
       if (error) {
@@ -72,7 +70,11 @@ export function MetaAppCredentialsForm({
     if (!organization) return;
 
     // Validación básica
-    if (!formData.metaAppId.trim() || !formData.metaAppSecret.trim() || !formData.webhookVerifyToken.trim()) {
+    if (
+      !formData.metaAppId.trim() ||
+      !formData.metaAppSecret.trim() ||
+      !formData.webhookVerifyToken.trim()
+    ) {
       toast.error('Todos los campos son obligatorios');
       return;
     }
@@ -84,7 +86,7 @@ export function MetaAppCredentialsForm({
         p_organization_id: organization.id,
         p_meta_app_id: formData.metaAppId.trim(),
         p_meta_app_secret: formData.metaAppSecret.trim(),
-        p_webhook_verify_token: formData.webhookVerifyToken.trim()
+        p_webhook_verify_token: formData.webhookVerifyToken.trim(),
       });
 
       if (error) {
@@ -115,9 +117,9 @@ export function MetaAppCredentialsForm({
 
   const handleClose = () => {
     setFormData({
-      metaAppId: "",
-      metaAppSecret: "",
-      webhookVerifyToken: ""
+      metaAppId: '',
+      metaAppSecret: '',
+      webhookVerifyToken: '',
     });
     setShowSecrets(false);
     onClose();
@@ -129,7 +131,7 @@ export function MetaAppCredentialsForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
             Configurar Meta App
           </DialogTitle>
@@ -151,8 +153,8 @@ export function MetaAppCredentialsForm({
             <CardContent>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <Badge variant={hasCredentials ? "default" : "secondary"}>
-                    {hasCredentials ? "Configurado" : "Pendiente"}
+                  <Badge variant={hasCredentials ? 'default' : 'secondary'}>
+                    {hasCredentials ? 'Configurado' : 'Pendiente'}
                   </Badge>
                   {lastUpdated && (
                     <p className="text-sm text-muted-foreground mt-1">
@@ -185,11 +187,15 @@ export function MetaAppCredentialsForm({
               <div>
                 <Label className="text-sm font-medium">Redirect URI (OAuth)</Label>
                 <div className="flex flex-col sm:flex-row gap-2 mt-1">
-                  <Input value={redirectUri} readOnly className="font-mono text-sm break-all flex-1" />
+                  <Input
+                    value={redirectUri}
+                    readOnly
+                    className="font-mono text-sm break-all flex-1"
+                  />
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(redirectUri, "Redirect URI")}
+                    onClick={() => copyToClipboard(redirectUri, 'Redirect URI')}
                     className="w-full sm:w-auto shrink-0"
                   >
                     <Copy className="h-4 w-4" />
@@ -200,11 +206,15 @@ export function MetaAppCredentialsForm({
               <div>
                 <Label className="text-sm font-medium">Webhook URL</Label>
                 <div className="flex flex-col sm:flex-row gap-2 mt-1">
-                  <Input value={webhookUrl} readOnly className="font-mono text-sm break-all flex-1" />
+                  <Input
+                    value={webhookUrl}
+                    readOnly
+                    className="font-mono text-sm break-all flex-1"
+                  />
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(webhookUrl, "Webhook URL")}
+                    onClick={() => copyToClipboard(webhookUrl, 'Webhook URL')}
                     className="w-full sm:w-auto shrink-0"
                   >
                     <Copy className="h-4 w-4" />
@@ -240,7 +250,7 @@ export function MetaAppCredentialsForm({
                   <div className="relative">
                     <Input
                       id="metaAppSecret"
-                      type={showSecrets ? "text" : "password"}
+                      type={showSecrets ? 'text' : 'password'}
                       value={formData.metaAppSecret}
                       onChange={(e) => setFormData({ ...formData, metaAppSecret: e.target.value })}
                       placeholder="abcdef123456789..."
@@ -258,41 +268,48 @@ export function MetaAppCredentialsForm({
                   </div>
                 </div>
 
-                  <div>
-                    <Label htmlFor="webhookVerifyToken">Webhook Verify Token *</Label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Input
-                        id="webhookVerifyToken"
-                        type={showSecrets ? "text" : "password"}
-                        value={formData.webhookVerifyToken}
-                        onChange={(e) => setFormData({ ...formData, webhookVerifyToken: e.target.value })}
-                        placeholder="mi_token_secreto_123"
-                        required
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={generateRandomToken}
-                        size="sm"
-                        className="w-full sm:w-auto shrink-0"
-                      >
-                        Generar
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Úsalo también en la configuración de Webhooks en Meta
-                    </p>
+                <div>
+                  <Label htmlFor="webhookVerifyToken">Webhook Verify Token *</Label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      id="webhookVerifyToken"
+                      type={showSecrets ? 'text' : 'password'}
+                      value={formData.webhookVerifyToken}
+                      onChange={(e) =>
+                        setFormData({ ...formData, webhookVerifyToken: e.target.value })
+                      }
+                      placeholder="mi_token_secreto_123"
+                      required
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generateRandomToken}
+                      size="sm"
+                      className="w-full sm:w-auto shrink-0"
+                    >
+                      Generar
+                    </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Úsalo también en la configuración de Webhooks en Meta
+                  </p>
+                </div>
 
-                  <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto">
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                      {loading ? 'Guardando...' : hasCredentials ? 'Actualizar' : 'Guardar'}
-                    </Button>
-                  </div>
+                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClose}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                    {loading ? 'Guardando...' : hasCredentials ? 'Actualizar' : 'Guardar'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>

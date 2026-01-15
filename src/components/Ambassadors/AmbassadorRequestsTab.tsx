@@ -1,15 +1,21 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Users, Check, X, Clock, Instagram, MessageCircle } from "lucide-react";
-import { useAmbassadorRequests, AmbassadorRequest } from "@/hooks/useAmbassadorRequests";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Users, Check, X, Clock, Instagram, MessageCircle } from 'lucide-react';
+import { useAmbassadorRequests, AmbassadorRequest } from '@/hooks/useAmbassadorRequests';
+import { toast } from 'sonner';
 
 interface ApprovalFormData {
   first_name: string;
@@ -23,23 +29,27 @@ export function AmbassadorRequestsTab() {
   const { requests, loading, approveRequest, rejectRequest } = useAmbassadorRequests();
   const [selectedRequest, setSelectedRequest] = useState<AmbassadorRequest | null>(null);
   const [approvalForm, setApprovalForm] = useState<ApprovalFormData>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    date_of_birth: "",
-    rut: ""
+    first_name: '',
+    last_name: '',
+    email: '',
+    date_of_birth: '',
+    rut: '',
   });
-  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const pendingRequests = requests.filter(r => r.status === 'pending');
-  const processedRequests = requests.filter(r => r.status !== 'pending');
+  const pendingRequests = requests.filter((r) => r.status === 'pending');
+  const processedRequests = requests.filter((r) => r.status !== 'pending');
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
-    
-    if (!approvalForm.first_name.trim() || !approvalForm.last_name.trim() || !approvalForm.email.trim()) {
-      toast.error("Nombre, apellido y email son requeridos");
+
+    if (
+      !approvalForm.first_name.trim() ||
+      !approvalForm.last_name.trim() ||
+      !approvalForm.email.trim()
+    ) {
+      toast.error('Nombre, apellido y email son requeridos');
       return;
     }
 
@@ -47,7 +57,7 @@ export function AmbassadorRequestsTab() {
     try {
       await approveRequest(selectedRequest.id, approvalForm);
       setSelectedRequest(null);
-      setApprovalForm({ first_name: "", last_name: "", email: "", date_of_birth: "", rut: "" });
+      setApprovalForm({ first_name: '', last_name: '', email: '', date_of_birth: '', rut: '' });
     } catch (error) {
       // Error already handled in hook
     } finally {
@@ -59,7 +69,7 @@ export function AmbassadorRequestsTab() {
     setActionLoading(true);
     try {
       await rejectRequest(requestId, rejectionReason);
-      setRejectionReason("");
+      setRejectionReason('');
     } catch (error) {
       // Error already handled in hook
     } finally {
@@ -69,19 +79,27 @@ export function AmbassadorRequestsTab() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
-      case 'approved': return 'bg-green-500/10 text-green-700 border-green-200';
-      case 'rejected': return 'bg-red-500/10 text-red-700 border-red-200';
-      default: return 'bg-gray-500/10 text-gray-700 border-gray-200';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
+      case 'approved':
+        return 'bg-green-500/10 text-green-700 border-green-200';
+      case 'rejected':
+        return 'bg-red-500/10 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-500/10 text-gray-700 border-gray-200';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return 'Pendiente';
-      case 'approved': return 'Aprobado';
-      case 'rejected': return 'Rechazado';
-      default: return status;
+      case 'pending':
+        return 'Pendiente';
+      case 'approved':
+        return 'Aprobado';
+      case 'rejected':
+        return 'Rechazado';
+      default:
+        return status;
     }
   };
 
@@ -131,7 +149,7 @@ export function AmbassadorRequestsTab() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <MessageCircle className="h-4 w-4" />
@@ -145,8 +163,8 @@ export function AmbassadorRequestsTab() {
                     <div className="flex gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="flex-1"
                             onClick={() => setSelectedRequest(request)}
                           >
@@ -160,16 +178,19 @@ export function AmbassadorRequestsTab() {
                           </DialogHeader>
                           <div className="space-y-4">
                             <div className="text-sm text-muted-foreground">
-                              Completa los datos del embajador @{selectedRequest?.instagram_username}
+                              Completa los datos del embajador @
+                              {selectedRequest?.instagram_username}
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label htmlFor="first_name">Nombre *</Label>
                                 <Input
                                   id="first_name"
                                   value={approvalForm.first_name}
-                                  onChange={(e) => setApprovalForm({ ...approvalForm, first_name: e.target.value })}
+                                  onChange={(e) =>
+                                    setApprovalForm({ ...approvalForm, first_name: e.target.value })
+                                  }
                                   required
                                 />
                               </div>
@@ -178,23 +199,27 @@ export function AmbassadorRequestsTab() {
                                 <Input
                                   id="last_name"
                                   value={approvalForm.last_name}
-                                  onChange={(e) => setApprovalForm({ ...approvalForm, last_name: e.target.value })}
+                                  onChange={(e) =>
+                                    setApprovalForm({ ...approvalForm, last_name: e.target.value })
+                                  }
                                   required
                                 />
                               </div>
                             </div>
-                            
+
                             <div>
                               <Label htmlFor="email">Email *</Label>
                               <Input
                                 id="email"
                                 type="email"
                                 value={approvalForm.email}
-                                onChange={(e) => setApprovalForm({ ...approvalForm, email: e.target.value })}
+                                onChange={(e) =>
+                                  setApprovalForm({ ...approvalForm, email: e.target.value })
+                                }
                                 required
                               />
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label htmlFor="date_of_birth">Fecha de Nacimiento</Label>
@@ -202,7 +227,12 @@ export function AmbassadorRequestsTab() {
                                   id="date_of_birth"
                                   type="date"
                                   value={approvalForm.date_of_birth}
-                                  onChange={(e) => setApprovalForm({ ...approvalForm, date_of_birth: e.target.value })}
+                                  onChange={(e) =>
+                                    setApprovalForm({
+                                      ...approvalForm,
+                                      date_of_birth: e.target.value,
+                                    })
+                                  }
                                 />
                               </div>
                               <div>
@@ -210,7 +240,9 @@ export function AmbassadorRequestsTab() {
                                 <Input
                                   id="rut"
                                   value={approvalForm.rut}
-                                  onChange={(e) => setApprovalForm({ ...approvalForm, rut: e.target.value })}
+                                  onChange={(e) =>
+                                    setApprovalForm({ ...approvalForm, rut: e.target.value })
+                                  }
                                 />
                               </div>
                             </div>
@@ -220,7 +252,7 @@ export function AmbassadorRequestsTab() {
                                 Cancelar
                               </Button>
                               <Button onClick={handleApprove} disabled={actionLoading}>
-                                {actionLoading ? "Aprobando..." : "Aprobar Embajador"}
+                                {actionLoading ? 'Aprobando...' : 'Aprobar Embajador'}
                               </Button>
                             </div>
                           </div>
@@ -240,9 +272,10 @@ export function AmbassadorRequestsTab() {
                           </DialogHeader>
                           <div className="space-y-4">
                             <div className="text-sm text-muted-foreground">
-                              ¿Estás seguro de rechazar la solicitud de @{request.instagram_username}?
+                              ¿Estás seguro de rechazar la solicitud de @
+                              {request.instagram_username}?
                             </div>
-                            
+
                             <div>
                               <Label htmlFor="rejection_reason">Razón del rechazo (opcional)</Label>
                               <Textarea
@@ -255,12 +288,12 @@ export function AmbassadorRequestsTab() {
 
                             <div className="flex justify-end gap-2">
                               <Button variant="outline">Cancelar</Button>
-                              <Button 
-                                variant="destructive" 
+                              <Button
+                                variant="destructive"
                                 onClick={() => handleReject(request.id)}
                                 disabled={actionLoading}
                               >
-                                {actionLoading ? "Rechazando..." : "Rechazar"}
+                                {actionLoading ? 'Rechazando...' : 'Rechazar'}
                               </Button>
                             </div>
                           </div>
@@ -287,7 +320,10 @@ export function AmbassadorRequestsTab() {
           <CardContent>
             <div className="space-y-2">
               {processedRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={request.profile_picture_url} />

@@ -17,10 +17,7 @@ export type {
   ApproveRequestInput,
 } from './ambassador';
 
-export {
-  getAmbassadorFullName,
-  getAmbassadorInitials,
-} from './ambassador';
+export { getAmbassadorFullName, getAmbassadorInitials } from './ambassador';
 
 // Organization types
 export type {
@@ -35,11 +32,7 @@ export type {
   UpdateOrganizationInput,
 } from './organization';
 
-export {
-  DEFAULT_PERMISSIONS,
-  ROLE_LABELS,
-  hasPermission,
-} from './organization';
+export { DEFAULT_PERMISSIONS, ROLE_LABELS, hasPermission } from './organization';
 
 // Event/Fiesta types
 export type {

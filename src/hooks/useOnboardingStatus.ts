@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OnboardingStep {
   id: string;
@@ -25,33 +25,33 @@ interface OrganizationData {
 
 const defaultSteps: OnboardingStep[] = [
   {
-    id: "organization",
-    title: "Crear Organización",
-    description: "Configura tu productora de eventos",
+    id: 'organization',
+    title: 'Crear Organización',
+    description: 'Configura tu productora de eventos',
     completed: false,
-    required: true
+    required: true,
   },
   {
-    id: "instagram",
-    title: "Conectar Instagram (Opcional)",
-    description: "Vincula tu cuenta business de Instagram",
+    id: 'instagram',
+    title: 'Conectar Instagram (Opcional)',
+    description: 'Vincula tu cuenta business de Instagram',
     completed: false,
-    required: false
+    required: false,
   },
   {
-    id: "fiesta",
-    title: "Crear Primera Fiesta (Opcional)",
-    description: "Configura tu primer evento",
+    id: 'fiesta',
+    title: 'Crear Primera Fiesta (Opcional)',
+    description: 'Configura tu primer evento',
     completed: false,
-    required: false
+    required: false,
   },
   {
-    id: "ambassadors",
-    title: "Añadir Embajadores (Opcional)",
-    description: "Invita a tus primeros embajadores",
+    id: 'ambassadors',
+    title: 'Añadir Embajadores (Opcional)',
+    description: 'Invita a tus primeros embajadores',
     completed: false,
-    required: false
-  }
+    required: false,
+  },
 ];
 
 async function fetchOnboardingData(organization: OrganizationData | null): Promise<OnboardingData> {
@@ -59,12 +59,12 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     return {
       steps: defaultSteps,
       overallProgress: 0,
-      canAccessDashboard: false
+      canAccessDashboard: false,
     };
   }
 
   // Verificar el estado de cada paso
-  const orgCompleted = organization.name !== "Mi Organización";
+  const orgCompleted = organization.name !== 'Mi Organización';
 
   // Verificar Instagram - check multiple indicators
   let instagramCompleted = false;
@@ -129,48 +129,46 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
 
   const steps: OnboardingStep[] = [
     {
-      id: "organization",
-      title: "Organización Lista",
-      description: "Configura tu productora de eventos",
+      id: 'organization',
+      title: 'Organización Lista',
+      description: 'Configura tu productora de eventos',
       completed: orgCompleted,
-      required: true
+      required: true,
     },
     {
-      id: "instagram",
-      title: "Conectar Instagram (Opcional)",
-      description: "Vincula tu cuenta business de Instagram",
+      id: 'instagram',
+      title: 'Conectar Instagram (Opcional)',
+      description: 'Vincula tu cuenta business de Instagram',
       completed: instagramCompleted,
-      required: false
+      required: false,
     },
     {
-      id: "fiesta",
-      title: "Crear Primera Fiesta (Opcional)",
-      description: "Configura tu primer evento",
+      id: 'fiesta',
+      title: 'Crear Primera Fiesta (Opcional)',
+      description: 'Configura tu primer evento',
       completed: fiestaCompleted,
-      required: false
+      required: false,
     },
     {
-      id: "ambassadors",
-      title: "Añadir Embajadores (Opcional)",
-      description: "Invita a tus primeros embajadores",
+      id: 'ambassadors',
+      title: 'Añadir Embajadores (Opcional)',
+      description: 'Invita a tus primeros embajadores',
       completed: ambassadorsCompleted,
-      required: false
-    }
+      required: false,
+    },
   ];
 
   // Calcular progreso
-  const completedSteps = steps.filter(step => step.completed).length;
+  const completedSteps = steps.filter((step) => step.completed).length;
   const overallProgress = (completedSteps / steps.length) * 100;
 
   // Puede acceder al dashboard si completó los pasos obligatorios
-  const canAccessDashboard = steps
-    .filter(step => step.required)
-    .every(step => step.completed);
+  const canAccessDashboard = steps.filter((step) => step.required).every((step) => step.completed);
 
   return {
     steps,
     overallProgress,
-    canAccessDashboard
+    canAccessDashboard,
   };
 }
 
@@ -199,6 +197,6 @@ export function useOnboardingStatus() {
     overallProgress: data?.overallProgress || 0,
     canAccessDashboard: data?.canAccessDashboard || false,
     loading,
-    refreshOnboardingStatus
+    refreshOnboardingStatus,
   };
 }

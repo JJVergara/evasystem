@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -17,7 +17,9 @@ export default function AuthCallback() {
         const error = urlParams.get('error');
 
         if (error) {
-          throw new Error(urlParams.get('error_description') || 'Error de autorización de Instagram');
+          throw new Error(
+            urlParams.get('error_description') || 'Error de autorización de Instagram'
+          );
         }
 
         if (!code || !state) {
@@ -32,19 +34,18 @@ export default function AuthCallback() {
           setStatus('success');
           setMessage('¡Instagram conectado exitosamente!');
           toast.success('Instagram conectado exitosamente');
-          
+
           // Redirect to ambassadors page after a short delay
           setTimeout(() => {
             navigate('/ambassadors');
           }, 2000);
         }, 1500);
-
       } catch (error) {
         console.error('Error processing Instagram callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error procesando autorización');
         toast.error('Error conectando Instagram');
-        
+
         // Redirect to ambassadors page after error
         setTimeout(() => {
           navigate('/ambassadors');
@@ -66,26 +67,22 @@ export default function AuthCallback() {
               <p className="text-muted-foreground">{message}</p>
             </>
           )}
-          
+
           {status === 'success' && (
             <>
               <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
               <h2 className="text-xl font-semibold mb-2 text-green-600">¡Éxito!</h2>
               <p className="text-muted-foreground">{message}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Redirigiendo en unos segundos...
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>
           )}
-          
+
           {status === 'error' && (
             <>
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
               <h2 className="text-xl font-semibold mb-2 text-red-600">Error</h2>
               <p className="text-muted-foreground">{message}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Redirigiendo en unos segundos...
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>
           )}
         </div>

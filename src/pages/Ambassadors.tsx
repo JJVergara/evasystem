@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import AmbassadorManagement from "@/components/Ambassadors/AmbassadorManagement";
-import { toast } from "sonner";
+import { useEffect } from 'react';
+import AmbassadorManagement from '@/components/Ambassadors/AmbassadorManagement';
+import { toast } from 'sonner';
 
 const Ambassadors = () => {
   // Handle Instagram connection callback
@@ -11,7 +11,7 @@ const Ambassadors = () => {
 
     if (status === 'success') {
       toast.success('Instagram conectado exitosamente', {
-        description: 'La cuenta de Instagram del embajador ha sido vinculada correctamente'
+        description: 'La cuenta de Instagram del embajador ha sido vinculada correctamente',
       });
 
       // Clean up URL parameters
@@ -20,7 +20,7 @@ const Ambassadors = () => {
       window.history.replaceState({}, '', url.toString());
     } else if (status === 'error' && error) {
       toast.error('Error al conectar Instagram', {
-        description: decodeURIComponent(error)
+        description: decodeURIComponent(error),
       });
 
       // Clean up URL parameters

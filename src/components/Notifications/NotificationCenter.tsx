@@ -1,10 +1,16 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import {
   Bell,
   AlertTriangle,
@@ -18,19 +24,25 @@ import {
   Check,
   Trash2,
   ExternalLink,
-  Search
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+  Search,
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
-  type: "story_deleted" | "task_expired" | "token_expiring" | "performance_change" | "ambassador_pending" | "general";
+  type:
+    | 'story_deleted'
+    | 'task_expired'
+    | 'token_expiring'
+    | 'performance_change'
+    | 'ambassador_pending'
+    | 'general';
   message: string;
-  priority: "low" | "normal" | "high";
+  priority: 'low' | 'normal' | 'high';
   read_status: boolean;
   created_at: string;
-  target_type: "user" | "ambassador" | "event" | "organization";
+  target_type: 'user' | 'ambassador' | 'event' | 'organization';
   target_id?: string;
   metadata?: {
     ambassador_name?: string;
@@ -45,9 +57,9 @@ export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTab, setSelectedTab] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,76 +73,76 @@ export function NotificationCenter() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      
+
       // Mock data for demonstration - replace with real Supabase queries
       const mockNotifications: Notification[] = [
         {
-          id: "1",
-          type: "token_expiring",
-          message: "Tu token de Instagram expira en 3 días",
-          priority: "high",
+          id: '1',
+          type: 'token_expiring',
+          message: 'Tu token de Instagram expira en 3 días',
+          priority: 'high',
           read_status: false,
           created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          target_type: "organization",
-          metadata: { days_remaining: 3 }
+          target_type: 'organization',
+          metadata: { days_remaining: 3 },
         },
         {
-          id: "2",
-          type: "story_deleted",
-          message: "Historia eliminada antes de 24h por María González",
-          priority: "normal",
+          id: '2',
+          type: 'story_deleted',
+          message: 'Historia eliminada antes de 24h por María González',
+          priority: 'normal',
           read_status: false,
           created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          target_type: "ambassador",
-          target_id: "amb1",
-          metadata: { ambassador_name: "María González", event_name: "Campaña Verano" }
+          target_type: 'ambassador',
+          target_id: 'amb1',
+          metadata: { ambassador_name: 'María González', event_name: 'Campaña Verano' },
         },
         {
-          id: "3",
-          type: "ambassador_pending",
-          message: "Nuevo embajador detectado: Carlos Ruiz requiere aprobación",
-          priority: "normal",
+          id: '3',
+          type: 'ambassador_pending',
+          message: 'Nuevo embajador detectado: Carlos Ruiz requiere aprobación',
+          priority: 'normal',
           read_status: true,
           created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          target_type: "ambassador",
-          target_id: "amb2",
-          metadata: { ambassador_name: "Carlos Ruiz" }
+          target_type: 'ambassador',
+          target_id: 'amb2',
+          metadata: { ambassador_name: 'Carlos Ruiz' },
         },
         {
-          id: "4",
-          type: "task_expired",
+          id: '4',
+          type: 'task_expired',
           message: "Tareas vencidas en evento 'Black Friday'",
-          priority: "high",
+          priority: 'high',
           read_status: false,
           created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-          target_type: "event",
-          target_id: "event1",
-          metadata: { event_name: "Black Friday" }
+          target_type: 'event',
+          target_id: 'event1',
+          metadata: { event_name: 'Black Friday' },
         },
         {
-          id: "5",
-          type: "performance_change",
+          id: '5',
+          type: 'performance_change',
           message: "Ana Silva cambió de 'cumple' a 'advertencia'",
-          priority: "normal",
+          priority: 'normal',
           read_status: true,
           created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          target_type: "ambassador",
-          target_id: "amb3",
-          metadata: { 
-            ambassador_name: "Ana Silva", 
-            old_performance: "cumple", 
-            new_performance: "advertencia" 
-          }
-        }
+          target_type: 'ambassador',
+          target_id: 'amb3',
+          metadata: {
+            ambassador_name: 'Ana Silva',
+            old_performance: 'cumple',
+            new_performance: 'advertencia',
+          },
+        },
       ];
 
       setNotifications(mockNotifications);
     } catch (error) {
-      console.error("Error loading notifications:", error);
+      console.error('Error loading notifications:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las notificaciones",
-        variant: "destructive"
+        title: 'Error',
+        description: 'No se pudieron cargar las notificaciones',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -141,25 +153,28 @@ export function NotificationCenter() {
     let filtered = notifications;
 
     // Filter by tab
-    if (selectedTab !== "all") {
-      if (selectedTab === "unread") {
-        filtered = filtered.filter(n => !n.read_status);
+    if (selectedTab !== 'all') {
+      if (selectedTab === 'unread') {
+        filtered = filtered.filter((n) => !n.read_status);
       } else {
-        filtered = filtered.filter(n => n.type === selectedTab);
+        filtered = filtered.filter((n) => n.type === selectedTab);
       }
     }
 
     // Filter by priority
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter(n => n.priority === priorityFilter);
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter((n) => n.priority === priorityFilter);
     }
 
     // Filter by search query
     if (searchQuery) {
-      filtered = filtered.filter(n => 
-        n.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (n.metadata?.ambassador_name && n.metadata.ambassador_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (n.metadata?.event_name && n.metadata.event_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      filtered = filtered.filter(
+        (n) =>
+          n.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (n.metadata?.ambassador_name &&
+            n.metadata.ambassador_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (n.metadata?.event_name &&
+            n.metadata.event_name.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -168,67 +183,63 @@ export function NotificationCenter() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId 
-            ? { ...n, read_status: true }
-            : n
-        )
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read_status: true } : n))
       );
 
       toast({
-        title: "Notificación marcada como leída",
-        description: "La notificación ha sido marcada como leída"
+        title: 'Notificación marcada como leída',
+        description: 'La notificación ha sido marcada como leída',
       });
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error('Error marking notification as read:', error);
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, read_status: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, read_status: true })));
 
       toast({
-        title: "Todas las notificaciones marcadas como leídas",
-        description: "Se han marcado todas las notificaciones como leídas"
+        title: 'Todas las notificaciones marcadas como leídas',
+        description: 'Se han marcado todas las notificaciones como leídas',
       });
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.error('Error marking all notifications as read:', error);
     }
   };
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
 
       toast({
-        title: "Notificación eliminada",
-        description: "La notificación ha sido eliminada"
+        title: 'Notificación eliminada',
+        description: 'La notificación ha sido eliminada',
       });
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error('Error deleting notification:', error);
     }
   };
 
   const getNotificationIcon = (type: string, priority: string) => {
-    const iconClass = priority === "high" ? "text-destructive" : 
-                     priority === "normal" ? "text-warning" : "text-muted-foreground";
+    const iconClass =
+      priority === 'high'
+        ? 'text-destructive'
+        : priority === 'normal'
+          ? 'text-warning'
+          : 'text-muted-foreground';
 
     switch (type) {
-      case "story_deleted":
+      case 'story_deleted':
         return <Instagram className={`w-4 h-4 ${iconClass}`} />;
-      case "task_expired":
+      case 'task_expired':
         return <Clock className={`w-4 h-4 ${iconClass}`} />;
-      case "token_expiring":
+      case 'token_expiring':
         return <AlertTriangle className={`w-4 h-4 ${iconClass}`} />;
-      case "performance_change":
+      case 'performance_change':
         return <User className={`w-4 h-4 ${iconClass}`} />;
-      case "ambassador_pending":
+      case 'ambassador_pending':
         return <User className={`w-4 h-4 ${iconClass}`} />;
       default:
         return <Bell className={`w-4 h-4 ${iconClass}`} />;
@@ -237,12 +248,24 @@ export function NotificationCenter() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "high":
-        return <Badge variant="destructive" className="text-xs">Alta</Badge>;
-      case "normal":
-        return <Badge variant="secondary" className="text-xs">Normal</Badge>;
-      case "low":
-        return <Badge variant="outline" className="text-xs">Baja</Badge>;
+      case 'high':
+        return (
+          <Badge variant="destructive" className="text-xs">
+            Alta
+          </Badge>
+        );
+      case 'normal':
+        return (
+          <Badge variant="secondary" className="text-xs">
+            Normal
+          </Badge>
+        );
+      case 'low':
+        return (
+          <Badge variant="outline" className="text-xs">
+            Baja
+          </Badge>
+        );
     }
   };
 
@@ -250,14 +273,14 @@ export function NotificationCenter() {
     const now = new Date();
     const date = new Date(dateString);
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return "Hace menos de 1 hora";
+
+    if (diffInHours < 1) return 'Hace menos de 1 hora';
     if (diffInHours < 24) return `Hace ${diffInHours} horas`;
     const diffInDays = Math.floor(diffInHours / 24);
     return `Hace ${diffInDays} días`;
   };
 
-  const unreadCount = notifications.filter(n => !n.read_status).length;
+  const unreadCount = notifications.filter((n) => !n.read_status).length;
 
   if (loading) {
     return (
@@ -311,7 +334,7 @@ export function NotificationCenter() {
               className="pl-10"
             />
           </div>
-          
+
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger className="w-36">
               <Filter className="w-4 h-4 mr-2" />
@@ -345,16 +368,18 @@ export function NotificationCenter() {
                 <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No hay notificaciones</h3>
                 <p className="text-muted-foreground">
-                  {searchQuery ? "No se encontraron notificaciones que coincidan con tu búsqueda" : 
-                   selectedTab === "unread" ? "¡Genial! No tienes notificaciones sin leer" :
-                   "No hay notificaciones disponibles en esta categoría"}
+                  {searchQuery
+                    ? 'No se encontraron notificaciones que coincidan con tu búsqueda'
+                    : selectedTab === 'unread'
+                      ? '¡Genial! No tienes notificaciones sin leer'
+                      : 'No hay notificaciones disponibles en esta categoría'}
                 </p>
               </CardContent>
             </Card>
           ) : (
             filteredNotifications.map((notification) => (
-              <Card 
-                key={notification.id} 
+              <Card
+                key={notification.id}
                 className={`shadow-card transition-all hover:shadow-elegant ${
                   !notification.read_status ? 'border-primary/50 bg-gradient-card' : ''
                 }`}
@@ -385,7 +410,7 @@ export function NotificationCenter() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2 ml-4">
                       {notification.target_id && (
                         <Button variant="ghost" size="sm">
@@ -393,16 +418,16 @@ export function NotificationCenter() {
                         </Button>
                       )}
                       {!notification.read_status && (
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => markAsRead(notification.id)}
                         >
                           <CheckCircle className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => deleteNotification(notification.id)}
                       >

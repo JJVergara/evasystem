@@ -5,7 +5,12 @@
  * They align with the database schema but provide TypeScript-friendly interfaces.
  */
 
-import type { AmbassadorCategory, PerformanceStatus, AmbassadorStatus, RequestStatus } from '@/constants';
+import type {
+  AmbassadorCategory,
+  PerformanceStatus,
+  AmbassadorStatus,
+  RequestStatus,
+} from '@/constants';
 
 /**
  * Core ambassador data
@@ -146,14 +151,18 @@ export interface ApproveRequestInput {
 /**
  * Full name helper
  */
-export function getAmbassadorFullName(ambassador: Pick<Ambassador, 'first_name' | 'last_name'>): string {
+export function getAmbassadorFullName(
+  ambassador: Pick<Ambassador, 'first_name' | 'last_name'>
+): string {
   return `${ambassador.first_name} ${ambassador.last_name}`.trim();
 }
 
 /**
  * Get ambassador initials for avatar fallback
  */
-export function getAmbassadorInitials(ambassador: Pick<Ambassador, 'first_name' | 'last_name'>): string {
+export function getAmbassadorInitials(
+  ambassador: Pick<Ambassador, 'first_name' | 'last_name'>
+): string {
   const first = ambassador.first_name?.charAt(0) ?? '';
   const last = ambassador.last_name?.charAt(0) ?? '';
   return `${first}${last}`.toUpperCase();

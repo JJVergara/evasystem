@@ -38,10 +38,7 @@ async function fetchAmbassadorsForFiesta(fiestaId: string): Promise<Ambassador[]
 }
 
 async function fetchEventsForFiesta(fiestaId: string): Promise<Event[]> {
-  const { data, error } = await supabase
-    .from('events')
-    .select('id')
-    .eq('fiesta_id', fiestaId);
+  const { data, error } = await supabase.from('events').select('id').eq('fiesta_id', fiestaId);
 
   if (error) throw error;
 
@@ -54,11 +51,13 @@ async function fetchEventsForFiesta(fiestaId: string): Promise<Event[]> {
 
   if (fiestaError) throw fiestaError;
 
-  return data?.map(e => ({
-    id: e.id,
-    name: fiestaData.name,
-    main_hashtag: fiestaData.main_hashtag || ''
-  })) || [];
+  return (
+    data?.map((e) => ({
+      id: e.id,
+      name: fiestaData.name,
+      main_hashtag: fiestaData.main_hashtag || '',
+    })) || []
+  );
 }
 
 export function useStoriesData() {
@@ -69,15 +68,9 @@ export function useStoriesData() {
     [selectedFiestaId]
   );
 
-  const eventsQueryKey = useMemo(
-    () => ['storiesEvents', selectedFiestaId],
-    [selectedFiestaId]
-  );
+  const eventsQueryKey = useMemo(() => ['storiesEvents', selectedFiestaId], [selectedFiestaId]);
 
-  const {
-    data: ambassadors = [],
-    isLoading: ambassadorsLoading
-  } = useQuery({
+  const { data: ambassadors = [], isLoading: ambassadorsLoading } = useQuery({
     queryKey: ambassadorsQueryKey,
     queryFn: () => fetchAmbassadorsForFiesta(selectedFiestaId!),
     enabled: !!selectedFiestaId,
@@ -86,10 +79,7 @@ export function useStoriesData() {
     placeholderData: keepPreviousData,
   });
 
-  const {
-    data: events = [],
-    isLoading: eventsLoading
-  } = useQuery({
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: eventsQueryKey,
     queryFn: () => fetchEventsForFiesta(selectedFiestaId!),
     enabled: !!selectedFiestaId,
@@ -101,6 +91,7 @@ export function useStoriesData() {
   return {
     ambassadors,
     events,
-    loading: (ambassadorsLoading && ambassadors.length === 0) || (eventsLoading && events.length === 0),
+    loading:
+      (ambassadorsLoading && ambassadors.length === 0) || (eventsLoading && events.length === 0),
   };
 }

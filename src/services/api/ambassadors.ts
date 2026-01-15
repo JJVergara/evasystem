@@ -19,12 +19,14 @@ import type {
 export async function getAmbassadors(organizationId: string): Promise<Ambassador[]> {
   const { data, error } = await supabase
     .from('embassadors')
-    .select(`
+    .select(
+      `
       id, first_name, last_name, instagram_user, instagram_user_id,
       follower_count, global_points, global_category, performance_status,
       events_participated, completed_tasks, failed_tasks, organization_id,
       created_by_user_id, status, profile_public, last_instagram_sync, created_at
-    `)
+    `
+    )
     .eq('organization_id', organizationId)
     .neq('status', 'deleted')
     .order('created_at', { ascending: false });

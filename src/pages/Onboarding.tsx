@@ -1,32 +1,32 @@
-import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { useFiestas } from "@/hooks/useFiestas";
-import { useInstagramConnection } from "@/hooks/useInstagramConnection";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Building, 
-  Users, 
-  PartyPopper, 
-  Instagram, 
-  CheckCircle, 
+import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { useFiestas } from '@/hooks/useFiestas';
+import { useInstagramConnection } from '@/hooks/useInstagramConnection';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Building,
+  Users,
+  PartyPopper,
+  Instagram,
+  CheckCircle,
   ArrowRight,
   Sparkles,
   Edit3,
-  Loader2
-} from "lucide-react";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { AppBackground } from "@/components/Layout/AppBackground";
+  Loader2,
+} from 'lucide-react';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { AppBackground } from '@/components/Layout/AppBackground';
 
 interface OnboardingStep {
   id: string;
@@ -42,7 +42,11 @@ export default function Onboarding() {
   const { profile, loading: profileLoading } = useUserProfile();
   const { organization, updateOrganization, loading: orgLoading } = useCurrentOrganization();
   const { fiestas } = useFiestas();
-  const { isConnected: instagramConnected, connectInstagram, isConnecting } = useInstagramConnection();
+  const {
+    isConnected: instagramConnected,
+    connectInstagram,
+    isConnecting,
+  } = useInstagramConnection();
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -103,7 +107,7 @@ export default function Onboarding() {
     setSavingOrg(true);
     const success = await updateOrganization({
       name: orgName.trim(),
-      description: orgDescription.trim() || null
+      description: orgDescription.trim() || null,
     });
 
     if (success) {
@@ -132,45 +136,45 @@ export default function Onboarding() {
 
   const steps: OnboardingStep[] = [
     {
-      id: "organization",
-      title: "Configura tu Organización",
-      description: "Dale un nombre y descripción a tu organización",
+      id: 'organization',
+      title: 'Configura tu Organización',
+      description: 'Dale un nombre y descripción a tu organización',
       icon: <Building className="h-6 w-6" />,
       completed: !!(organization?.name && organization.name !== 'Mi Organización'),
-      action: () => setEditingOrg(true)
+      action: () => setEditingOrg(true),
     },
     {
-      id: "instagram",
-      title: "Conecta Instagram",
-      description: "Vincula tu cuenta de Instagram para gestionar embajadores",
+      id: 'instagram',
+      title: 'Conecta Instagram',
+      description: 'Vincula tu cuenta de Instagram para gestionar embajadores',
       icon: <Instagram className="h-6 w-6" />,
       completed: instagramConnected,
-      action: handleInstagramConnect
+      action: handleInstagramConnect,
     },
     {
-      id: "fiesta",
-      title: "Crea tu Primera Fiesta",
-      description: "Configura tu primer evento para comenzar a gestionar embajadores",
+      id: 'fiesta',
+      title: 'Crea tu Primera Fiesta',
+      description: 'Configura tu primer evento para comenzar a gestionar embajadores',
       icon: <PartyPopper className="h-6 w-6" />,
       completed: fiestas.length > 0,
-      action: handleCreateFiesta
+      action: handleCreateFiesta,
     },
     {
-      id: "ambassadors",
-      title: "Agrega Embajadores",
-      description: "Invita o importa tus primeros embajadores",
+      id: 'ambassadors',
+      title: 'Agrega Embajadores',
+      description: 'Invita o importa tus primeros embajadores',
       icon: <Users className="h-6 w-6" />,
       completed: ambassadorCount > 0,
-      action: handleAddAmbassadors
-    }
+      action: handleAddAmbassadors,
+    },
   ];
 
-  const completedSteps = steps.filter(step => step.completed).length;
+  const completedSteps = steps.filter((step) => step.completed).length;
   const progress = (completedSteps / steps.length) * 100;
 
   // Verificar si se pueden completar los pasos requeridos para acceder al dashboard
-  const requiredSteps = steps.filter(step => step.id === 'organization'); // Solo organización es requerida
-  const canAccessDashboard = requiredSteps.every(step => step.completed);
+  const requiredSteps = steps.filter((step) => step.id === 'organization'); // Solo organización es requerida
+  const canAccessDashboard = requiredSteps.every((step) => step.completed);
 
   const handleFinishOnboarding = () => {
     navigate('/');
@@ -206,21 +210,23 @@ export default function Onboarding() {
                   <Sparkles className="h-12 w-12 text-white" />
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
                   ¡Bienvenido a EVA System!
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                  Tu plataforma inteligente para gestionar embajadores y eventos. 
-                  Comencemos configurando tu experiencia paso a paso.
+                  Tu plataforma inteligente para gestionar embajadores y eventos. Comencemos
+                  configurando tu experiencia paso a paso.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Progreso de configuración</span>
-                  <span className="font-medium">{completedSteps} de {steps.length} completados</span>
+                  <span className="font-medium">
+                    {completedSteps} de {steps.length} completados
+                  </span>
                 </div>
                 <Progress value={progress} className="h-3" />
               </div>
@@ -237,7 +243,7 @@ export default function Onboarding() {
                     Configura tu Organización
                   </h3>
                 </div>
-                
+
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="orgName">Nombre de la Organización *</Label>
@@ -248,7 +254,7 @@ export default function Onboarding() {
                       placeholder="Ej: Productora Eventos Chile"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="orgDescription">Descripción</Label>
                     <Textarea
@@ -262,7 +268,7 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button 
+                  <Button
                     onClick={handleSaveOrganization}
                     disabled={savingOrg || !orgName.trim()}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
@@ -276,8 +282,8 @@ export default function Onboarding() {
                       'Guardar'
                     )}
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setEditingOrg(false)}
                     disabled={savingOrg}
                   >
@@ -291,13 +297,13 @@ export default function Onboarding() {
           {/* Steps Grid */}
           <div className="grid gap-6 md:grid-cols-2">
             {steps.map((step, index) => (
-              <GlassPanel 
-                key={step.id} 
+              <GlassPanel
+                key={step.id}
                 className={`relative transition-all duration-300 hover:shadow-xl ${
-                  step.completed 
-                    ? 'border-green-200 bg-green-50/50' 
-                    : index === currentStep 
-                      ? 'border-purple-200 bg-purple-50/50 ring-2 ring-purple-100' 
+                  step.completed
+                    ? 'border-green-200 bg-green-50/50'
+                    : index === currentStep
+                      ? 'border-purple-200 bg-purple-50/50 ring-2 ring-purple-100'
                       : 'hover:border-purple-100'
                 }`}
               >
@@ -308,33 +314,33 @@ export default function Onboarding() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4">
-                    <div className={`p-3 rounded-lg ${
-                      step.completed 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-600'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-lg ${
+                        step.completed
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-600'
+                      }`}
+                    >
                       {step.icon}
                     </div>
-                    
+
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold">{step.title}</h3>
-                        <Badge variant={step.completed ? "default" : "secondary"}>
-                          {step.completed ? "Completado" : `Paso ${index + 1}`}
+                        <Badge variant={step.completed ? 'default' : 'secondary'}>
+                          {step.completed ? 'Completado' : `Paso ${index + 1}`}
                         </Badge>
                       </div>
-                      
-                      <p className="text-muted-foreground text-sm">
-                        {step.description}
-                      </p>
+
+                      <p className="text-muted-foreground text-sm">{step.description}</p>
                     </div>
                   </div>
 
                   {!step.completed && (
-                    <Button 
+                    <Button
                       onClick={step.action}
                       disabled={step.id === 'instagram' && isConnecting}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
@@ -364,15 +370,16 @@ export default function Onboarding() {
                 <div className="bg-green-100 p-4 rounded-full w-fit mx-auto">
                   <CheckCircle className="h-12 w-12 text-green-600" />
                 </div>
-                
+
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold text-green-800">¡Configuración Completada!</h3>
                   <p className="text-green-700">
-                    Tu cuenta está lista. Ahora puedes comenzar a gestionar tus embajadores y eventos.
+                    Tu cuenta está lista. Ahora puedes comenzar a gestionar tus embajadores y
+                    eventos.
                   </p>
                 </div>
-                
-                <Button 
+
+                <Button
                   size="lg"
                   onClick={handleFinishOnboarding}
                   className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
@@ -389,8 +396,8 @@ export default function Onboarding() {
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">¡Excelente Progreso!</h3>
                 <p className="text-muted-foreground">
-                  Has completado {completedSteps} de {steps.length} pasos. 
-                  Los pasos restantes son opcionales y pueden completarse más tarde.
+                  Has completado {completedSteps} de {steps.length} pasos. Los pasos restantes son
+                  opcionales y pueden completarse más tarde.
                 </p>
               </div>
             </GlassPanel>

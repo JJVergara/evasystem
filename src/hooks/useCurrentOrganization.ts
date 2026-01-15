@@ -1,9 +1,31 @@
+/**
+ * @fileoverview Hook for managing the current organization context.
+ *
+ * This is a core hook used throughout the app to:
+ * - Get the current user's active organization
+ * - Switch between organizations (multi-tenant support)
+ * - Update organization settings
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { organization, loading, updateOrganization } = useCurrentOrganization();
+ *
+ *   if (loading) return <Loading />;
+ *   if (!organization) return <NoOrganization />;
+ *
+ *   return <div>{organization.name}</div>;
+ * }
+ * ```
+ */
+
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
+/** Organization membership with full organization details */
 interface OrganizationMembership {
   organization_id: string;
   role: string;
@@ -30,8 +52,9 @@ async function fetchOrganizationsData(userId: string): Promise<{
   userOrganizations: OrganizationMembership[];
 }> {
   // Get user's accessible organizations
-  const { data: userOrgs, error: orgsError } = await supabase
-    .rpc('get_user_organizations', { user_auth_id: userId });
+  const { data: userOrgs, error: orgsError } = await supabase.rpc('get_user_organizations', {
+    user_auth_id: userId,
+  });
 
   if (orgsError) {
     throw orgsError;
@@ -70,12 +93,14 @@ async function fetchOrganizationsData(userId: string): Promise<{
         console.log('✅ Organization already exists, refreshing...');
         localStorage.removeItem(lockKey);
         // Retry fetching organizations
-        const { data: retryOrgs } = await supabase
-          .rpc('get_user_organizations', { user_auth_id: userId });
+        const { data: retryOrgs } = await supabase.rpc('get_user_organizations', {
+          user_auth_id: userId,
+        });
         if (retryOrgs && retryOrgs.length > 0) {
           const membership = retryOrgs[0];
-          const { data: orgDetails } = await supabase
-            .rpc('get_organization_safe_info', { org_id: membership.organization_id });
+          const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+            org_id: membership.organization_id,
+          });
 
           if (orgDetails && orgDetails.length > 0) {
             const org = { ...membership, organization: orgDetails[0] };
@@ -95,7 +120,7 @@ async function fetchOrganizationsData(userId: string): Promise<{
           description: `Organización de ${userName}`,
           created_by: userId,
           timezone: 'America/Santiago',
-          plan_type: 'free'
+          plan_type: 'free',
         })
         .select()
         .single();
@@ -109,13 +134,15 @@ async function fetchOrganizationsData(userId: string): Promise<{
       console.log('✅ Organization created:', newOrg.id);
 
       // Refresh to get the new organization
-      const { data: refreshedOrgs } = await supabase
-        .rpc('get_user_organizations', { user_auth_id: userId });
+      const { data: refreshedOrgs } = await supabase.rpc('get_user_organizations', {
+        user_auth_id: userId,
+      });
 
       if (refreshedOrgs && refreshedOrgs.length > 0) {
         const membership = refreshedOrgs[0];
-        const { data: orgDetails } = await supabase
-          .rpc('get_organization_safe_info', { org_id: membership.organization_id });
+        const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+          org_id: membership.organization_id,
+        });
 
         if (orgDetails && orgDetails.length > 0) {
           localStorage.removeItem(lockKey);
@@ -136,19 +163,18 @@ async function fetchOrganizationsData(userId: string): Promise<{
   // Get organizations with their details
   const orgsWithDetails = await Promise.all(
     (userOrgs || []).map(async (orgMembership) => {
-      const { data: orgDetails } = await supabase
-        .rpc('get_organization_safe_info', {
-          org_id: orgMembership.organization_id
-        });
+      const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+        org_id: orgMembership.organization_id,
+      });
 
       return {
         ...orgMembership,
-        organization: orgDetails && orgDetails.length > 0 ? orgDetails[0] : null
+        organization: orgDetails && orgDetails.length > 0 ? orgDetails[0] : null,
       };
     })
   );
 
-  const validOrgs = orgsWithDetails.filter(org => org.organization) as OrganizationMembership[];
+  const validOrgs = orgsWithDetails.filter((org) => org.organization) as OrganizationMembership[];
 
   // Get user's current organization preference
   const { data: userData } = await supabase
@@ -159,16 +185,26 @@ async function fetchOrganizationsData(userId: string): Promise<{
 
   // Set current organization (prefer user's selected one, or first available)
   const preferredOrgId = userData?.organization_id;
-  const currentOrg = validOrgs.find(org =>
-    org.organization_id === preferredOrgId
-  ) || validOrgs[0] || null;
+  const currentOrg =
+    validOrgs.find((org) => org.organization_id === preferredOrgId) || validOrgs[0] || null;
 
   return {
     currentOrganization: currentOrg,
-    userOrganizations: validOrgs
+    userOrganizations: validOrgs,
   };
 }
 
+/**
+ * Hook for managing the current organization context.
+ *
+ * @returns Object containing:
+ * - `organization` - Current organization data (null if none selected)
+ * - `userOrganizations` - All organizations the user has access to
+ * - `loading` - Whether data is being fetched
+ * - `switchOrganization(id)` - Switch to a different organization
+ * - `updateOrganization(updates)` - Update current organization settings
+ * - `refreshOrganization()` - Manually refresh organization data
+ */
 export const useCurrentOrganization = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -186,52 +222,58 @@ export const useCurrentOrganization = () => {
   const currentOrganization = data?.currentOrganization || null;
   const userOrganizations = data?.userOrganizations || [];
 
-  const switchOrganization = useCallback(async (organizationId: string) => {
-    if (!user?.id) return;
+  const switchOrganization = useCallback(
+    async (organizationId: string) => {
+      if (!user?.id) return;
 
-    try {
-      // Update user's current organization preference
-      await supabase
-        .from('users')
-        .update({ organization_id: organizationId })
-        .eq('auth_user_id', user.id);
+      try {
+        // Update user's current organization preference
+        await supabase
+          .from('users')
+          .update({ organization_id: organizationId })
+          .eq('auth_user_id', user.id);
 
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey });
-    } catch (error) {
-      console.error('Error switching organization:', error);
-      throw error;
-    }
-  }, [user?.id, queryClient, queryKey]);
+        // Invalidate and refetch
+        await queryClient.invalidateQueries({ queryKey });
+      } catch (error) {
+        console.error('Error switching organization:', error);
+        throw error;
+      }
+    },
+    [user?.id, queryClient, queryKey]
+  );
 
   // Provide legacy compatibility
   const organization = currentOrganization?.organization || null;
 
-  const updateOrganization = useCallback(async (updates: Partial<any>) => {
-    if (!currentOrganization?.organization) return false;
+  const updateOrganization = useCallback(
+    async (updates: Partial<OrganizationMembership['organization']>) => {
+      if (!currentOrganization?.organization) return false;
 
-    try {
-      const { error } = await supabase
-        .from('organizations')
-        .update(updates)
-        .eq('id', currentOrganization.organization.id);
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update(updates)
+          .eq('id', currentOrganization.organization.id);
 
-      if (error) {
+        if (error) {
+          console.error('Error updating organization:', error);
+          toast.error('Error al actualizar organización');
+          return false;
+        }
+
+        // Invalidate and refetch
+        await queryClient.invalidateQueries({ queryKey });
+        toast.success('Organización actualizada');
+        return true;
+      } catch (error) {
         console.error('Error updating organization:', error);
-        toast.error('Error al actualizar organización');
+        toast.error('Error inesperado');
         return false;
       }
-
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey });
-      toast.success('Organización actualizada');
-      return true;
-    } catch (error) {
-      console.error('Error updating organization:', error);
-      toast.error('Error inesperado');
-      return false;
-    }
-  }, [currentOrganization, queryClient, queryKey]);
+    },
+    [currentOrganization, queryClient, queryKey]
+  );
 
   const fetchOrganizations = useCallback(() => {
     return refetch();
@@ -248,6 +290,6 @@ export const useCurrentOrganization = () => {
     // Legacy compatibility
     organization,
     updateOrganization,
-    refreshOrganization: fetchOrganizations
+    refreshOrganization: fetchOrganizations,
   };
 };

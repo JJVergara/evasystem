@@ -1,7 +1,12 @@
-
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search } from 'lucide-react';
 
 interface TaskFiltersProps {
   searchTerm: string;
@@ -20,7 +25,7 @@ export function TaskFilters({
   onStatusFilterChange,
   eventFilter,
   onEventFilterChange,
-  events
+  events,
 }: TaskFiltersProps) {
   return (
     <div className="flex gap-4 items-center">
@@ -33,7 +38,7 @@ export function TaskFilters({
           className="pl-10"
         />
       </div>
-      
+
       <Select value={statusFilter} onValueChange={onStatusFilterChange}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="Filtrar por estado" />

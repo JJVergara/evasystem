@@ -1,21 +1,20 @@
-
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, Shield } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+} from '@/components/ui/dropdown-menu';
+import { User, Settings, LogOut, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface UserData {
   id: string;
@@ -96,7 +95,11 @@ export function UserProfileDropdown() {
           <Avatar className="w-8 h-8">
             <AvatarImage src="" />
             <AvatarFallback className="text-xs">
-              {userData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              {userData.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start text-left">
@@ -109,38 +112,38 @@ export function UserProfileDropdown() {
           </div>
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="start" className="w-56 z-50 bg-background border">
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">{userData.name}</p>
           <p className="text-xs text-muted-foreground">{userData.email}</p>
         </div>
-        
+
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem asChild>
           <Link to="/profile" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             Mi Perfil
           </Link>
         </DropdownMenuItem>
-        
+
         <DropdownMenuItem asChild>
           <Link to="/settings" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Configuraciones
           </Link>
         </DropdownMenuItem>
-        
+
         <DropdownMenuItem asChild>
           <Link to="/system-config" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Sistema
           </Link>
         </DropdownMenuItem>
-        
+
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
           <LogOut className="w-4 h-4 mr-2" />
           Cerrar Sesión

@@ -1,28 +1,28 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Bell, Check, AlertCircle, Info, Calendar, Users } from "lucide-react";
-import { useRealNotifications } from "@/hooks/useRealNotifications";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+} from '@/components/ui/dropdown-menu';
+import { Bell, Check, AlertCircle, Info, Calendar, Users } from 'lucide-react';
+import { useRealNotifications } from '@/hooks/useRealNotifications';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useRealNotifications();
 
   const handleMarkAsRead = async (notificationId: string) => {
     await markAsRead(notificationId);
-    toast.success("Notificación marcada como leída");
+    toast.success('Notificación marcada como leída');
   };
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
-    toast.success("Todas las notificaciones marcadas como leídas");
+    toast.success('Todas las notificaciones marcadas como leídas');
   };
 
   const getNotificationIcon = (type: string) => {
@@ -39,9 +39,9 @@ export function NotificationDropdown() {
 
   const getPriorityColor = (priority: string) => {
     const colors: Record<string, string> = {
-      high: "text-destructive",
-      normal: "text-foreground",
-      low: "text-muted-foreground",
+      high: 'text-destructive',
+      normal: 'text-foreground',
+      low: 'text-muted-foreground',
     };
     return colors[priority] || colors.normal;
   };
@@ -72,7 +72,7 @@ export function NotificationDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-80 z-50 bg-background border">
         <div className="px-3 py-2 border-b">
           <div className="flex items-center justify-between">
@@ -93,7 +93,7 @@ export function NotificationDropdown() {
             )}
           </div>
         </div>
-        
+
         <ScrollArea className="h-96">
           {loading ? (
             <div className="space-y-1 p-1">
@@ -108,17 +108,15 @@ export function NotificationDropdown() {
               ))}
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              No hay notificaciones
-            </div>
+            <div className="p-4 text-center text-muted-foreground">No hay notificaciones</div>
           ) : (
             <div className="space-y-1 p-1">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent",
-                    !notification.read_status && "bg-primary/5"
+                    'flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent',
+                    !notification.read_status && 'bg-primary/5'
                   )}
                   onClick={() => {
                     if (!notification.read_status) {
@@ -126,14 +124,12 @@ export function NotificationDropdown() {
                     }
                   }}
                 >
-                  <div className={cn("mt-0.5", getPriorityColor(notification.priority))}>
+                  <div className={cn('mt-0.5', getPriorityColor(notification.priority))}>
                     {getNotificationIcon(notification.type)}
                   </div>
-                  
+
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm leading-tight">
-                      {notification.message}
-                    </p>
+                    <p className="text-sm leading-tight">{notification.message}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {formatTimeAgo(notification.created_at)}
@@ -145,7 +141,7 @@ export function NotificationDropdown() {
                       )}
                     </div>
                   </div>
-                  
+
                   {!notification.read_status && (
                     <Button
                       variant="ghost"

@@ -1,6 +1,27 @@
 /**
- * useAmbassadors hook
- * Manages ambassador data fetching and mutations
+ * @fileoverview Hook for managing ambassador data with React Query.
+ *
+ * This hook provides CRUD operations for ambassadors using:
+ * - Service layer (`@/services/api`) for API calls
+ * - Query keys from `@/constants` for cache management
+ * - Automatic organization scoping via `useCurrentOrganization`
+ *
+ * Data is automatically cached for 5 minutes (staleTime) and kept in
+ * memory for 15 minutes (gcTime) for optimal performance.
+ *
+ * @example
+ * ```tsx
+ * function AmbassadorList() {
+ *   const { ambassadors, loading, createAmbassador, deleteAmbassador } = useAmbassadors();
+ *
+ *   const handleCreate = async () => {
+ *     await createAmbassador({ first_name: 'John', last_name: 'Doe', ... });
+ *   };
+ *
+ *   if (loading) return <Skeleton />;
+ *   return ambassadors.map(a => <AmbassadorCard key={a.id} ambassador={a} />);
+ * }
+ * ```
  */
 
 import { useCallback } from 'react';
@@ -20,6 +41,18 @@ import type { Ambassador, CreateAmbassadorInput, UpdateAmbassadorInput } from '@
 // Re-export Ambassador type for backwards compatibility
 export type { Ambassador };
 
+/**
+ * Hook for managing ambassadors with full CRUD operations.
+ *
+ * @returns Object containing:
+ * - `ambassadors` - Array of Ambassador objects for current organization
+ * - `loading` - Whether data is being fetched
+ * - `error` - Error message if fetch failed
+ * - `createAmbassador(data)` - Create a new ambassador
+ * - `updateAmbassador(id, updates)` - Update an existing ambassador
+ * - `deleteAmbassador(id)` - Delete an ambassador
+ * - `refreshAmbassadors()` - Manually refresh the ambassador list
+ */
 export function useAmbassadors() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();
@@ -40,8 +73,7 @@ export function useAmbassadors() {
   });
 
   const createAmbassadorMutation = useMutation({
-    mutationFn: (data: CreateAmbassadorInput) =>
-      createAmbassadorApi(organizationId!, data),
+    mutationFn: (data: CreateAmbassadorInput) => createAmbassadorApi(organizationId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Embajador creado exitosamente');

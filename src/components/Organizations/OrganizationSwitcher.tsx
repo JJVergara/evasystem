@@ -14,16 +14,12 @@ import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { toast } from 'sonner';
 
 export const OrganizationSwitcher = () => {
-  const { 
-    currentOrganization, 
-    userOrganizations, 
-    switchOrganization 
-  } = useCurrentOrganization();
+  const { currentOrganization, userOrganizations, switchOrganization } = useCurrentOrganization();
   const [switching, setSwitching] = useState(false);
 
   const handleSwitchOrganization = async (organizationId: string) => {
     if (switching || currentOrganization?.organization_id === organizationId) return;
-    
+
     setSwitching(true);
     try {
       await switchOrganization(organizationId);
@@ -45,8 +41,8 @@ export const OrganizationSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full justify-between gap-2 h-10"
           disabled={switching}
         >
@@ -54,7 +50,9 @@ export const OrganizationSwitcher = () => {
             <Building2 className="w-4 h-4 shrink-0" />
             <span className="truncate">{currentOrganization.organization.name}</span>
             {currentOrganization.is_owner && (
-              <Badge variant="secondary" className="text-xs">Owner</Badge>
+              <Badge variant="secondary" className="text-xs">
+                Owner
+              </Badge>
             )}
           </div>
           <ChevronDown className="w-4 h-4 shrink-0" />
@@ -63,7 +61,7 @@ export const OrganizationSwitcher = () => {
       <DropdownMenuContent className="w-80">
         <DropdownMenuLabel>Cambiar Organización</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         {userOrganizations.map((org) => (
           <DropdownMenuItem
             key={org.organization_id}
@@ -84,9 +82,9 @@ export const OrganizationSwitcher = () => {
             )}
           </DropdownMenuItem>
         ))}
-        
+
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem
           onClick={() => {
             // Navigate to create organization or settings

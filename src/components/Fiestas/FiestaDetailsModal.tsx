@@ -1,7 +1,13 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Hash, Clock, Users } from "lucide-react";
-import { Fiesta } from "@/hooks/useFiestas";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Hash, Clock, Users } from 'lucide-react';
+import { Fiesta } from '@/hooks/useFiestas';
 
 interface FiestaDetailsModalProps {
   fiesta: Fiesta | null;
@@ -30,7 +36,7 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
             </DialogDescription>
           )}
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Event Details */}
           <div className="space-y-4">
@@ -48,13 +54,13 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
-                        weekday: 'long'
+                        weekday: 'long',
                       })}
                     </p>
                   </div>
                 </div>
               )}
-              
+
               {fiesta.location && (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 border border-gray-200/50">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
@@ -85,13 +91,17 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
                     </div>
                   </div>
                 )}
-                
+
                 {fiesta.secondary_hashtags && fiesta.secondary_hashtags.length > 0 && (
                   <div className="p-3 rounded-xl bg-gray-50/50 border border-gray-200/50">
                     <p className="font-medium text-gray-900 mb-2">Hashtags Secundarios</p>
                     <div className="flex flex-wrap gap-2">
                       {fiesta.secondary_hashtags.map((hashtag, index) => (
-                        <Badge key={index} variant="outline" className="text-gray-700 border-gray-300">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-gray-700 border-gray-300"
+                        >
                           {hashtag}
                         </Badge>
                       ))}
@@ -116,12 +126,12 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
                       month: 'long',
                       day: 'numeric',
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 border border-gray-200/50">
                 <Clock className="w-5 h-5 text-gray-600" />
                 <div>
@@ -132,7 +142,7 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
                       month: 'long',
                       day: 'numeric',
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>

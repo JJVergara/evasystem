@@ -1,12 +1,23 @@
-
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { useTasksManagement } from "@/hooks/useTasksManagement";
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus } from 'lucide-react';
+import { useTasksManagement } from '@/hooks/useTasksManagement';
 
 interface CreateTaskModalProps {
   ambassadors: Array<{ id: string; name: string; instagram_user: string }>;
@@ -17,18 +28,18 @@ export function CreateTaskModal({ ambassadors, events }: CreateTaskModalProps) {
   const { createTask } = useTasksManagement();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    embassador_id: "",
-    event_id: "",
-    task_type: "story" as "story" | "mention" | "repost",
-    expected_hashtag: "",
+    embassador_id: '',
+    event_id: '',
+    task_type: 'story' as 'story' | 'mention' | 'repost',
+    expected_hashtag: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const selectedEvent = events.find(e => e.id === formData.event_id);
-    const hashtag = formData.expected_hashtag || selectedEvent?.main_hashtag || "";
-    
+
+    const selectedEvent = events.find((e) => e.id === formData.event_id);
+    const hashtag = formData.expected_hashtag || selectedEvent?.main_hashtag || '';
+
     const success = await createTask({
       ...formData,
       expected_hashtag: hashtag,
@@ -37,10 +48,10 @@ export function CreateTaskModal({ ambassadors, events }: CreateTaskModalProps) {
     if (success) {
       setOpen(false);
       setFormData({
-        embassador_id: "",
-        event_id: "",
-        task_type: "story",
-        expected_hashtag: "",
+        embassador_id: '',
+        event_id: '',
+        task_type: 'story',
+        expected_hashtag: '',
       });
     }
   };
@@ -57,11 +68,14 @@ export function CreateTaskModal({ ambassadors, events }: CreateTaskModalProps) {
         <DialogHeader>
           <DialogTitle>Crear Nueva Tarea</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="embassador">Embajador</Label>
-            <Select value={formData.embassador_id} onValueChange={(value) => setFormData({ ...formData, embassador_id: value })}>
+            <Select
+              value={formData.embassador_id}
+              onValueChange={(value) => setFormData({ ...formData, embassador_id: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar embajador" />
               </SelectTrigger>
@@ -77,7 +91,10 @@ export function CreateTaskModal({ ambassadors, events }: CreateTaskModalProps) {
 
           <div>
             <Label htmlFor="event">Evento</Label>
-            <Select value={formData.event_id} onValueChange={(value) => setFormData({ ...formData, event_id: value })}>
+            <Select
+              value={formData.event_id}
+              onValueChange={(value) => setFormData({ ...formData, event_id: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar evento" />
               </SelectTrigger>
@@ -93,7 +110,12 @@ export function CreateTaskModal({ ambassadors, events }: CreateTaskModalProps) {
 
           <div>
             <Label htmlFor="task_type">Tipo de Tarea</Label>
-            <Select value={formData.task_type} onValueChange={(value: "story" | "mention" | "repost") => setFormData({ ...formData, task_type: value })}>
+            <Select
+              value={formData.task_type}
+              onValueChange={(value: 'story' | 'mention' | 'repost') =>
+                setFormData({ ...formData, task_type: value })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

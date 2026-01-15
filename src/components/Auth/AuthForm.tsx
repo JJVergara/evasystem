@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Instagram, BarChart3, Users, Zap, Shield } from "lucide-react";
-import { ModernLogo } from "@/components/Logo/ModernLogo";
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { Sparkles, Instagram, BarChart3, Users, Zap, Shield } from 'lucide-react';
+import { ModernLogo } from '@/components/Logo/ModernLogo';
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,27 +23,26 @@ export function AuthForm() {
     const password = formData.get('password') as string;
 
     try {
-      const { error } = mode === 'signin' 
-        ? await signIn(email, password)
-        : await signUp(email, password);
+      const { error } =
+        mode === 'signin' ? await signIn(email, password) : await signUp(email, password);
 
       if (error) {
         toast({
-          title: "Error",
+          title: 'Error',
           description: error.message,
-          variant: "destructive",
+          variant: 'destructive',
         });
       } else if (mode === 'signup') {
         toast({
-          title: "¡Cuenta creada!",
-          description: "Revisa tu email para confirmar tu cuenta.",
+          title: '¡Cuenta creada!',
+          description: 'Revisa tu email para confirmar tu cuenta.',
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Algo salió mal. Inténtalo de nuevo.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Algo salió mal. Inténtalo de nuevo.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -55,22 +54,24 @@ export function AuthForm() {
       <div className="w-full max-w-6xl mx-auto">
         {/* Centered Container */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
-          
           {/* Brand Section - Always Visible */}
           <div className="flex flex-col items-center space-y-8 text-center lg:flex-1">
             {/* Logo with Animation */}
             <div className="animate-fade-in">
               <ModernLogo size="xl" className="animate-scale-in" />
             </div>
-            
+
             {/* Title with Futuristic Gradient */}
             <div className="space-y-4 animate-fade-in">
               <h1 className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-600 bg-clip-text text-transparent">
                 EVA System
               </h1>
               <p className="text-xl lg:text-2xl text-gray-600 max-w-2xl leading-relaxed">
-                Gestiona tu equipo de embajadores de Instagram con 
-                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent font-semibold"> inteligencia artificial</span>
+                Gestiona tu equipo de embajadores de Instagram con
+                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent font-semibold">
+                  {' '}
+                  inteligencia artificial
+                </span>
               </p>
             </div>
 
@@ -83,7 +84,7 @@ export function AuthForm() {
                 <h3 className="font-semibold text-gray-900 mb-1">Integración Instagram</h3>
                 <p className="text-sm text-gray-600">Conexión directa y segura</p>
               </div>
-              
+
               <div className="group p-4 rounded-2xl bg-white/50 backdrop-blur-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <BarChart3 className="w-6 h-6 text-white" />
@@ -91,7 +92,7 @@ export function AuthForm() {
                 <h3 className="font-semibold text-gray-900 mb-1">Analíticas IA</h3>
                 <p className="text-sm text-gray-600">Insights en tiempo real</p>
               </div>
-              
+
               <div className="group p-4 rounded-2xl bg-white/50 backdrop-blur-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <Users className="w-6 h-6 text-white" />
@@ -114,32 +115,32 @@ export function AuthForm() {
 
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-gray-100/50 rounded-2xl p-1">
-                  <TabsTrigger 
-                    value="signin" 
+                  <TabsTrigger
+                    value="signin"
                     className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
                   >
                     Iniciar Sesión
                   </TabsTrigger>
-                  <TabsTrigger 
+                  <TabsTrigger
                     value="signup"
                     className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
                   >
                     Registrarse
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="signin" className="mt-6">
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
                       <h3 className="text-2xl font-bold text-gray-900">Bienvenido de vuelta</h3>
-                      <p className="text-gray-600">
-                        Ingresa tus credenciales para continuar
-                      </p>
+                      <p className="text-gray-600">Ingresa tus credenciales para continuar</p>
                     </div>
-                    
+
                     <form onSubmit={(e) => handleSubmit(e, 'signin')} className="space-y-5">
                       <div className="space-y-2">
-                        <Label htmlFor="signin-email" className="text-gray-700 font-medium">Email</Label>
+                        <Label htmlFor="signin-email" className="text-gray-700 font-medium">
+                          Email
+                        </Label>
                         <Input
                           id="signin-email"
                           name="email"
@@ -150,7 +151,9 @@ export function AuthForm() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="signin-password" className="text-gray-700 font-medium">Contraseña</Label>
+                        <Label htmlFor="signin-password" className="text-gray-700 font-medium">
+                          Contraseña
+                        </Label>
                         <Input
                           id="signin-password"
                           name="password"
@@ -160,9 +163,9 @@ export function AuthForm() {
                           required
                         />
                       </div>
-                      <Button 
-                        type="submit" 
-                        className="w-full h-12 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 hover:from-gray-800 hover:to-gray-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]" 
+                      <Button
+                        type="submit"
+                        className="w-full h-12 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 hover:from-gray-800 hover:to-gray-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -180,7 +183,7 @@ export function AuthForm() {
                     </form>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="signup" className="mt-6">
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
@@ -189,10 +192,12 @@ export function AuthForm() {
                         Únete a EVA System y comienza tu transformación digital
                       </p>
                     </div>
-                    
+
                     <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-5">
                       <div className="space-y-2">
-                        <Label htmlFor="signup-email" className="text-gray-700 font-medium">Email</Label>
+                        <Label htmlFor="signup-email" className="text-gray-700 font-medium">
+                          Email
+                        </Label>
                         <Input
                           id="signup-email"
                           name="email"
@@ -203,7 +208,9 @@ export function AuthForm() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="signup-password" className="text-gray-700 font-medium">Contraseña</Label>
+                        <Label htmlFor="signup-password" className="text-gray-700 font-medium">
+                          Contraseña
+                        </Label>
                         <Input
                           id="signup-password"
                           name="password"
@@ -213,9 +220,9 @@ export function AuthForm() {
                           required
                         />
                       </div>
-                      <Button 
-                        type="submit" 
-                        className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]" 
+                      <Button
+                        type="submit"
+                        className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
                         disabled={isLoading}
                       >
                         {isLoading ? (
@@ -237,7 +244,7 @@ export function AuthForm() {
             </div>
           </div>
         </div>
-        
+
         {/* Floating Elements for Futuristic Feel */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-40"></div>

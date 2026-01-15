@@ -1,6 +1,6 @@
-import { Instagram, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Instagram, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface InstagramProfileLinkProps {
   username: string;
@@ -8,9 +8,13 @@ interface InstagramProfileLinkProps {
   className?: string;
 }
 
-export function InstagramProfileLink({ username, followerCount, className }: InstagramProfileLinkProps) {
+export function InstagramProfileLink({
+  username,
+  followerCount,
+  className,
+}: InstagramProfileLinkProps) {
   const instagramUrl = `https://instagram.com/${username.replace('@', '')}`;
-  
+
   const handleClick = () => {
     window.open(instagramUrl, '_blank', 'noopener,noreferrer');
   };

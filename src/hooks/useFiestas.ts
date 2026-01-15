@@ -1,6 +1,27 @@
 /**
- * useFiestas hook
- * Manages fiesta data fetching and mutations
+ * @fileoverview Hook for managing fiesta (party/event) data with React Query.
+ *
+ * This hook provides:
+ * - CRUD operations for fiestas using the service layer
+ * - Automatic organization scoping
+ * - Selection state for the currently active fiesta
+ *
+ * Data is cached for 10 minutes (staleTime) and kept in memory
+ * for 30 minutes (gcTime).
+ *
+ * @example
+ * ```tsx
+ * function FiestaManager() {
+ *   const { fiestas, selectedFiesta, setSelectedFiestaId, createFiesta } = useFiestas();
+ *
+ *   return (
+ *     <div>
+ *       <FiestaList fiestas={fiestas} onSelect={setSelectedFiestaId} />
+ *       {selectedFiesta && <FiestaDetails fiesta={selectedFiesta} />}
+ *     </div>
+ *   );
+ * }
+ * ```
  */
 
 import { useState, useCallback } from 'react';
@@ -19,6 +40,19 @@ import type { Fiesta, CreateFiestaInput, UpdateFiestaInput } from '@/types';
 // Re-export Fiesta type for backwards compatibility
 export type { Fiesta };
 
+/**
+ * Hook for managing fiestas with selection state.
+ *
+ * @returns Object containing:
+ * - `fiestas` - Array of Fiesta objects for current organization
+ * - `selectedFiesta` - Currently selected Fiesta or null
+ * - `selectedFiestaId` - ID of selected fiesta
+ * - `setSelectedFiestaId(id)` - Select a fiesta by ID
+ * - `loading` - Whether data is being fetched
+ * - `createFiesta(data)` - Create a new fiesta
+ * - `updateFiesta(id, updates)` - Update an existing fiesta
+ * - `refreshFiestas()` - Manually refresh the fiesta list
+ */
 export function useFiestas() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();

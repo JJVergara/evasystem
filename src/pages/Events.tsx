@@ -1,4 +1,4 @@
-import FiestasManagement from "@/components/Fiestas/FiestasManagement";
+import FiestasManagement from '@/components/Fiestas/FiestasManagement';
 
 const Events = () => {
   return <FiestasManagement />;

@@ -1,10 +1,9 @@
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, ExternalLink, Copy, AlertTriangle, Instagram } from "lucide-react";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, ExternalLink, Copy, AlertTriangle, Instagram } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface InstagramConfigGuideProps {
   isOpen: boolean;
@@ -22,58 +21,58 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
 
   const steps = [
     {
-      title: "1. Crear App en Meta Developers",
-      description: "Crea una nueva aplicación para tu organización",
-      action: "Ir a Meta Developers",
-      url: "https://developers.facebook.com/apps/",
+      title: '1. Crear App en Meta Developers',
+      description: 'Crea una nueva aplicación para tu organización',
+      action: 'Ir a Meta Developers',
+      url: 'https://developers.facebook.com/apps/',
       details: [
         "Haz clic en 'Crear app'",
         "Selecciona tipo 'Empresa' o 'Consumidor'",
-        "Completa el nombre de tu app y email de contacto",
-        "Guarda el App ID que se genera"
-      ]
+        'Completa el nombre de tu app y email de contacto',
+        'Guarda el App ID que se genera',
+      ],
     },
     {
-      title: "2. Configurar Instagram API con Instagram Login",
-      description: "Añade el producto de Instagram API",
+      title: '2. Configurar Instagram API con Instagram Login',
+      description: 'Añade el producto de Instagram API',
       details: [
         "En el panel de tu app, ve a 'Añadir productos'",
         "Busca y añade 'Instagram API with Instagram Login'",
-        "Este producto permite conectar cuentas Business y Creator directamente",
-        "No necesitas vincular una página de Facebook"
-      ]
+        'Este producto permite conectar cuentas Business y Creator directamente',
+        'No necesitas vincular una página de Facebook',
+      ],
     },
     {
-      title: "3. Configurar OAuth de Instagram",
-      description: "Configura los ajustes de autorización",
+      title: '3. Configurar OAuth de Instagram',
+      description: 'Configura los ajustes de autorización',
       details: [
-        "Ve a Instagram API with Instagram Login > Settings",
-        "Añade la Redirect URI (Valid OAuth Redirect URIs):",
+        'Ve a Instagram API with Instagram Login > Settings',
+        'Añade la Redirect URI (Valid OAuth Redirect URIs):',
         redirectUri,
-        "Guarda los cambios"
-      ]
+        'Guarda los cambios',
+      ],
     },
     {
-      title: "4. Configurar Webhooks (Opcional)",
-      description: "Configura las notificaciones automáticas",
+      title: '4. Configurar Webhooks (Opcional)',
+      description: 'Configura las notificaciones automáticas',
       details: [
-        "Ve a Webhooks en el menú lateral",
-        "Crea un nuevo webhook con esta URL:",
+        'Ve a Webhooks en el menú lateral',
+        'Crea un nuevo webhook con esta URL:',
         webhookUrl,
-        "Usa un Verify Token personalizado (lo necesitarás después)",
-        "Selecciona los campos: mentions, comments, story_insights"
-      ]
+        'Usa un Verify Token personalizado (lo necesitarás después)',
+        'Selecciona los campos: mentions, comments, story_insights',
+      ],
     },
     {
-      title: "5. Obtener Credenciales",
-      description: "Copia las credenciales de tu app",
+      title: '5. Obtener Credenciales',
+      description: 'Copia las credenciales de tu app',
       details: [
-        "Ve a Configuración > Básica",
+        'Ve a Configuración > Básica',
         "Copia el 'ID de la app' (Instagram App ID)",
         "Copia el 'Secreto de la app' (haz clic en 'Mostrar')",
-        "También necesitarás el Verify Token si configuraste webhooks"
-      ]
-    }
+        'También necesitarás el Verify Token si configuraste webhooks',
+      ],
+    },
   ];
 
   return (
@@ -97,8 +96,8 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
             </CardHeader>
             <CardContent>
               <p className="text-amber-700 dark:text-amber-300">
-                Cada organización debe tener su propia aplicación en Meta Developers. 
-                No compartas credenciales entre diferentes organizaciones o clientes.
+                Cada organización debe tener su propia aplicación en Meta Developers. No compartas
+                credenciales entre diferentes organizaciones o clientes.
               </p>
             </CardContent>
           </Card>
@@ -118,7 +117,7 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(redirectUri, "Redirect URI")}
+                    onClick={() => copyToClipboard(redirectUri, 'Redirect URI')}
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copiar
@@ -135,7 +134,7 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(webhookUrl, "Webhook URL")}
+                    onClick={() => copyToClipboard(webhookUrl, 'Webhook URL')}
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copiar

@@ -12,8 +12,4 @@ export {
   deleteAmbassador,
 } from './ambassadors';
 
-export {
-  getFiestas,
-  createFiesta,
-  updateFiesta,
-} from './fiestas';
+export { getFiestas, createFiesta, updateFiesta } from './fiestas';

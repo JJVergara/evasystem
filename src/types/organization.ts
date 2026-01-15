@@ -164,5 +164,9 @@ export function hasPermission(
   if (membership.role === 'owner') return true;
 
   // Check explicit permission
-  return membership.permissions?.[permission] ?? DEFAULT_PERMISSIONS[membership.role]?.[permission] ?? false;
+  return (
+    membership.permissions?.[permission] ??
+    DEFAULT_PERMISSIONS[membership.role]?.[permission] ??
+    false
+  );
 }

@@ -1,7 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Instagram,
   AlertCircle,
@@ -15,15 +15,15 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Calendar
-} from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useInstagramConnection } from "@/hooks/useInstagramConnection";
-import { useInstagramSync } from "@/hooks/useInstagramSync";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { supabase } from "@/integrations/supabase/client";
-import { TokenExpiryWarning } from "@/components/Instagram/TokenExpiryWarning";
+  Calendar,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useInstagramConnection } from '@/hooks/useInstagramConnection';
+import { useInstagramSync } from '@/hooks/useInstagramSync';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { supabase } from '@/integrations/supabase/client';
+import { TokenExpiryWarning } from '@/components/Instagram/TokenExpiryWarning';
 
 interface DiagnosticResult {
   instagram_account: {
@@ -52,7 +52,7 @@ export function EnhancedInstagramSettings() {
     showWarning,
     // Token refresh functionality
     refreshToken: refreshInstagramToken,
-    isRefreshingToken
+    isRefreshingToken,
   } = useInstagramConnection();
   const { isSyncing, syncInstagramData, refreshToken } = useInstagramSync();
 
@@ -71,7 +71,8 @@ export function EnhancedInstagramSettings() {
               Conexión de Instagram
             </CardTitle>
             <CardDescription>
-              Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar embajadores automáticamente.
+              Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar
+              embajadores automáticamente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -104,15 +105,17 @@ export function EnhancedInstagramSettings() {
     setDiagnosticResult(null);
     try {
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=diagnose');
-      
+
       if (error) {
         toast.error('Error al ejecutar diagnóstico', { description: error.message });
         return;
       }
-      
+
       if (data?.success && data?.data) {
         setDiagnosticResult(data.data);
-        toast.success(`Cuenta conectada: @${data.data.instagram_account?.username || 'desconocido'}`);
+        toast.success(
+          `Cuenta conectada: @${data.data.instagram_account?.username || 'desconocido'}`
+        );
       } else {
         toast.error(data?.error_description || 'Error desconocido');
       }
@@ -140,24 +143,24 @@ export function EnhancedInstagramSettings() {
         status: 'Desconectado',
         variant: 'destructive' as const,
         icon: <AlertCircle className="h-4 w-4" />,
-        description: 'Instagram no está conectado a tu organización'
+        description: 'Instagram no está conectado a tu organización',
       };
     }
-    
+
     if (isTokenExpired) {
       return {
         status: 'Token Expirado',
         variant: 'destructive' as const,
         icon: <AlertCircle className="h-4 w-4" />,
-        description: 'El token de acceso ha expirado y necesita ser renovado'
+        description: 'El token de acceso ha expirado y necesita ser renovado',
       };
     }
-    
+
     return {
       status: 'Conectado',
       variant: 'default' as const,
       icon: <CheckCircle className="h-4 w-4" />,
-      description: 'Instagram está conectado y funcionando correctamente'
+      description: 'Instagram está conectado y funcionando correctamente',
     };
   };
 
@@ -173,7 +176,8 @@ export function EnhancedInstagramSettings() {
             Conexión de Instagram
           </CardTitle>
           <CardDescription>
-            Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar embajadores automáticamente.
+            Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar
+            embajadores automáticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -187,16 +191,13 @@ export function EnhancedInstagramSettings() {
                 </Badge>
                 {instagramUsername && (
                   <Badge variant="outline" className="flex items-center gap-1 bg-white">
-                    <Instagram className="h-3 w-3" />
-                    @{instagramUsername}
+                    <Instagram className="h-3 w-3" />@{instagramUsername}
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                {statusInfo.description}
-              </p>
+              <p className="text-sm text-muted-foreground">{statusInfo.description}</p>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {isConnected ? (
@@ -239,9 +240,13 @@ export function EnhancedInstagramSettings() {
                   size="lg"
                 >
                   <Instagram className="h-5 w-5" />
-                  {orgLoading ? 'Cargando...' : 
-                   !organization ? 'Preparando...' :
-                   isConnecting ? 'Conectando...' : 'Conectar con Instagram'}
+                  {orgLoading
+                    ? 'Cargando...'
+                    : !organization
+                      ? 'Preparando...'
+                      : isConnecting
+                        ? 'Conectando...'
+                        : 'Conectar con Instagram'}
                 </Button>
               )}
             </div>
@@ -261,7 +266,9 @@ export function EnhancedInstagramSettings() {
                   variant="link"
                   size="sm"
                   className="p-0 h-auto text-blue-700 hover:text-blue-800"
-                  onClick={() => window.open('https://help.instagram.com/502981923235522', '_blank')}
+                  onClick={() =>
+                    window.open('https://help.instagram.com/502981923235522', '_blank')
+                  }
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
                   ¿Cómo convertir mi cuenta a Business?
@@ -315,12 +322,7 @@ export function EnhancedInstagramSettings() {
                 <Eye className="h-5 w-5" />
                 Detalles de la Cuenta
               </CardTitle>
-              <Button
-                onClick={handleRefreshAll}
-                variant="ghost"
-                size="sm"
-                disabled={isConnecting}
-              >
+              <Button onClick={handleRefreshAll} variant="ghost" size="sm" disabled={isConnecting}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${isConnecting ? 'animate-spin' : ''}`} />
                 Actualizar
               </Button>
@@ -331,14 +333,20 @@ export function EnhancedInstagramSettings() {
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Usuario</p>
                 <p className="font-medium">
-                  {instagramUsername ? `@${instagramUsername}` :
-                    <span className="text-yellow-600">No detectado</span>}
+                  {instagramUsername ? (
+                    `@${instagramUsername}`
+                  ) : (
+                    <span className="text-yellow-600">No detectado</span>
+                  )}
                 </p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Estado del Token</p>
-                <Badge variant={isTokenExpired ? "destructive" : "default"} className={!isTokenExpired ? "bg-green-600" : ""}>
-                  {isTokenExpired ? "Expirado" : "Activo"}
+                <Badge
+                  variant={isTokenExpired ? 'destructive' : 'default'}
+                  className={!isTokenExpired ? 'bg-green-600' : ''}
+                >
+                  {isTokenExpired ? 'Expirado' : 'Activo'}
                 </Badge>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
@@ -346,15 +354,17 @@ export function EnhancedInstagramSettings() {
                   <Calendar className="h-3 w-3" />
                   Expira en
                 </p>
-                <p className={`font-medium ${
-                  daysUntilExpiry !== null && daysUntilExpiry !== undefined
-                    ? daysUntilExpiry <= 7
-                      ? 'text-red-600'
-                      : daysUntilExpiry <= 14
-                        ? 'text-yellow-600'
-                        : 'text-green-600'
-                    : ''
-                }`}>
+                <p
+                  className={`font-medium ${
+                    daysUntilExpiry !== null && daysUntilExpiry !== undefined
+                      ? daysUntilExpiry <= 7
+                        ? 'text-red-600'
+                        : daysUntilExpiry <= 14
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                      : ''
+                  }`}
+                >
                   {daysUntilExpiry !== null && daysUntilExpiry !== undefined
                     ? `${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'día' : 'días'}`
                     : isTokenExpired
@@ -364,7 +374,9 @@ export function EnhancedInstagramSettings() {
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Cuenta Business</p>
-                <p className={`font-medium ${businessAccountId ? 'text-green-600' : 'text-yellow-600'}`}>
+                <p
+                  className={`font-medium ${businessAccountId ? 'text-green-600' : 'text-yellow-600'}`}
+                >
                   {businessAccountId ? '✓ Conectada' : 'No vinculada'}
                 </p>
               </div>
@@ -379,7 +391,7 @@ export function EnhancedInstagramSettings() {
                     {new Date(tokenExpiryDate).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </span>
                 </div>
@@ -389,7 +401,9 @@ export function EnhancedInstagramSettings() {
                   variant="outline"
                   size="sm"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingToken ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${isRefreshingToken ? 'animate-spin' : ''}`}
+                  />
                   {isRefreshingToken ? 'Renovando...' : 'Renovar (+60 días)'}
                 </Button>
               </div>
@@ -403,7 +417,8 @@ export function EnhancedInstagramSettings() {
                   <div className="flex-1">
                     <p className="font-medium mb-1">Información incompleta</p>
                     <p className="text-yellow-600 mb-3">
-                      Puede que los datos no se hayan cargado completamente. Intenta actualizar o ejecutar un diagnóstico.
+                      Puede que los datos no se hayan cargado completamente. Intenta actualizar o
+                      ejecutar un diagnóstico.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Button
@@ -412,7 +427,9 @@ export function EnhancedInstagramSettings() {
                         size="sm"
                         disabled={isConnecting}
                       >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isConnecting ? 'animate-spin' : ''}`} />
+                        <RefreshCw
+                          className={`h-4 w-4 mr-2 ${isConnecting ? 'animate-spin' : ''}`}
+                        />
                         Actualizar datos
                       </Button>
                       <Button
@@ -422,7 +439,11 @@ export function EnhancedInstagramSettings() {
                       >
                         <Search className="h-4 w-4 mr-2" />
                         {showDiagnostics ? 'Ocultar diagnóstico' : 'Ver diagnóstico'}
-                        {showDiagnostics ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                        {showDiagnostics ? (
+                          <ChevronUp className="h-4 w-4 ml-1" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -433,11 +454,7 @@ export function EnhancedInstagramSettings() {
                   <div className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">Diagnóstico de Instagram</h4>
-                      <Button
-                        onClick={runAccountDiagnostic}
-                        disabled={isDiagnosing}
-                        size="sm"
-                      >
+                      <Button onClick={runAccountDiagnostic} disabled={isDiagnosing} size="sm">
                         <Search className={`h-4 w-4 mr-2 ${isDiagnosing ? 'animate-pulse' : ''}`} />
                         {isDiagnosing ? 'Analizando...' : 'Ejecutar diagnóstico'}
                       </Button>
@@ -453,10 +470,13 @@ export function EnhancedInstagramSettings() {
                               </div>
                               <div>
                                 <p className="font-medium text-green-800">
-                                  @{diagnosticResult.instagram_account?.username || 'Usuario no disponible'}
+                                  @
+                                  {diagnosticResult.instagram_account?.username ||
+                                    'Usuario no disponible'}
                                 </p>
                                 <p className="text-sm text-green-600">
-                                  {diagnosticResult.instagram_account?.account_type || 'Cuenta de Instagram'}
+                                  {diagnosticResult.instagram_account?.account_type ||
+                                    'Cuenta de Instagram'}
                                 </p>
                               </div>
                             </div>
@@ -470,13 +490,17 @@ export function EnhancedInstagramSettings() {
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div className="p-3 bg-muted rounded-lg">
                             <p className="text-muted-foreground mb-1">ID de cuenta</p>
-                            <p className="font-mono text-xs">{diagnosticResult.instagram_account?.id || 'N/A'}</p>
+                            <p className="font-mono text-xs">
+                              {diagnosticResult.instagram_account?.id || 'N/A'}
+                            </p>
                           </div>
                           <div className="p-3 bg-muted rounded-lg">
                             <p className="text-muted-foreground mb-1">Token actualizado</p>
                             <p className="text-xs">
-                              {diagnosticResult.token_updated_at 
-                                ? new Date(diagnosticResult.token_updated_at).toLocaleString('es-ES')
+                              {diagnosticResult.token_updated_at
+                                ? new Date(diagnosticResult.token_updated_at).toLocaleString(
+                                    'es-ES'
+                                  )
                                 : 'N/A'}
                             </p>
                           </div>
@@ -492,7 +516,8 @@ export function EnhancedInstagramSettings() {
 
                     {!diagnosticResult && (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        Haz clic en "Ejecutar diagnóstico" para verificar el estado de tu conexión de Instagram
+                        Haz clic en "Ejecutar diagnóstico" para verificar el estado de tu conexión
+                        de Instagram
                       </p>
                     )}
                   </div>
@@ -511,7 +536,7 @@ export function EnhancedInstagramSettings() {
             <div className="space-y-1">
               <p className="font-medium text-green-800">Tu privacidad está protegida</p>
               <p className="text-sm text-green-700">
-                EVA System solo accede a la información necesaria para gestionar tus embajadores. 
+                EVA System solo accede a la información necesaria para gestionar tus embajadores.
                 Puedes desconectar tu cuenta en cualquier momento y tus datos serán eliminados.
               </p>
             </div>

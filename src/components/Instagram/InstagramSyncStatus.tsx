@@ -1,13 +1,12 @@
-
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, Zap, RefreshCw, CheckCircle, AlertTriangle } from "lucide-react";
-import { useInstagramSync } from "@/hooks/useInstagramSync";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Clock, Zap, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useInstagramSync } from '@/hooks/useInstagramSync';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { supabase } from '@/integrations/supabase/client';
 
 export function InstagramSyncStatus() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
@@ -18,7 +17,7 @@ export function InstagramSyncStatus() {
     todayMentions: 0,
     todayTags: 0,
     weeklyMentions: 0,
-    isAutoSyncActive: true
+    isAutoSyncActive: true,
   });
 
   useEffect(() => {
@@ -57,15 +56,15 @@ export function InstagramSyncStatus() {
         .eq('organization_id', organization.id)
         .gte('created_at', weekAgo.toISOString());
 
-      const todayMentions = todayData?.filter(m => m.mention_type === 'mention').length || 0;
-      const todayTags = todayData?.filter(m => m.mention_type === 'tag').length || 0;
+      const todayMentions = todayData?.filter((m) => m.mention_type === 'mention').length || 0;
+      const todayTags = todayData?.filter((m) => m.mention_type === 'tag').length || 0;
       const weeklyMentions = weeklyData?.length || 0;
 
       setSyncStats({
         todayMentions,
         todayTags,
         weeklyMentions,
-        isAutoSyncActive: true
+        isAutoSyncActive: true,
       });
     } catch (error) {
       console.error('Error loading sync stats:', error);
@@ -83,11 +82,11 @@ export function InstagramSyncStatus() {
 
   const getTimeSinceLastSync = () => {
     if (!lastSync) return 'Nunca';
-    
+
     const now = new Date();
     const syncTime = new Date(lastSync);
     const diffMinutes = Math.floor((now.getTime() - syncTime.getTime()) / (1000 * 60));
-    
+
     if (diffMinutes < 1) return 'Hace menos de 1 minuto';
     if (diffMinutes < 60) return `Hace ${diffMinutes} minutos`;
     if (diffMinutes < 1440) return `Hace ${Math.floor(diffMinutes / 60)} horas`;
@@ -96,11 +95,11 @@ export function InstagramSyncStatus() {
 
   const getSyncStatusColor = () => {
     if (!lastSync) return 'destructive';
-    
+
     const now = new Date();
     const syncTime = new Date(lastSync);
     const diffMinutes = Math.floor((now.getTime() - syncTime.getTime()) / (1000 * 60));
-    
+
     if (diffMinutes <= 10) return 'success';
     if (diffMinutes <= 60) return 'default';
     return 'warning';
@@ -143,9 +142,7 @@ export function InstagramSyncStatus() {
               {syncStats.isAutoSyncActive ? 'Activo (cada 5 min)' : 'Inactivo'}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Última sync: {getTimeSinceLastSync()}
-          </p>
+          <p className="text-xs text-muted-foreground">Última sync: {getTimeSinceLastSync()}</p>
         </CardContent>
       </Card>
 
@@ -155,9 +152,7 @@ export function InstagramSyncStatus() {
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {syncStats.todayMentions + syncStats.todayTags}
-          </div>
+          <div className="text-2xl font-bold">{syncStats.todayMentions + syncStats.todayTags}</div>
           <p className="text-xs text-muted-foreground">
             {syncStats.todayMentions} menciones, {syncStats.todayTags} etiquetas
           </p>
@@ -171,9 +166,7 @@ export function InstagramSyncStatus() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{syncStats.weeklyMentions}</div>
-          <p className="text-xs text-muted-foreground">
-            Total de interacciones
-          </p>
+          <p className="text-xs text-muted-foreground">Total de interacciones</p>
         </CardContent>
       </Card>
 
@@ -183,12 +176,7 @@ export function InstagramSyncStatus() {
           <RefreshCw className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={handleManualSync}
-            disabled={isSyncing}
-            size="sm"
-            className="w-full"
-          >
+          <Button onClick={handleManualSync} disabled={isSyncing} size="sm" className="w-full">
             {isSyncing ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

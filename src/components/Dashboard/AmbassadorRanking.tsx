@@ -1,12 +1,19 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAmbassadorRanking } from "@/hooks/useAmbassadorRanking";
-import { toast } from "sonner";
-import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from "lucide-react";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAmbassadorRanking } from '@/hooks/useAmbassadorRanking';
+import { toast } from 'sonner';
+import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from 'lucide-react';
 
 export function AmbassadorRanking() {
   const { ranking, loading, refreshRanking } = useAmbassadorRanking();
@@ -32,10 +39,10 @@ export function AmbassadorRanking() {
 
   const getCategoryBadge = (category: string) => {
     const styles = {
-      'bronze': 'bg-amber-100 text-amber-800 border-amber-300',
-      'silver': 'bg-gray-100 text-gray-800 border-gray-300',
-      'gold': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      'diamond': 'bg-purple-100 text-purple-800 border-purple-300'
+      bronze: 'bg-amber-100 text-amber-800 border-amber-300',
+      silver: 'bg-gray-100 text-gray-800 border-gray-300',
+      gold: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      diamond: 'bg-purple-100 text-purple-800 border-purple-300',
     };
     const style = styles[category as keyof typeof styles] || styles.bronze;
     return (
@@ -135,9 +142,7 @@ export function AmbassadorRanking() {
               <TableBody>
                 {ranking.map((ambassador) => (
                   <TableRow key={ambassador.id}>
-                    <TableCell>
-                      {getRankBadge(ambassador.rank)}
-                    </TableCell>
+                    <TableCell>{getRankBadge(ambassador.rank)}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -156,9 +161,7 @@ export function AmbassadorRanking() {
                     <TableCell className="text-center">
                       {getCategoryBadge(ambassador.global_category)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {ambassador.events_participated}
-                    </TableCell>
+                    <TableCell className="text-right">{ambassador.events_participated}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex flex-col items-end">
                         <span className="font-medium">{ambassador.completed_tasks}</span>
@@ -169,7 +172,15 @@ export function AmbassadorRanking() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <span className={ambassador.completion_rate >= 80 ? 'text-green-600 font-medium' : ambassador.completion_rate >= 60 ? 'text-yellow-600' : 'text-red-600'}>
+                        <span
+                          className={
+                            ambassador.completion_rate >= 80
+                              ? 'text-green-600 font-medium'
+                              : ambassador.completion_rate >= 60
+                                ? 'text-yellow-600'
+                                : 'text-red-600'
+                          }
+                        >
                           {ambassador.completion_rate}%
                         </span>
                       </div>

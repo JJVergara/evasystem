@@ -1,24 +1,30 @@
-
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Eye, UserPlus, Upload, Download, Edit, Trash2, Clock } from "lucide-react";
-import { AmbassadorMetricsCards } from "./AmbassadorMetricsCards";
-import { AmbassadorPerformanceChart } from "./AmbassadorPerformanceChart";
-import { AmbassadorActivityTimeline } from "./AmbassadorActivityTimeline";
-import { AmbassadorRequestsTab } from "./AmbassadorRequestsTab";
-import { useAmbassadorMetrics } from "@/hooks/useAmbassadorMetrics";
-import { useAmbassadorRequests } from "@/hooks/useAmbassadorRequests";
-import AddAmbassadorModal from "./AddAmbassadorModal";
-import { EditAmbassadorModal } from "./EditAmbassadorModal";
-import { DeleteAmbassadorModal } from "./DeleteAmbassadorModal";
-import { InstagramProfileLink } from "./InstagramProfileLink";
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Eye, UserPlus, Upload, Download, Edit, Trash2, Clock } from 'lucide-react';
+import { AmbassadorMetricsCards } from './AmbassadorMetricsCards';
+import { AmbassadorPerformanceChart } from './AmbassadorPerformanceChart';
+import { AmbassadorActivityTimeline } from './AmbassadorActivityTimeline';
+import { AmbassadorRequestsTab } from './AmbassadorRequestsTab';
+import { useAmbassadorMetrics } from '@/hooks/useAmbassadorMetrics';
+import { useAmbassadorRequests } from '@/hooks/useAmbassadorRequests';
+import AddAmbassadorModal from './AddAmbassadorModal';
+import { EditAmbassadorModal } from './EditAmbassadorModal';
+import { DeleteAmbassadorModal } from './DeleteAmbassadorModal';
+import { InstagramProfileLink } from './InstagramProfileLink';
 
 interface Ambassador {
   id: string;
@@ -46,39 +52,45 @@ interface EnhancedAmbassadorDashboardProps {
   onRefresh: () => void;
 }
 
-export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: EnhancedAmbassadorDashboardProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+export function EnhancedAmbassadorDashboard({
+  ambassadors,
+  onRefresh,
+}: EnhancedAmbassadorDashboardProps) {
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedAmbassadorId, setSelectedAmbassadorId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAmbassador, setEditingAmbassador] = useState<Ambassador | null>(null);
   const [deletingAmbassador, setDeletingAmbassador] = useState<Ambassador | null>(null);
-  
-  const { metrics, loading: metricsLoading } = useAmbassadorMetrics(selectedAmbassadorId || undefined);
+
+  const { metrics, loading: metricsLoading } = useAmbassadorMetrics(
+    selectedAmbassadorId || undefined
+  );
   const { getPendingCount } = useAmbassadorRequests();
 
   const pendingRequestsCount = getPendingCount();
 
-  const filteredAmbassadors = ambassadors.filter(ambassador => {
-    const searchText = `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
+  const filteredAmbassadors = ambassadors.filter((ambassador) => {
+    const searchText =
+      `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
     return searchText.includes(searchTerm.toLowerCase());
   });
 
   const getCategoryBadge = (category: string) => {
     const styles = {
-      'bronze': 'bg-amber-100 text-amber-800',
-      'silver': 'bg-gray-100 text-gray-800', 
-      'gold': 'bg-yellow-100 text-yellow-800',
-      'diamond': 'bg-purple-100 text-purple-800'
+      bronze: 'bg-amber-100 text-amber-800',
+      silver: 'bg-gray-100 text-gray-800',
+      gold: 'bg-yellow-100 text-yellow-800',
+      diamond: 'bg-purple-100 text-purple-800',
     };
     return styles[category as keyof typeof styles] || styles.bronze;
   };
 
   const getPerformanceBadge = (status: string) => {
     const styles = {
-      'cumple': 'bg-green-100 text-green-800',
-      'advertencia': 'bg-yellow-100 text-yellow-800',
-      'no_cumple': 'bg-red-100 text-red-800',
-      'exclusivo': 'bg-purple-100 text-purple-800'
+      cumple: 'bg-green-100 text-green-800',
+      advertencia: 'bg-yellow-100 text-yellow-800',
+      no_cumple: 'bg-red-100 text-red-800',
+      exclusivo: 'bg-purple-100 text-purple-800',
     };
     return styles[status as keyof typeof styles] || styles.cumple;
   };
@@ -157,12 +169,17 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                         <div className="flex items-center space-x-3">
                           <Avatar>
                             <AvatarFallback>
-                              {ambassador.first_name[0]}{ambassador.last_name[0]}
+                              {ambassador.first_name[0]}
+                              {ambassador.last_name[0]}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{ambassador.first_name} {ambassador.last_name}</p>
-                            <p className="text-sm text-muted-foreground">@{ambassador.instagram_user}</p>
+                            <p className="font-medium">
+                              {ambassador.first_name} {ambassador.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              @{ambassador.instagram_user}
+                            </p>
                           </div>
                         </div>
                       </TableCell>
@@ -173,9 +190,13 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                       </TableCell>
                       <TableCell>
                         <Badge className={getPerformanceBadge(ambassador.performance_status)}>
-                          {ambassador.performance_status === 'cumple' ? 'Cumple' :
-                           ambassador.performance_status === 'advertencia' ? 'Advertencia' :
-                           ambassador.performance_status === 'no_cumple' ? 'No Cumple' : 'Exclusivo'}
+                          {ambassador.performance_status === 'cumple'
+                            ? 'Cumple'
+                            : ambassador.performance_status === 'advertencia'
+                              ? 'Advertencia'
+                              : ambassador.performance_status === 'no_cumple'
+                                ? 'No Cumple'
+                                : 'Exclusivo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -185,29 +206,29 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                       <TableCell>{ambassador.completed_tasks}</TableCell>
                       <TableCell>{ambassador.follower_count.toLocaleString()}</TableCell>
                       <TableCell>
-                        <InstagramProfileLink 
+                        <InstagramProfileLink
                           username={ambassador.instagram_user}
                           followerCount={ambassador.follower_count}
                         />
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setSelectedAmbassadorId(ambassador.id)}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setEditingAmbassador(ambassador)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setDeletingAmbassador(ambassador)}
                           >
@@ -229,16 +250,17 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
       </Tabs>
 
       {/* Ambassador Detail Modal */}
-      <Dialog open={!!selectedAmbassadorId} onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}>
+      <Dialog
+        open={!!selectedAmbassadorId}
+        onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}
+      >
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Dashboard del Embajador</DialogTitle>
           </DialogHeader>
-          
+
           {metricsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              Cargando métricas...
-            </div>
+            <div className="flex items-center justify-center py-8">Cargando métricas...</div>
           ) : metrics ? (
             <div className="space-y-6">
               <AmbassadorMetricsCards metrics={metrics} />
@@ -254,7 +276,7 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
       </Dialog>
 
       {/* Add Ambassador Modal */}
-      <AddAmbassadorModal 
+      <AddAmbassadorModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAmbassadorAdded={onRefresh}

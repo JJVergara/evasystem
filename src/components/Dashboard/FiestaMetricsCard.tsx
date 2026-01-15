@@ -1,10 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
   Calendar,
   Users,
   Trophy,
@@ -13,10 +19,10 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Settings
-} from "lucide-react";
-import { useFiestaMetrics } from "@/hooks/useFiestaMetrics";
-import { MetricCard } from "./MetricCard";
+  Settings,
+} from 'lucide-react';
+import { useFiestaMetrics } from '@/hooks/useFiestaMetrics';
+import { MetricCard } from './MetricCard';
 
 interface FiestaMetricsCardProps {
   fiesta: {
@@ -51,9 +57,9 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      'active': 'bg-success/10 text-success',
-      'completed': 'bg-blue-100 text-blue-800',
-      'draft': 'bg-gray-100 text-gray-800',
+      active: 'bg-success/10 text-success',
+      completed: 'bg-blue-100 text-blue-800',
+      draft: 'bg-gray-100 text-gray-800',
     };
     return styles[status as keyof typeof styles] || styles.active;
   };
@@ -66,8 +72,11 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
             <CardTitle className="text-lg font-semibold">{fiesta.name}</CardTitle>
             <div className="flex items-center gap-2 mt-1">
               <Badge className={getStatusBadge(fiesta.status)}>
-                {fiesta.status === 'active' ? 'Activa' : 
-                 fiesta.status === 'completed' ? 'Completada' : 'Borrador'}
+                {fiesta.status === 'active'
+                  ? 'Activa'
+                  : fiesta.status === 'completed'
+                    ? 'Completada'
+                    : 'Borrador'}
               </Badge>
               {fiesta.event_date && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
@@ -77,20 +86,22 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
               )}
             </div>
           </div>
-          
+
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
                 <Eye className="w-4 h-4" />
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl">
-                  {fiesta.name} - Detalles Completos
-                </DialogTitle>
+                <DialogTitle className="text-2xl">{fiesta.name} - Detalles Completos</DialogTitle>
               </DialogHeader>
-              
+
               <Tabs defaultValue="overview" className="space-y-6">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="overview">Resumen</TabsTrigger>
@@ -122,7 +133,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                       icon={<Trophy className="w-4 h-4" />}
                     />
                   </div>
-                  
+
                   {fiesta.description && (
                     <Card>
                       <CardHeader>
@@ -138,7 +149,10 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                 <TabsContent value="ambassadors" className="space-y-4">
                   <div className="space-y-3">
                     {metrics?.top_ambassadors?.slice(0, 10).map((ambassador, index) => (
-                      <div key={ambassador.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div
+                        key={ambassador.id}
+                        className="flex items-center justify-between p-3 rounded-lg border"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                             {index + 1}
@@ -230,7 +244,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
           </Dialog>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 rounded-lg bg-accent/20">
@@ -240,7 +254,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
             <div className="text-lg font-bold">{metrics?.total_ambassadors || 0}</div>
             <div className="text-xs text-muted-foreground">Embajadores</div>
           </div>
-          
+
           <div className="text-center p-3 rounded-lg bg-accent/20">
             <div className="flex items-center justify-center mb-1">
               <CheckCircle className="w-4 h-4 text-success" />
@@ -248,7 +262,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
             <div className="text-lg font-bold">{metrics?.completed_tasks || 0}</div>
             <div className="text-xs text-muted-foreground">Completadas</div>
           </div>
-          
+
           <div className="text-center p-3 rounded-lg bg-accent/20">
             <div className="flex items-center justify-center mb-1">
               <TrendingUp className="w-4 h-4 text-secondary" />
