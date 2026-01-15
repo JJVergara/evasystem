@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User, Session, AuthError } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 export function useAuth() {
@@ -105,7 +105,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error('Error al iniciar sesión');
-      return { data: null, error };
+      return { data: null, error: error as AuthError };
     }
   };
 
@@ -136,7 +136,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Sign up error:', error);
       toast.error('Error al crear cuenta');
-      return { data: null, error };
+      return { data: null, error: error as AuthError };
     }
   };
 

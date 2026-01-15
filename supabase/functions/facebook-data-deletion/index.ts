@@ -1,13 +1,17 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+/**
+ * Facebook Data Deletion Edge Function
+ * GDPR compliance endpoint for Facebook/Instagram data deletion requests
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 
 const META_APP_SECRET = Deno.env.get('META_APP_SECRET');
 
-function base64UrlDecode(input: string) {
+/**
+ * Decode base64url-encoded string
+ */
+function base64UrlDecode(input: string): string {
   input = input.replace(/-/g, '+').replace(/_/g, '/');
   const pad = input.length % 4;
   if (pad) input += '='.repeat(4 - pad);
@@ -17,30 +21,42 @@ function base64UrlDecode(input: string) {
   return decoder.decode(bytes);
 }
 
-async function verifySignedRequest(signedRequest: string) {
+/**
+ * Verify Facebook signed request
+ */
+async function verifySignedRequest(signedRequest: string): Promise<Record<string, unknown>> {
   if (!META_APP_SECRET) throw new Error('Missing META_APP_SECRET');
   const [sig, payload] = signedRequest.split('.');
   if (!sig || !payload) throw new Error('Invalid signed_request');
 
   const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(META_APP_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(META_APP_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
   const mac = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
   const bytes = new Uint8Array(mac);
   let binary = '';
   bytes.forEach(b => binary += String.fromCharCode(b));
-  const expectedB64Url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/,'');
+  const expectedB64Url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   if (expectedB64Url !== sig) throw new Error('Signature mismatch');
 
   const json = JSON.parse(base64UrlDecode(payload));
   return json;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
+    // Handle POST - Data deletion callback from Facebook
     if (req.method === 'POST') {
       const contentType = req.headers.get('content-type') || '';
       let signedRequest: string | null = null;
@@ -58,7 +74,7 @@ serve(async (req) => {
       try {
         if (signedRequest) {
           const parsed = await verifySignedRequest(signedRequest);
-          userRef = parsed.user_id || parsed.user?.id || 'unknown';
+          userRef = String(parsed.user_id || (parsed.user as Record<string, unknown>)?.id || 'unknown');
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : String(e);
@@ -69,29 +85,29 @@ serve(async (req) => {
       const statusUrl = `https://awpfslcepylnipaolmvv.functions.supabase.co/functions/v1/facebook-data-deletion?code=${code}`;
 
       // TODO: Optionally mark records for deletion for this userRef
-      return new Response(JSON.stringify({ url: statusUrl, confirmation_code: code }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      console.log(`Data deletion request received for user: ${userRef}, confirmation code: ${code}`);
+
+      return jsonResponse({
+        url: statusUrl,
+        confirmation_code: code
       });
     }
 
+    // Handle GET - Status check endpoint
     if (req.method === 'GET') {
-      // Simple status endpoint
       const url = new URL(req.url);
       const code = url.searchParams.get('code') || 'unknown';
-      return new Response(JSON.stringify({ status: 'pending', confirmation_code: code }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      return jsonResponse({
+        status: 'pending',
+        confirmation_code: code
       });
     }
 
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+
   } catch (e) {
     console.error('facebook-data-deletion error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return errorResponse(errorMessage, 500);
   }
 });

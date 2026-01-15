@@ -14,12 +14,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
+    /* Strict Type-Checking - Enabled incrementally for better type safety */
+    "strict": true,
+    "strictNullChecks": false,          // TODO: Enable after aligning types with Supabase nullability
+    "noUnusedLocals": false,            // TODO: Enable and clean up unused imports
+    "noUnusedParameters": false,        // TODO: Enable and clean up unused params
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,  // Too strict for current codebase
+    "exactOptionalPropertyTypes": false,
 
     "baseUrl": ".",
     "paths": {

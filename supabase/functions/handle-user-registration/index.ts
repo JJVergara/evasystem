@@ -1,32 +1,30 @@
+/**
+ * Handle User Registration Edge Function
+ * Handles new user registration and organization creation
+ */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
-    const { 
-      email, 
-      password, 
-      name, 
-      organizationName, 
+    const {
+      email,
+      password,
+      name,
+      organizationName,
       organizationDescription,
       mainInstagramAccount,
-      authUserId 
-    } = await req.json()
+      authUserId
+    } = await req.json();
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    // Initialize Supabase client with service role
+    const supabase = createSupabaseClient();
 
     let userData;
     let authData;
@@ -41,11 +39,11 @@ serve(async (req) => {
         .single();
 
       if (existingUserError && existingUserError.code !== 'PGRST116') {
-        throw new Error(`Error checking existing user: ${existingUserError.message}`)
+        throw new Error(`Error checking existing user: ${existingUserError.message}`);
       }
 
       authData = { user: { id: authUserId, email } };
-      
+
       if (existingUser) {
         userData = existingUser;
       }
@@ -55,10 +53,10 @@ serve(async (req) => {
         email,
         password,
         email_confirm: true
-      })
+      });
 
       if (authError) {
-        throw new Error(`Error creating user: ${authError.message}`)
+        throw new Error(`Error creating user: ${authError.message}`);
       }
 
       authData = newAuthData;
@@ -73,10 +71,10 @@ serve(async (req) => {
         created_by: authData.user.id
       })
       .select()
-      .single()
+      .single();
 
     if (orgError) {
-      throw new Error(`Error creating organization: ${orgError.message}`)
+      throw new Error(`Error creating organization: ${orgError.message}`);
     }
 
     // Si no hay userData, crear el registro del usuario
@@ -91,10 +89,10 @@ serve(async (req) => {
           role: 'user'
         })
         .select()
-        .single()
+        .single();
 
       if (userError) {
-        throw new Error(`Error creating user record: ${userError.message}`)
+        throw new Error(`Error creating user record: ${userError.message}`);
       }
 
       userData = newUserData;
@@ -115,13 +113,13 @@ serve(async (req) => {
             view_analytics: true,
             manage_members: true
           }
-        })
+        });
 
       if (memberError) {
-        console.log('Membership may already exist:', memberError.message)
+        console.log('Membership may already exist:', memberError.message);
         // Don't throw error if membership already exists
       }
-      
+
       // Update user's current organization to the new one
       const { data: updatedUserData, error: updateError } = await supabase
         .from('users')
@@ -130,10 +128,10 @@ serve(async (req) => {
         })
         .eq('id', userData.id)
         .select()
-        .single()
+        .single();
 
       if (updateError) {
-        throw new Error(`Error updating user record: ${updateError.message}`)
+        throw new Error(`Error updating user record: ${updateError.message}`);
       }
 
       userData = updatedUserData;
@@ -145,7 +143,7 @@ serve(async (req) => {
       p_event_id: null,
       p_type: 'success',
       p_message: `¡Bienvenido a EVA System, ${name}! Tu organización ${organizationName} ha sido creada exitosamente.`
-    })
+    });
 
     // Create registration log
     await supabase.rpc('create_event_log', {
@@ -157,37 +155,25 @@ serve(async (req) => {
         organization_name: organizationName,
         timestamp: new Date().toISOString()
       }
-    })
+    });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Organización creada exitosamente',
-        data: {
-          user: userData,
-          organization: orgData
-        }
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 201
+    return jsonResponse({
+      success: true,
+      message: 'Organización creada exitosamente',
+      data: {
+        user: userData,
+        organization: orgData
       }
-    )
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('Error in handle-user-registration:', error)
+    console.error('Error in handle-user-registration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Error al procesar solicitud',
-        error: errorMessage
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
-    )
+
+    return jsonResponse({
+      success: false,
+      message: 'Error al procesar solicitud',
+      error: errorMessage
+    }, { status: 400 });
   }
-})
+});

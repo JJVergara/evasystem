@@ -9,11 +9,11 @@ interface RealtimeSocialMentionsProps {
   onNewAmbassadorRequest?: (request: any) => void;
 }
 
-export function useRealtimeSocialMentions({ 
-  onNewMention, 
-  onMentionUpdated, 
-  onNewAmbassadorRequest 
-}: RealtimeSocialMentionsProps = {}) {
+export function useRealtimeSocialMentions({
+  onNewMention,
+  onMentionUpdated,
+  onNewAmbassadorRequest
+}: RealtimeSocialMentionsProps = {}): null {
   const { organization } = useCurrentOrganization();
 
   useEffect(() => {

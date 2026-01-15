@@ -13,12 +13,11 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 | **Frontend** | React 18.3, Vite 5.4, TypeScript 5.9 |
 | **Styling** | Tailwind CSS 3.4, shadcn/ui (Radix-based) |
 | **State Management** | TanStack React Query 5.56 |
-| **Forms** | react-hook-form 7.53, Zod 3.23 |
+| **Forms** | react-hook-form 7.53 |
 | **Backend** | Supabase (PostgreSQL + Edge Functions + Auth) |
 | **Edge Functions** | Deno runtime |
 | **External APIs** | Instagram Graph API v24.0, Meta OAuth |
 | **Automation** | N8n workflows |
-| **i18n** | i18next |
 
 ---
 
@@ -27,24 +26,26 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 ```
 evasystem/
 ├── src/
-│   ├── components/               # React components (138 total)
-│   │   ├── ui/                   # shadcn/ui components (51)
+│   ├── components/               # React components (114 total)
+│   │   ├── ui/                   # shadcn/ui primitives (51)
 │   │   ├── Auth/                 # Authentication UI
 │   │   ├── Dashboard/            # Dashboard widgets
 │   │   ├── Layout/               # MainLayout, Sidebar, Header
 │   │   ├── Ambassadors/          # Ambassador management
 │   │   ├── Events/               # Event management
-│   │   ├── Fiestas/              # Party/fiesta components
+│   │   ├── Fiestas/              # Fiesta components
 │   │   ├── Analytics/            # Charts and reports
 │   │   ├── Instagram/            # Instagram connection UI
-│   │   ├── Mentions/             # Social mention tracking
 │   │   ├── Stories/              # Story management
 │   │   ├── StoryMentions/        # Story mention components
 │   │   ├── Organizations/        # Org management
 │   │   ├── Settings/             # App settings
-│   │   └── ...
+│   │   ├── ErrorBoundary/        # Error handling
+│   │   ├── ImportExport/         # Data import/export
+│   │   ├── Notifications/        # Notification center
+│   │   └── Profile/              # User profile
 │   │
-│   ├── pages/                    # Route pages (20)
+│   ├── pages/                    # Route pages (18)
 │   │   ├── Index.tsx             # Dashboard
 │   │   ├── Ambassadors.tsx
 │   │   ├── Events.tsx
@@ -52,15 +53,32 @@ evasystem/
 │   │   ├── Settings.tsx
 │   │   └── ...
 │   │
-│   ├── hooks/                    # Custom hooks (31)
+│   ├── hooks/                    # Custom hooks (26)
 │   │   ├── useAuth.ts
 │   │   ├── useCurrentOrganization.ts
+│   │   ├── useAmbassadors.ts     # Uses @/services/api
+│   │   ├── useFiestas.ts         # Uses @/services/api
 │   │   ├── useInstagramConnection.ts
-│   │   ├── useInstagramSync.ts
-│   │   ├── useFiestas.ts
-│   │   ├── useAmbassadorMetrics.ts
-│   │   ├── useRealNotifications.ts
 │   │   └── ...
+│   │
+│   ├── constants/                # Centralized constants (~170 lines)
+│   │   ├── queryKeys.ts          # React Query key factories
+│   │   ├── ambassadorStatus.ts   # Status const objects & types
+│   │   ├── categories.ts         # Category const & type
+│   │   ├── entityStatus.ts       # Entity status const & types
+│   │   └── index.ts              # Re-exports
+│   │
+│   ├── services/api/             # API abstraction (~220 lines)
+│   │   ├── ambassadors.ts        # get, create, update, delete
+│   │   ├── fiestas.ts            # get, create, update
+│   │   └── index.ts              # Re-exports
+│   │
+│   ├── types/                    # Shared TypeScript types (~560 lines)
+│   │   ├── ambassador.ts         # Ambassador, Request, Ranking types
+│   │   ├── organization.ts       # Organization, Member types
+│   │   ├── event.ts              # Event, Fiesta, Task types
+│   │   ├── storyMentions.ts      # Story mention types
+│   │   └── index.ts              # Re-exports
 │   │
 │   ├── integrations/
 │   │   └── supabase/
@@ -68,12 +86,7 @@ evasystem/
 │   │       └── types.ts          # Generated DB types
 │   │
 │   ├── lib/
-│   │   └── utils.ts              # Utility functions (cn, etc.)
-│   │
-│   ├── types/                    # TypeScript type definitions
-│   │
-│   ├── i18n/                     # Internationalization
-│   │   └── locales/
+│   │   └── utils.ts              # cn() utility
 │   │
 │   ├── assets/                   # Static assets
 │   │
@@ -480,14 +493,110 @@ supabase gen types          # Generate TypeScript types
 
 ## Key Patterns
 
-### React Query Usage
-All data fetching uses React Query with consistent patterns:
+### React Query Configuration
+Global configuration in `App.tsx`:
 ```typescript
-const { data, isLoading, error } = useQuery({
-  queryKey: ['entity', id],
-  queryFn: () => supabase.from('table').select('*'),
-  staleTime: 10 * 60 * 1000, // 10 minutes
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 60 * 1000,      // 10 minutes
+      gcTime: 30 * 60 * 1000,         // 30 minutes garbage collection
+      retry: (failureCount, error) => {
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return failureCount < 1;
+      },
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: false,
+      networkMode: 'online',
+    },
+    mutations: { retry: false },
+  },
 });
+```
+
+### Query Key Factories
+Use `QUERY_KEYS` from `@/constants` instead of hardcoded arrays:
+```typescript
+import { QUERY_KEYS } from '@/constants';
+
+// Usage in hooks
+const queryKey = QUERY_KEYS.ambassadors(organizationId);
+const queryKey = QUERY_KEYS.fiestas(organizationId);
+const queryKey = QUERY_KEYS.tasks(organizationId);
+const queryKey = QUERY_KEYS.dashboardStats(userId);
+```
+
+### Service Layer Pattern
+Use `@/services/api` for Supabase operations instead of direct calls:
+```typescript
+import { getAmbassadors, createAmbassador } from '@/services/api';
+
+// In hooks
+const { data } = useQuery({
+  queryKey: QUERY_KEYS.ambassadors(orgId),
+  queryFn: () => getAmbassadors(orgId),
+});
+```
+
+### Hook Structure Pattern
+All data hooks follow this consistent structure:
+```typescript
+import { QUERY_KEYS } from '@/constants';
+import { getEntities, createEntity } from '@/services/api';
+import type { Entity, CreateEntityInput } from '@/types';
+
+export function useEntities() {
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+
+  const organizationId = organization?.id;
+  const queryKey = QUERY_KEYS.entities(organizationId || '');
+
+  // 1. Query using service layer
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => getEntities(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 2. Mutations with cache invalidation
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEntityInput) => createEntity(organizationId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Created successfully');
+    },
+    onError: () => toast.error('Error creating'),
+  });
+
+  // 3. Combine loading states
+  const loading = orgLoading || (!!organizationId && isLoading);
+
+  return { data, loading, error, create: createMutation.mutateAsync };
+}
+```
+
+### Real-time Subscriptions Pattern
+```typescript
+useEffect(() => {
+  if (!organization) return;
+
+  const channel = supabase
+    .channel(`entity_${organization.id}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'entity_table',
+      filter: `organization_id=eq.${organization.id}`
+    }, (payload) => {
+      onNewItem?.(payload.new);
+    })
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [organization]);
 ```
 
 ### Supabase Client Access
@@ -503,6 +612,7 @@ const { data, error } = await supabase.functions.invoke('function-name', {
 ```
 
 ### Path Aliases
+Configured in `vite.config.ts` and `tsconfig.json`:
 ```typescript
 import { Component } from '@/components/Component';
 import { useHook } from '@/hooks/useHook';
@@ -670,6 +780,55 @@ verify_jwt = false  # Called by Instagram, uses verify_token instead
 [functions.refresh-instagram-tokens]
 verify_jwt = false  # Called by cron, uses CRON_SECRET
 ```
+
+### ADR-007: React Query for Server State
+**Decision**: Use TanStack React Query for all server state management.
+
+**Context**: Server state (data from API) has different characteristics than UI state and benefits from caching, deduplication, and background refetching.
+
+**Configuration**:
+- 10-minute stale time prevents unnecessary refetches
+- 30-minute garbage collection keeps inactive data available
+- No retry on 4xx errors (client errors)
+- Single retry on network errors
+- Disabled refetch on window focus (explicit user action preferred)
+
+**Pattern**: All hooks use `useQuery` for reads and `useMutation` for writes with automatic cache invalidation.
+
+### ADR-008: Feature-Based Component Organization
+**Decision**: Organize components by feature/domain rather than by type (atomic design).
+
+**Context**: Feature-based organization makes it easier to understand domain boundaries and keeps related code together.
+
+**Structure**:
+```
+components/
+├── Ambassadors/     # All ambassador-related UI
+├── Events/          # Event management UI
+├── Fiestas/         # Fiesta/party UI
+├── Instagram/       # Instagram integration UI
+├── Settings/        # Settings page components
+└── ui/              # Shared primitive components (shadcn/ui)
+```
+
+**Consequence**: Components in a feature folder should only be used within that feature. Cross-feature components belong in `ui/` or root `components/`.
+
+### ADR-009: Organization-Scoped Data Access
+**Decision**: All data queries are scoped to the current organization.
+
+**Context**: Multi-tenant architecture requires data isolation between organizations.
+
+**Pattern**:
+```typescript
+const { organization } = useCurrentOrganization();
+const { data } = useQuery({
+  queryKey: ['entity', organization?.id],
+  queryFn: () => fetchData(organization!.id),
+  enabled: !!organization?.id,
+});
+```
+
+**Consequence**: Every data hook must depend on `useCurrentOrganization` and include organization ID in query keys for proper cache separation.
 
 ---
 

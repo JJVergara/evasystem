@@ -1,17 +1,27 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
-import { toast } from "sonner";
+/**
+ * useTasksManagement hook
+ * Manages task data fetching and mutations
+ */
 
-interface Task {
+import { useCallback } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { QUERY_KEYS } from '@/constants';
+
+type TaskType = 'story' | 'mention' | 'repost';
+type TaskStatusType = 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired';
+
+interface TaskWithRelations {
   id: string;
   embassador_id: string;
   event_id: string;
-  task_type: 'story' | 'mention' | 'repost';
+  task_type: TaskType;
   platform: string;
   expected_hashtag: string | null;
-  status: 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired';
+  status: TaskStatusType;
   instagram_story_id: string | null;
   story_url: string | null;
   upload_time: string | null;
@@ -31,9 +41,7 @@ interface Task {
   events?: {
     id: string;
     fiesta_id: string;
-    fiestas?: {
-      name: string;
-    };
+    fiestas?: { name: string };
   };
 }
 
@@ -47,7 +55,7 @@ interface TaskStats {
 }
 
 interface TasksData {
-  tasks: Task[];
+  tasks: TaskWithRelations[];
   stats: TaskStats;
 }
 
@@ -78,12 +86,11 @@ async function fetchTasksData(organizationId: string): Promise<TasksData> {
     throw fetchError;
   }
 
-  // Type assertion to ensure proper typing
   const tasksData = (data || []).map(task => ({
     ...task,
-    task_type: task.task_type as 'story' | 'mention' | 'repost',
-    status: task.status as 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired',
-    completion_method: task.completion_method as '24h_validation' | 'manual'
+    task_type: task.task_type as TaskType,
+    status: task.status as TaskStatusType,
+    completion_method: task.completion_method as '24h_validation' | 'manual',
   }));
 
   // Calculate stats
@@ -110,21 +117,22 @@ export function useTasksManagement() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();
 
-  const queryKey = ['tasks', organization?.id];
+  const organizationId = organization?.id;
+  const queryKey = QUERY_KEYS.tasks(organizationId || '');
 
   const { data, isLoading: tasksLoading, error } = useQuery({
     queryKey,
-    queryFn: () => fetchTasksData(organization!.id),
-    enabled: !!organization?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    queryFn: () => fetchTasksData(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: {
       embassador_id: string;
       event_id: string;
-      task_type: 'story' | 'mention' | 'repost';
+      task_type: TaskType;
       expected_hashtag?: string;
     }) => {
       const { data, error } = await supabase
@@ -150,7 +158,7 @@ export function useTasksManagement() {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ taskId, status, points }: { taskId: string; status: Task['status']; points?: number }) => {
+    mutationFn: async ({ taskId, status, points }: { taskId: string; status: TaskStatusType; points?: number }) => {
       const updateData: any = {
         status,
         last_status_update: new Date().toISOString()
@@ -196,20 +204,18 @@ export function useTasksManagement() {
     }
   });
 
-  const createTask = useCallback(async (taskData: {
-    embassador_id: string;
-    event_id: string;
-    task_type: 'story' | 'mention' | 'repost';
-    expected_hashtag?: string;
-  }) => {
-    try {
-      return await createTaskMutation.mutateAsync(taskData);
-    } catch {
-      return null;
-    }
-  }, [createTaskMutation]);
+  const createTask = useCallback(
+    async (taskData: { embassador_id: string; event_id: string; task_type: TaskType; expected_hashtag?: string }) => {
+      try {
+        return await createTaskMutation.mutateAsync(taskData);
+      } catch {
+        return null;
+      }
+    },
+    [createTaskMutation]
+  );
 
-  const updateTaskStatus = useCallback(async (taskId: string, status: Task['status'], points?: number) => {
+  const updateTaskStatus = useCallback(async (taskId: string, status: TaskStatusType, points?: number) => {
     try {
       await updateTaskMutation.mutateAsync({ taskId, status, points });
       return true;
@@ -231,7 +237,7 @@ export function useTasksManagement() {
     return queryClient.invalidateQueries({ queryKey });
   }, [queryClient, queryKey]);
 
-  const loading = orgLoading || (!!organization?.id && tasksLoading);
+  const loading = orgLoading || (!!organizationId && tasksLoading);
 
   return {
     tasks: data?.tasks || [],

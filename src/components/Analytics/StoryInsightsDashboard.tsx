@@ -523,10 +523,8 @@ export function StoryInsightsDashboard() {
                       {/* Stacked bars for each story position */}
                       {Array.from({ length: max_stories_per_hour }, (_, i) => {
                         // Custom shape that applies rounded corners to the last non-zero bar in each stack
-                        const CustomBarShape = (props: {
-                          payload?: Record<string, unknown>;
-                          [key: string]: unknown;
-                        }) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const CustomBarShape = (props: any) => {
                           const { payload, ...barProps } = props;
                           // Find the last non-zero story index for this hour
                           let lastNonZeroIndex = -1;

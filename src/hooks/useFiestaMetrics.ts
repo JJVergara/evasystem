@@ -1,8 +1,33 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * useFiestaMetrics hook
+ * Manages fiesta metrics data fetching
+ */
 
-interface FiestaMetrics {
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+import { QUERY_KEYS } from '@/constants';
+
+interface TopAmbassador {
+  id: string;
+  name: string;
+  instagram_user: string;
+  points: number;
+  tasks_completed: number;
+  category: string;
+}
+
+interface RecentTask {
+  id: string;
+  task_type: string;
+  status: string;
+  created_at: string;
+  ambassador_name: string;
+  fiesta_name: string;
+}
+
+interface FiestaMetricsData {
   total_ambassadors: number;
   active_ambassadors: number;
   total_tasks: number;
@@ -12,25 +37,11 @@ interface FiestaMetrics {
   total_reach: number;
   avg_engagement: number;
   completion_rate: number;
-  top_ambassadors: Array<{
-    id: string;
-    name: string;
-    instagram_user: string;
-    points: number;
-    tasks_completed: number;
-    category: string;
-  }>;
-  recent_tasks: Array<{
-    id: string;
-    task_type: string;
-    status: string;
-    created_at: string;
-    ambassador_name: string;
-    fiesta_name: string;
-  }>;
+  top_ambassadors: TopAmbassador[];
+  recent_tasks: RecentTask[];
 }
 
-function processTasksToMetrics(tasks: any[]): FiestaMetrics {
+function processTasksToMetrics(tasks: any[]): FiestaMetricsData {
   const ambassadorSet = new Set();
   const ambassadorMap = new Map();
 
@@ -90,7 +101,7 @@ function processTasksToMetrics(tasks: any[]): FiestaMetrics {
   };
 }
 
-async function fetchGlobalMetrics(): Promise<FiestaMetrics> {
+async function fetchGlobalMetrics(): Promise<FiestaMetricsData> {
   const { data: tasks } = await supabase
     .from('tasks')
     .select(`
@@ -123,7 +134,7 @@ async function fetchGlobalMetrics(): Promise<FiestaMetrics> {
   return processTasksToMetrics(tasks || []);
 }
 
-async function fetchFiestaSpecificMetrics(fiestaId: string): Promise<FiestaMetrics> {
+async function fetchFiestaSpecificMetrics(fiestaId: string): Promise<FiestaMetricsData> {
   // Get events for the fiesta
   const { data: events } = await supabase
     .from('events')
@@ -179,7 +190,7 @@ async function fetchFiestaSpecificMetrics(fiestaId: string): Promise<FiestaMetri
   return processTasksToMetrics(tasks || []);
 }
 
-async function fetchFiestaMetricsData(fiestaId: string | null): Promise<FiestaMetrics> {
+async function fetchMetrics(fiestaId: string | null): Promise<FiestaMetricsData> {
   if (!fiestaId) {
     return fetchGlobalMetrics();
   }
@@ -188,22 +199,23 @@ async function fetchFiestaMetricsData(fiestaId: string | null): Promise<FiestaMe
 
 export function useFiestaMetrics(fiestaId: string | null) {
   const queryClient = useQueryClient();
-  const queryKey = ['fiestaMetrics', fiestaId];
+  const queryKey = QUERY_KEYS.fiestaMetrics(fiestaId || 'global');
 
   const { data: metrics, isLoading } = useQuery({
     queryKey,
-    queryFn: () => fetchFiestaMetricsData(fiestaId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    queryFn: () => fetchMetrics(fiestaId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
-  const refreshMetrics = useCallback(() => {
-    return queryClient.invalidateQueries({ queryKey });
-  }, [queryClient, queryKey]);
+  const refreshMetrics = useCallback(
+    () => queryClient.invalidateQueries({ queryKey }),
+    [queryClient, queryKey]
+  );
 
   return {
     metrics: metrics || null,
     loading: isLoading,
-    refreshMetrics
+    refreshMetrics,
   };
 }

@@ -1,49 +1,46 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+/**
+ * Create Event Edge Function
+ * Creates a new event for an organization
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse } from '../shared/responses.ts';
+import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
-    const { eventData } = await req.json()
-    
-    // Get auth header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Authorization header required')
+    // Authenticate request
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
+    }
+    const { user, supabase } = authResult;
+
+    // Parse request body
+    const { eventData } = await req.json();
+    if (!eventData) {
+      return badRequestResponse('Event data is required');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader }
-      }
-    })
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Invalid authentication')
+    // Get user's organization
+    const organizationId = await getUserOrganization(supabase, user.id);
+    if (!organizationId) {
+      return errorResponse('User has no organization', 400);
     }
 
-    // Get user record
+    // Get user record for logs
     const { data: userData, error: userDataError } = await supabase
       .from('users')
-      .select('id, organization_id')
+      .select('id')
       .eq('auth_user_id', user.id)
-      .single()
+      .single();
 
-    if (userDataError) {
-      throw new Error('User not found')
+    if (userDataError || !userData) {
+      return errorResponse('User record not found', 404);
     }
 
     // Create event
@@ -62,14 +59,15 @@ serve(async (req) => {
         budget_estimate: eventData.budget_estimate,
         main_hashtag: eventData.main_hashtag,
         instagram_account: eventData.instagram_account,
-        organization_id: userData.organization_id,
+        organization_id: organizationId,
         active: true
       })
       .select()
-      .single()
+      .single();
 
     if (eventError) {
-      throw new Error(`Error creating event: ${eventError.message}`)
+      console.error('Error creating event:', eventError);
+      return errorResponse(`Error creating event: ${eventError.message}`, 400);
     }
 
     // Create success feedback card
@@ -78,7 +76,7 @@ serve(async (req) => {
       p_event_id: eventResult.id,
       p_type: 'success',
       p_message: `Evento "${eventData.name}" creado exitosamente`
-    })
+    });
 
     // Create event log
     await supabase.rpc('create_event_log', {
@@ -91,34 +89,22 @@ serve(async (req) => {
         hashtag: eventData.main_hashtag,
         created_timestamp: new Date().toISOString()
       }
-    })
+    });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Evento creado exitosamente',
-        data: eventResult
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 201
-      }
-    )
+    return jsonResponse({
+      success: true,
+      message: 'Evento creado exitosamente',
+      data: eventResult
+    }, { status: 201 });
 
   } catch (error) {
-    console.error('Error in create-event:', error)
+    console.error('Error in create-event:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Error al crear evento',
-        error: errorMessage
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
-    )
+
+    return jsonResponse({
+      success: false,
+      message: 'Error al crear evento',
+      error: errorMessage
+    }, { status: 400 });
   }
-})
+});

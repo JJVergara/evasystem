@@ -1,54 +1,49 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+/**
+ * Export Organization Data Edge Function
+ * Exports organization data in JSON or CSV format
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse, errorResponse, notFoundResponse } from '../shared/responses.ts';
+import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Authenticate request
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
     }
+    const { user, supabase: supabaseClient } = authResult;
 
+    // Parse request body
     const { organizationId, format = 'json', tables = 'all' } = await req.json();
 
     console.log('Starting organization export:', { organizationId, format, tables });
 
     // Verify user owns this organization
+    const hasAccess = await verifyOrganizationAccess(supabaseClient, user.id, organizationId);
+    if (!hasAccess) {
+      return notFoundResponse('Organization not found or access denied');
+    }
+
+    // Get organization data
     const { data: org, error: orgError } = await supabaseClient
       .from('organizations')
       .select('*')
       .eq('id', organizationId)
-      .eq('created_by', user.id)
       .single();
 
     if (orgError || !org) {
-      return new Response(
-        JSON.stringify({ error: 'Organization not found or access denied' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return notFoundResponse('Organization not found');
     }
 
-    const exportData: Record<string, any> = {
+    const exportData: Record<string, unknown> = {
       metadata: {
         organization_id: organizationId,
         organization_name: org.name,
@@ -83,8 +78,9 @@ serve(async (req) => {
       exportData.fiestas = fiestas || [];
 
       // Export events for these fiestas
-      if (tablesToExport.includes('events') && exportData.fiestas.length > 0) {
-        const fiestaIds = exportData.fiestas.map((f: any) => f.id);
+      const fiestaList = exportData.fiestas as Array<{ id: string }>;
+      if (tablesToExport.includes('events') && fiestaList.length > 0) {
+        const fiestaIds = fiestaList.map(f => f.id);
         const { data: events } = await supabaseClient
           .from('events')
           .select('*')
@@ -94,8 +90,9 @@ serve(async (req) => {
     }
 
     // Export tasks
-    if (tablesToExport.includes('tasks') && exportData.embassadors?.length > 0) {
-      const embassadorIds = exportData.embassadors.map((e: any) => e.id);
+    const embassadorList = exportData.embassadors as Array<{ id: string }> | undefined;
+    if (tablesToExport.includes('tasks') && embassadorList?.length) {
+      const embassadorIds = embassadorList.map(e => e.id);
       const { data: tasks } = await supabaseClient
         .from('tasks')
         .select('*')
@@ -104,8 +101,9 @@ serve(async (req) => {
     }
 
     // Export leaderboards
-    if (tablesToExport.includes('leaderboards') && exportData.events?.length > 0) {
-      const eventIds = exportData.events.map((e: any) => e.id);
+    const eventList = exportData.events as Array<{ id: string }> | undefined;
+    if (tablesToExport.includes('leaderboards') && eventList?.length) {
+      const eventIds = eventList.map(e => e.id);
       const { data: leaderboards } = await supabaseClient
         .from('leaderboards')
         .select('*')
@@ -122,25 +120,26 @@ serve(async (req) => {
       exportData.organization_settings = settings || [];
     }
 
-// Export notifications
-if (tablesToExport.includes('notifications')) {
-  const { data: notifications } = await supabaseClient
-    .from('notifications')
-    .select('*')
-    .eq('organization_id', organizationId);
-  exportData.notifications = notifications || [];
-}
+    // Export notifications
+    if (tablesToExport.includes('notifications')) {
+      const { data: notifications } = await supabaseClient
+        .from('notifications')
+        .select('*')
+        .eq('organization_id', organizationId);
+      exportData.notifications = notifications || [];
+    }
 
-// Sanitize sensitive fields before packaging
-if (exportData.organization) {
-  const { meta_token, token_expiry, ...safeOrg } = exportData.organization as any;
-  exportData.organization = safeOrg;
-}
-if (Array.isArray(exportData.embassadors)) {
-  exportData.embassadors = exportData.embassadors.map((a: any) => {
-    const { instagram_access_token, token_expires_at, ...safe } = a; return safe;
-  });
-}
+    // Sanitize sensitive fields before packaging
+    if (exportData.organization) {
+      const { meta_token, token_expiry, ...safeOrg } = exportData.organization as Record<string, unknown>;
+      exportData.organization = safeOrg;
+    }
+    if (Array.isArray(exportData.embassadors)) {
+      exportData.embassadors = exportData.embassadors.map((a: Record<string, unknown>) => {
+        const { instagram_access_token, token_expires_at, ...safe } = a;
+        return safe;
+      });
+    }
 
     // Log the export operation
     await supabaseClient
@@ -156,7 +155,7 @@ if (Array.isArray(exportData.embassadors)) {
           tables_exported: tablesToExport,
           record_counts: Object.keys(exportData).reduce((acc, key) => {
             if (Array.isArray(exportData[key])) {
-              acc[key] = exportData[key].length;
+              acc[key] = (exportData[key] as unknown[]).length;
             }
             return acc;
           }, {} as Record<string, number>),
@@ -170,11 +169,11 @@ if (Array.isArray(exportData.embassadors)) {
 
     if (format === 'csv') {
       // Convert to CSV format (simplified, only embassadors table)
-      const csvData = exportData.embassadors || [];
+      const csvData = (exportData.embassadors || []) as Record<string, unknown>[];
       if (csvData.length > 0) {
         const headers = Object.keys(csvData[0]).join(',');
-        const rows = csvData.map((row: any) => 
-          Object.values(row).map(val => 
+        const rows = csvData.map((row) =>
+          Object.values(row).map(val =>
             typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
           ).join(',')
         );
@@ -195,22 +194,19 @@ if (Array.isArray(exportData.embassadors)) {
 
     return new Response(
       responseContent,
-      { 
-        status: 200, 
-        headers: { 
-          ...corsHeaders, 
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
           'Content-Type': contentType,
           'Content-Disposition': `attachment; filename="${fileName}"`
-        } 
+        }
       }
     );
 
   } catch (error) {
     console.error('Error during export:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ error: 'Error exporting data', details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(`Error exporting data: ${errorMessage}`, 500);
   }
 });

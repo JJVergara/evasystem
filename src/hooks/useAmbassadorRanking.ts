@@ -1,13 +1,23 @@
-import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentOrganization } from "./useCurrentOrganization";
+/**
+ * useAmbassadorRanking hook
+ * Manages ambassador ranking data fetching
+ */
 
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { QUERY_KEYS } from '@/constants';
+import { getAmbassadors } from '@/services/api';
+
+/**
+ * Extended ranking data with computed fields
+ */
 export interface AmbassadorRankingData {
   id: string;
   first_name: string;
   last_name: string;
-  instagram_user: string | null;
+  instagram_user: string;
   rank: number;
   global_points: number;
   global_category: string;
@@ -18,71 +28,62 @@ export interface AmbassadorRankingData {
   total_tasks: number;
 }
 
-async function fetchAmbassadorRankingData(organizationId: string): Promise<AmbassadorRankingData[]> {
-  // Fetch ambassadors for the organization, ordered by global_points
-  const { data: ambassadors, error: ambassadorsError } = await supabase
-    .from('embassadors')
-    .select('id, first_name, last_name, instagram_user, global_points, global_category, events_participated, completed_tasks, failed_tasks')
-    .eq('organization_id', organizationId)
-    .eq('status', 'active')
-    .order('global_points', { ascending: false });
-
-  if (ambassadorsError) {
-    throw ambassadorsError;
-  }
-
-  if (!ambassadors || ambassadors.length === 0) {
-    return [];
-  }
-
-  // Process and rank ambassadors
-  return ambassadors.map((ambassador, index) => {
-    const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
-    const completionRate = totalTasks > 0
-      ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100)
-      : 0;
-
-    return {
-      id: ambassador.id,
-      first_name: ambassador.first_name,
-      last_name: ambassador.last_name,
-      instagram_user: ambassador.instagram_user,
-      rank: index + 1,
-      global_points: ambassador.global_points || 0,
-      global_category: ambassador.global_category || 'bronze',
-      events_participated: ambassador.events_participated || 0,
-      completed_tasks: ambassador.completed_tasks || 0,
-      failed_tasks: ambassador.failed_tasks || 0,
-      completion_rate: completionRate,
-      total_tasks: totalTasks
-    };
-  });
-}
-
 export function useAmbassadorRanking() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();
 
-  const queryKey = ['ambassadorRanking', organization?.id];
+  const organizationId = organization?.id;
+  const queryKey = QUERY_KEYS.ambassadorRanking(organizationId || '');
 
-  const { data: ranking, isLoading: rankingLoading, error } = useQuery({
+  const { data: ranking = [], isLoading: rankingLoading, error } = useQuery({
     queryKey,
-    queryFn: () => fetchAmbassadorRankingData(organization!.id),
-    enabled: !!organization?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    queryFn: async (): Promise<AmbassadorRankingData[]> => {
+      const ambassadors = await getAmbassadors(organizationId!);
+
+      // Filter active ambassadors and sort by points
+      const activeAmbassadors = ambassadors
+        .filter(a => a.status === 'active')
+        .sort((a, b) => (b.global_points || 0) - (a.global_points || 0));
+
+      // Compute ranking data
+      return activeAmbassadors.map((ambassador, index) => {
+        const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
+        const completionRate = totalTasks > 0
+          ? Math.round(((ambassador.completed_tasks || 0) / totalTasks) * 100)
+          : 0;
+
+        return {
+          id: ambassador.id,
+          first_name: ambassador.first_name,
+          last_name: ambassador.last_name,
+          instagram_user: ambassador.instagram_user,
+          rank: index + 1,
+          global_points: ambassador.global_points || 0,
+          global_category: ambassador.global_category || 'bronze',
+          events_participated: ambassador.events_participated || 0,
+          completed_tasks: ambassador.completed_tasks || 0,
+          failed_tasks: ambassador.failed_tasks || 0,
+          completion_rate: completionRate,
+          total_tasks: totalTasks,
+        };
+      });
+    },
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
-  const refreshRanking = useCallback(() => {
-    return queryClient.invalidateQueries({ queryKey });
-  }, [queryClient, queryKey]);
+  const refreshRanking = useCallback(
+    () => queryClient.invalidateQueries({ queryKey }),
+    [queryClient, queryKey]
+  );
 
-  const loading = orgLoading || (!!organization?.id && rankingLoading);
+  const loading = orgLoading || (!!organizationId && rankingLoading);
 
   return {
-    ranking: ranking || [],
+    ranking,
     loading,
     error: error ? 'Error al cargar el ranking de embajadores' : null,
-    refreshRanking
+    refreshRanking,
   };
 }

@@ -1,121 +1,107 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+/**
+ * Secure Webhook Proxy Edge Function
+ * Proxies webhook requests to whitelisted external services with security validations
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse, unauthorizedResponse } from '../shared/responses.ts';
+import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
-serve(async (req) => {
+// Whitelist of allowed webhook domains
+const ALLOWED_DOMAINS = [
+  'hooks.zapier.com',
+  'webhook.site',
+  'n8n.cloud',
+  'pipedream.com',
+  'rquevedos.app.n8n.cloud' // Specific n8n instance
+];
+
+const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // 2MB
+const WEBHOOK_TIMEOUT_MS = 10000; // 10 seconds
+
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Get the user from the Authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
+    // Authenticate request
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
     }
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-
-    if (authError || !user) {
-      throw new Error('Unauthorized')
-    }
+    const { user, supabase } = authResult;
 
     // Get user's organization
-    const { data: userData, error: userError } = await supabaseClient
-      .from('users')
-      .select('organization_id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (userError || !userData) {
-      throw new Error('User not found')
+    const organizationId = await getUserOrganization(supabase, user.id);
+    if (!organizationId) {
+      return errorResponse('User has no organization', 400);
     }
 
-    // Parse request body with size limit (2MB max)
-    const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // 2MB
+    // Check payload size
     const contentLength = req.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
-      throw new Error('Payload too large');
+      return badRequestResponse('Payload too large');
     }
 
-    const body = await req.json()
-    const { webhookUrl, data } = body
+    // Parse request body
+    const body = await req.json();
+    const { webhookUrl, data } = body;
 
     if (!webhookUrl || !data) {
-      throw new Error('Missing webhookUrl or data')
+      return badRequestResponse('Missing webhookUrl or data');
     }
 
-    // Enhanced URL validation - enforce HTTPS and whitelist
-    const allowedDomains = [
-      'hooks.zapier.com',
-      'webhook.site', 
-      'n8n.cloud',
-      'pipedream.com',
-      'rquevedos.app.n8n.cloud' // Add specific n8n instance
-    ];
-
+    // Validate URL format
     let url: URL;
     try {
       url = new URL(webhookUrl);
     } catch {
-      throw new Error('Invalid webhook URL format');
+      return badRequestResponse('Invalid webhook URL format');
     }
 
     // Security checks
     if (url.protocol !== 'https:') {
-      throw new Error('Only HTTPS URLs are allowed');
+      return badRequestResponse('Only HTTPS URLs are allowed');
     }
 
-    // Reject IP addresses and non-standard ports
+    // Reject IP addresses
     if (/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
-      throw new Error('IP addresses are not allowed');
+      return badRequestResponse('IP addresses are not allowed');
     }
 
+    // Reject non-standard ports
     if (url.port && !['80', '443', ''].includes(url.port)) {
-      throw new Error('Non-standard ports are not allowed');
+      return badRequestResponse('Non-standard ports are not allowed');
     }
 
     // Check if domain is in allowlist
-    const isAllowed = allowedDomains.some(domain => 
+    const isAllowed = ALLOWED_DOMAINS.some(domain =>
       url.hostname === domain || url.hostname.endsWith('.' + domain)
     );
 
     if (!isAllowed) {
-      throw new Error(`Domain ${url.hostname} is not in the allowed list`);
+      return badRequestResponse(`Domain ${url.hostname} is not in the allowed list`);
     }
 
     // Generate request ID for observability
     const requestId = crypto.randomUUID();
-    
+
     // Prepare payload with organization and user context
     const payload = {
       ...data,
-      organization_id: userData.organization_id,
+      organization_id: organizationId,
       user_id: user.id,
       timestamp: new Date().toISOString(),
       request_id: requestId
-    }
+    };
 
     console.log(`[${requestId}] Proxying request to:`, webhookUrl);
 
-    console.log('Proxying request to:', webhookUrl);
-
-    // Make the webhook request with timeout and proper error handling
+    // Make the webhook request with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 
     try {
       const response = await fetch(webhookUrl, {
@@ -138,38 +124,26 @@ serve(async (req) => {
         responseData = { message: responseText };
       }
 
-      console.log('Webhook response status:', response.status);
+      console.log(`[${requestId}] Webhook response status:`, response.status);
 
-      return new Response(
-        JSON.stringify({
-          success: response.ok,
-          status: response.status,
-          data: responseData
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.ok ? 200 : 400,
-        },
-      )
+      return jsonResponse({
+        success: response.ok,
+        status: response.status,
+        data: responseData,
+        request_id: requestId
+      }, { status: response.ok ? 200 : 400 });
+
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
-        throw new Error('Webhook request timed out');
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        return errorResponse('Webhook request timed out', 504);
       }
-      throw new Error(`Webhook request failed: ${fetchError.message}`);
+      throw new Error(`Webhook request failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
     }
 
   } catch (error) {
-    console.error('Webhook proxy error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
-    )
+    console.error('Webhook proxy error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMessage, 400);
   }
-})
+});
