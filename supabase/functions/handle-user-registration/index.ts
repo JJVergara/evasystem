@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       organizationName,
       organizationDescription,
       mainInstagramAccount,
-      authUserId
+      authUserId,
     } = await req.json();
 
     // Initialize Supabase client with service role
@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       const { data: newAuthData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
-        email_confirm: true
+        email_confirm: true,
       });
 
       if (authError) {
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       .insert({
         name: organizationName,
         description: organizationDescription || `Organización de ${name}`,
-        created_by: authData.user.id
+        created_by: authData.user.id,
       })
       .select()
       .single();
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
           email,
           name,
           organization_id: orgData.id,
-          role: 'user'
+          role: 'user',
         })
         .select()
         .single();
@@ -99,21 +99,19 @@ Deno.serve(async (req) => {
     } else {
       // For existing users creating a new organization, add them as member
       // Don't update their primary organization_id, just add membership
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: orgData.id,
-          user_id: authData.user.id,
-          role: 'owner',
-          status: 'active',
-          permissions: {
-            manage_ambassadors: true,
-            manage_events: true,
-            manage_instagram: true,
-            view_analytics: true,
-            manage_members: true
-          }
-        });
+      const { error: memberError } = await supabase.from('organization_members').insert({
+        organization_id: orgData.id,
+        user_id: authData.user.id,
+        role: 'owner',
+        status: 'active',
+        permissions: {
+          manage_ambassadors: true,
+          manage_events: true,
+          manage_instagram: true,
+          view_analytics: true,
+          manage_members: true,
+        },
+      });
 
       if (memberError) {
         console.log('Membership may already exist:', memberError.message);
@@ -124,7 +122,7 @@ Deno.serve(async (req) => {
       const { data: updatedUserData, error: updateError } = await supabase
         .from('users')
         .update({
-          organization_id: orgData.id
+          organization_id: orgData.id,
         })
         .eq('id', userData.id)
         .select()
@@ -142,7 +140,7 @@ Deno.serve(async (req) => {
       p_user_id: userData.id,
       p_event_id: null,
       p_type: 'success',
-      p_message: `¡Bienvenido a EVA System, ${name}! Tu organización ${organizationName} ha sido creada exitosamente.`
+      p_message: `¡Bienvenido a EVA System, ${name}! Tu organización ${organizationName} ha sido creada exitosamente.`,
     });
 
     // Create registration log
@@ -153,27 +151,32 @@ Deno.serve(async (req) => {
       p_details: {
         email,
         organization_name: organizationName,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
-    return jsonResponse({
-      success: true,
-      message: 'Organización creada exitosamente',
-      data: {
-        user: userData,
-        organization: orgData
-      }
-    }, { status: 201 });
-
+    return jsonResponse(
+      {
+        success: true,
+        message: 'Organización creada exitosamente',
+        data: {
+          user: userData,
+          organization: orgData,
+        },
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error in handle-user-registration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    return jsonResponse({
-      success: false,
-      message: 'Error al procesar solicitud',
-      error: errorMessage
-    }, { status: 400 });
+    return jsonResponse(
+      {
+        success: false,
+        message: 'Error al procesar solicitud',
+        error: errorMessage,
+      },
+      { status: 400 }
+    );
   }
 });

@@ -27,8 +27,8 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 ```
 evasystem/
 ├── src/
-│   ├── components/               # React components (114 total)
-│   │   ├── ui/                   # shadcn/ui primitives (51)
+│   ├── components/               # React components (113 total)
+│   │   ├── ui/                   # shadcn/ui primitives (48)
 │   │   ├── Auth/                 # Authentication UI
 │   │   ├── Dashboard/            # Dashboard widgets
 │   │   ├── Layout/               # MainLayout, Sidebar, Header

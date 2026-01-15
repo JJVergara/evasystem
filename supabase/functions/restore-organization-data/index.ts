@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       success: true,
       restored: {},
       errors: [],
-      summary: ''
+      summary: '',
     };
 
     // Helper function to restore table data with org-boundary enforcement and sanitization
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         // Map foreign keys if needed
         let processedData = data;
         if (foreignKeyMap) {
-          processedData = data.map(item => {
+          processedData = data.map((item) => {
             const mappedItem = { ...item };
             Object.entries(foreignKeyMap).forEach(([oldKey, newKey]) => {
               if (mappedItem[oldKey]) {
@@ -105,7 +105,11 @@ Deno.serve(async (req) => {
           // For organizations, delete only caller-owned records in payload
           if (tableName === 'organizations') {
             const orgIds = processedData.map((org) => org.id as string);
-            await supabaseClient.from(tableName).delete().in('id', orgIds).eq('created_by', user.id);
+            await supabaseClient
+              .from(tableName)
+              .delete()
+              .in('id', orgIds)
+              .eq('created_by', user.id);
           } else if (tableName === 'users') {
             await supabaseClient.from(tableName).delete().eq('auth_user_id', user.id);
           } else if (processedData[0] && 'organization_id' in processedData[0]) {
@@ -145,7 +149,7 @@ Deno.serve(async (req) => {
       'leaderboards',
       'notifications',
       'task_logs',
-      'import_logs'
+      'import_logs',
     ];
 
     for (const tableName of restoreOrder) {
@@ -162,21 +166,19 @@ Deno.serve(async (req) => {
     }
 
     // Create restore log
-    await supabaseClient
-      .from('import_logs')
-      .insert({
-        user_id: user.id,
-        organization_id: backupData.organizations?.[0]?.id || null,
-        type: 'restore',
-        source: 'backup_file',
-        file_name: `restore-${new Date().toISOString()}`,
-        status: results.errors.length > 0 ? 'partial' : 'completed',
-        result_json: {
-          restored: results.restored,
-          errors: results.errors,
-          timestamp: new Date().toISOString()
-        }
-      });
+    await supabaseClient.from('import_logs').insert({
+      user_id: user.id,
+      organization_id: backupData.organizations?.[0]?.id || null,
+      type: 'restore',
+      source: 'backup_file',
+      file_name: `restore-${new Date().toISOString()}`,
+      status: results.errors.length > 0 ? 'partial' : 'completed',
+      result_json: {
+        restored: results.restored,
+        errors: results.errors,
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     results.summary = `Restoration completed. ${Object.values(results.restored).reduce((a, b) => a + b, 0)} total records restored.`;
 
@@ -188,7 +190,6 @@ Deno.serve(async (req) => {
     console.log('Restoration completed:', results);
 
     return jsonResponse(results);
-
   } catch (error) {
     console.error('Error during restoration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

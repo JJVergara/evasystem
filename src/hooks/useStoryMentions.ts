@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentOrganization } from './useCurrentOrganization';
 import { useToast } from '@/hooks/use-toast';
-import { StoryMention } from '@/types/storyMentions';
+import type { StoryMention } from '@/types/storyMentions';
 
 type StoryMentionState = 'new' | 'flagged_early_delete' | 'completed' | 'expired_unknown';
 

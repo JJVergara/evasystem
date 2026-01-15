@@ -35,11 +35,19 @@ export const QUERY_KEYS = {
     ['instagramTokenStatus', organizationId] as const,
   instagramConnection: (organizationId: string) => ['instagramConnection', organizationId] as const,
   instagramProfile: (organizationId: string) => ['instagramProfile', organizationId] as const,
+  ambassadorInstagramStatus: (ambassadorId: string) =>
+    ['ambassadorInstagramStatus', ambassadorId] as const,
 
   // Story/Mention-related queries
   storyMentions: (organizationId: string) => ['storyMentions', organizationId] as const,
   storyInsights: (organizationId: string) => ['storyInsights', organizationId] as const,
   socialMentions: (organizationId: string) => ['socialMentions', organizationId] as const,
+  socialMentionsFiltered: (
+    organizationId: string,
+    search: string,
+    typeFilter: string,
+    statusFilter: string
+  ) => ['socialMentions', organizationId, search, typeFilter, statusFilter] as const,
 
   // Dashboard/Analytics queries
   dashboardStats: (userId: string) => ['dashboardStats', userId] as const,
@@ -55,6 +63,10 @@ export const QUERY_KEYS = {
   // Task queries
   tasks: (organizationId: string) => ['tasks', organizationId] as const,
   ambassadorTasks: (ambassadorId: string) => ['ambassadorTasks', ambassadorId] as const,
+
+  // System queries
+  systemChecks: (organizationId: string) => ['systemChecks', organizationId] as const,
+  onboardingStatus: (userId: string) => ['onboardingStatus', userId] as const,
 } as const;
 
 /**

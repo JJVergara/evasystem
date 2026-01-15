@@ -8,7 +8,8 @@
  */
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-cron-secret',
 } as const;
 
 /**
@@ -25,16 +26,16 @@ export const INSTAGRAM_TOKEN_REFRESH = `https://graph.instagram.com/refresh_acce
 
 // Instagram scopes (new format as of Jan 27, 2025)
 export const INSTAGRAM_SCOPES = [
-  'instagram_business_basic',           // Required for basic profile access
+  'instagram_business_basic', // Required for basic profile access
   'instagram_business_manage_insights', // Required for insights API
   'instagram_business_manage_messages', // For messaging features
-  'instagram_business_content_publish'  // For content publishing features
+  'instagram_business_content_publish', // For content publishing features
 ].join(',');
 
 /**
  * Story insights metrics to fetch from Instagram API
  * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
- * 
+ *
  * Available STORY metrics:
  * - reach: Unique accounts that viewed the story
  * - replies: Total replies on the story
@@ -43,7 +44,7 @@ export const INSTAGRAM_SCOPES = [
  * - shares: Number of shares
  * - navigation: Total navigation actions (with breakdown available)
  * - views: Total views (in development)
- * 
+ *
  * Note: 'impressions' was deprecated in v22.0+ for media created after July 2, 2024
  */
 export const STORY_INSIGHTS_METRICS = [
@@ -53,7 +54,7 @@ export const STORY_INSIGHTS_METRICS = [
   'total_interactions',
   'shares',
   'navigation',
-  'views'
+  'views',
 ].join(',');
 
 /**

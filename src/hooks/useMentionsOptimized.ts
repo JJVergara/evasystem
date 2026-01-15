@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentOrganization } from './useCurrentOrganization';
 import { useDebounce } from './useDebounce';
 import { toast } from 'sonner';
+import { QUERY_KEYS } from '@/constants';
 
 interface SocialMention {
   id: string;
@@ -49,8 +50,15 @@ export function useMentionsOptimized(
   const queryClient = useQueryClient();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const queryKey = QUERY_KEYS.socialMentionsFiltered(
+    organization?.id || '',
+    debouncedSearchTerm,
+    typeFilter,
+    statusFilter
+  );
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['social_mentions', organization?.id, debouncedSearchTerm, typeFilter, statusFilter],
+    queryKey,
     queryFn: async (): Promise<PaginatedMentions> => {
       if (!organization?.id) {
         throw new Error('No organization selected');
@@ -179,8 +187,10 @@ export function useMentionsOptimized(
 
       toast.success('Mención asignada exitosamente');
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['social_mentions', organization?.id] });
+      // Invalidate queries to refresh data (use base key to invalidate all filtered queries)
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.socialMentions(organization?.id || ''),
+      });
     } catch (error) {
       console.error('Error assigning mention:', error);
       toast.error('Error al asignar mención');

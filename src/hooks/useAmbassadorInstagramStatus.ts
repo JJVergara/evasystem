@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { QUERY_KEYS } from '@/constants';
 
 interface AmbassadorInstagramStatus {
   isConnected: boolean;
@@ -44,7 +45,7 @@ async function fetchAmbassadorInstagramStatus(
 
 export function useAmbassadorInstagramStatus(ambassadorId: string | null) {
   const { data: status, isLoading } = useQuery({
-    queryKey: ['ambassadorInstagramStatus', ambassadorId],
+    queryKey: QUERY_KEYS.ambassadorInstagramStatus(ambassadorId || ''),
     queryFn: () => fetchAmbassadorInstagramStatus(ambassadorId!),
     enabled: !!ambassadorId,
     staleTime: 5 * 60 * 1000, // 5 minutes

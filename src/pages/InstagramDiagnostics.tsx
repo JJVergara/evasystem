@@ -19,7 +19,8 @@ import {
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { useInstagramConnection } from '@/hooks/useInstagramConnection';
 import { useInstagramSync } from '@/hooks/useInstagramSync';
-import { useSystemChecks, SystemCheck } from '@/hooks/useSystemChecks';
+import type { SystemCheck } from '@/hooks/useSystemChecks';
+import { useSystemChecks } from '@/hooks/useSystemChecks';
 import { toast } from 'sonner';
 
 export default function InstagramDiagnostics() {

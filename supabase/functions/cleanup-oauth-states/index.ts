@@ -36,9 +36,8 @@ Deno.serve(async (req) => {
     return jsonResponse({
       success: true,
       message: `Cleaned up ${deletedCount} expired OAuth states`,
-      deleted_count: deletedCount
+      deleted_count: deletedCount,
     });
-
   } catch (error) {
     console.error('OAuth cleanup error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

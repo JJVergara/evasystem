@@ -1,122 +1,59 @@
 /**
- * useTasksManagement hook
- * Manages task data fetching and mutations
+ * @fileoverview Hook for managing task data with React Query.
+ *
+ * This hook provides:
+ * - CRUD operations for tasks using the service layer
+ * - Automatic organization scoping
+ * - Task statistics calculation
+ *
+ * @example
+ * ```tsx
+ * function TaskManager() {
+ *   const { tasks, stats, createTask, updateTaskStatus } = useTasksManagement();
+ *
+ *   return (
+ *     <div>
+ *       <TaskStats stats={stats} />
+ *       <TaskList tasks={tasks} />
+ *     </div>
+ *   );
+ * }
+ * ```
  */
 
 import { useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 import { useCurrentOrganization } from './useCurrentOrganization';
 import { QUERY_KEYS } from '@/constants';
+import {
+  getTasks,
+  createTask as createTaskApi,
+  updateTask as updateTaskApi,
+  deleteTask as deleteTaskApi,
+  type TaskType,
+  type TaskStatusType,
+  type TaskWithRelations,
+  type TaskStats,
+  type CreateTaskInput,
+} from '@/services/api';
 
-type TaskType = 'story' | 'mention' | 'repost';
-type TaskStatusType = 'pending' | 'uploaded' | 'in_progress' | 'completed' | 'invalid' | 'expired';
+// Re-export types for backwards compatibility
+export type { TaskType, TaskStatusType, TaskWithRelations, TaskStats };
 
-interface TaskWithRelations {
-  id: string;
-  embassador_id: string;
-  event_id: string;
-  task_type: TaskType;
-  platform: string;
-  expected_hashtag: string | null;
-  status: TaskStatusType;
-  instagram_story_id: string | null;
-  story_url: string | null;
-  upload_time: string | null;
-  expiry_time: string | null;
-  completion_method: '24h_validation' | 'manual';
-  engagement_score: number;
-  reach_count: number;
-  verified_through_api: boolean;
-  points_earned: number;
-  last_status_update: string;
-  created_at: string;
-  embassadors?: {
-    first_name: string;
-    last_name: string;
-    instagram_user: string;
-  };
-  events?: {
-    id: string;
-    fiesta_id: string;
-    fiestas?: { name: string };
-  };
-}
-
-interface TaskStats {
-  total: number;
-  completed: number;
-  pending: number;
-  invalid: number;
-  totalPoints: number;
-  completionRate: number;
-}
-
-interface TasksData {
-  tasks: TaskWithRelations[];
-  stats: TaskStats;
-}
-
-async function fetchTasksData(organizationId: string): Promise<TasksData> {
-  const { data, error: fetchError } = await supabase
-    .from('tasks')
-    .select(
-      `
-      *,
-      embassadors (
-        first_name,
-        last_name,
-        instagram_user,
-        organization_id
-      ),
-      events (
-        id,
-        fiesta_id,
-        fiestas (
-          name
-        )
-      )
-    `
-    )
-    .eq('embassadors.organization_id', organizationId)
-    .order('created_at', { ascending: false });
-
-  if (fetchError) {
-    console.error('Error fetching tasks:', fetchError);
-    throw fetchError;
-  }
-
-  const tasksData = (data || []).map((task) => ({
-    ...task,
-    task_type: task.task_type as TaskType,
-    status: task.status as TaskStatusType,
-    completion_method: task.completion_method as '24h_validation' | 'manual',
-  }));
-
-  // Calculate stats
-  const completed = tasksData.filter((t) => t.status === 'completed').length;
-  const pending = tasksData.filter((t) =>
-    ['pending', 'uploaded', 'in_progress'].includes(t.status)
-  ).length;
-  const invalid = tasksData.filter((t) => ['invalid', 'expired'].includes(t.status)).length;
-  const totalPoints = tasksData.reduce((sum, t) => sum + t.points_earned, 0);
-  const completionRate = tasksData.length > 0 ? (completed / tasksData.length) * 100 : 0;
-
-  return {
-    tasks: tasksData,
-    stats: {
-      total: tasksData.length,
-      completed,
-      pending,
-      invalid,
-      totalPoints,
-      completionRate: Math.round(completionRate * 100) / 100,
-    },
-  };
-}
-
+/**
+ * Hook for managing tasks with full CRUD operations.
+ *
+ * @returns Object containing:
+ * - `tasks` - Array of TaskWithRelations objects
+ * - `stats` - Task statistics (total, completed, pending, etc.)
+ * - `loading` - Whether data is being fetched
+ * - `createTask(data)` - Create a new task
+ * - `updateTaskStatus(id, status, points?)` - Update task status
+ * - `deleteTask(id)` - Delete a task
+ * - `refreshTasks()` - Manually refresh task list
+ */
 export function useTasksManagement() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();
@@ -130,32 +67,14 @@ export function useTasksManagement() {
     error,
   } = useQuery({
     queryKey,
-    queryFn: () => fetchTasksData(organizationId!),
+    queryFn: () => getTasks(organizationId!),
     enabled: !!organizationId,
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: async (taskData: {
-      embassador_id: string;
-      event_id: string;
-      task_type: TaskType;
-      expected_hashtag?: string;
-    }) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          ...taskData,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (taskData: CreateTaskInput) => createTaskApi(taskData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Tarea creada exitosamente');
@@ -166,7 +85,7 @@ export function useTasksManagement() {
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       taskId,
       status,
       points,
@@ -174,25 +93,7 @@ export function useTasksManagement() {
       taskId: string;
       status: TaskStatusType;
       points?: number;
-    }) => {
-      const updateData: {
-        status: TaskStatusType;
-        last_status_update: string;
-        points_earned?: number;
-      } = {
-        status,
-        last_status_update: new Date().toISOString(),
-      };
-
-      if (points !== undefined) {
-        updateData.points_earned = points;
-      }
-
-      const { error } = await supabase.from('tasks').update(updateData).eq('id', taskId);
-
-      if (error) throw error;
-      return true;
-    },
+    }) => updateTaskApi({ taskId, status, points }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Tarea actualizada correctamente');
@@ -203,12 +104,7 @@ export function useTasksManagement() {
   });
 
   const deleteTaskMutation = useMutation({
-    mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-
-      if (error) throw error;
-      return true;
-    },
+    mutationFn: (taskId: string) => deleteTaskApi(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Tarea eliminada correctamente');
@@ -219,12 +115,7 @@ export function useTasksManagement() {
   });
 
   const createTask = useCallback(
-    async (taskData: {
-      embassador_id: string;
-      event_id: string;
-      task_type: TaskType;
-      expected_hashtag?: string;
-    }) => {
+    async (taskData: CreateTaskInput) => {
       try {
         return await createTaskMutation.mutateAsync(taskData);
       } catch {

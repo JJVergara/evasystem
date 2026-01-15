@@ -3,7 +3,7 @@
  * Single source of truth for data structures
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
  * Supabase client type
@@ -67,7 +67,7 @@ export interface SocialMention {
 /**
  * Story insights metrics
  * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
- * 
+ *
  * Available STORY metrics:
  * - reach: Unique accounts that viewed the story
  * - replies: Total replies on the story
@@ -76,7 +76,7 @@ export interface SocialMention {
  * - total_interactions: Likes, saves, comments, shares (minus unlikes/unsaves/deleted)
  * - views: Total views (metric in development)
  * - navigation: Total navigation actions with breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
- * 
+ *
  * Note: 'impressions' was deprecated in v22.0+ for media created after July 2, 2024
  */
 export interface StoryInsights {
@@ -84,20 +84,22 @@ export interface StoryInsights {
   reach: number;
   replies: number;
   shares: number;
-  
+
   // Engagement metrics
   profile_visits: number;
   total_interactions: number;
   views: number;
-  
+
   // Navigation breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
-  navigation?: number | {
-    tap_forward?: number;
-    tap_back?: number;
-    tap_exit?: number;
-    swipe_forward?: number;
-  };
-  
+  navigation?:
+    | number
+    | {
+        tap_forward?: number;
+        tap_back?: number;
+        tap_exit?: number;
+        swipe_forward?: number;
+      };
+
   // Legacy fields (kept for DB compatibility)
   impressions?: number;
   exits?: number;
@@ -186,9 +188,8 @@ export interface MessageData {
  */
 export type TokenData = {
   access_token: string;
-  expires_in: number;   // seconds
+  expires_in: number; // seconds
 };
-
 
 /**
  * Social mention update data
@@ -254,7 +255,6 @@ export interface Fiesta {
   status?: string;
   created_at?: string;
 }
-
 
 export interface MediaData {
   id: string;

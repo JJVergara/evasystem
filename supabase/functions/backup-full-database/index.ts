@@ -4,7 +4,12 @@
  */
 
 import { corsHeaders } from '../shared/constants.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse, unauthorizedResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  unauthorizedResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest } from '../shared/auth.ts';
 
 // Type definitions for backup data
@@ -52,7 +57,7 @@ Deno.serve(async (req) => {
       organization_settings: [],
       notifications: [],
       import_logs: [],
-      task_logs: []
+      task_logs: [],
     };
 
     // Fetch organizations (only user's own)
@@ -63,7 +68,7 @@ Deno.serve(async (req) => {
     backupData.organizations = organizations || [];
 
     if (organizations && organizations.length > 0) {
-      const orgIds = organizations.map(org => org.id);
+      const orgIds = organizations.map((org) => org.id);
 
       // Fetch embassadors for user's organizations
       const { data: embassadors } = await supabaseClient
@@ -80,7 +85,7 @@ Deno.serve(async (req) => {
       backupData.fiestas = fiestas || [];
 
       if (fiestas && fiestas.length > 0) {
-        const fiestaIds = fiestas.map(f => f.id);
+        const fiestaIds = fiestas.map((f) => f.id);
 
         // Fetch events for user's fiestas
         const { data: events } = await supabaseClient
@@ -91,7 +96,7 @@ Deno.serve(async (req) => {
       }
 
       if (embassadors && embassadors.length > 0) {
-        const embassadorIds = embassadors.map(e => e.id);
+        const embassadorIds = embassadors.map((e) => e.id);
 
         // Fetch tasks for user's embassadors
         const { data: tasks } = await supabaseClient
@@ -101,7 +106,7 @@ Deno.serve(async (req) => {
         backupData.tasks = tasks || [];
 
         if (tasks && tasks.length > 0) {
-          const taskIds = tasks.map(t => t.id);
+          const taskIds = tasks.map((t) => t.id);
 
           // Fetch task logs
           const { data: taskLogs } = await supabaseClient
@@ -113,7 +118,7 @@ Deno.serve(async (req) => {
       }
 
       if (backupData.events.length > 0) {
-        const eventIds = backupData.events.map(e => (e as { id: string }).id);
+        const eventIds = backupData.events.map((e) => (e as { id: string }).id);
 
         // Fetch leaderboards for user's events
         const { data: leaderboards } = await supabaseClient
@@ -173,21 +178,17 @@ Deno.serve(async (req) => {
       organization_settings: backupData.organization_settings.length,
       notifications: backupData.notifications.length,
       import_logs: backupData.import_logs.length,
-      task_logs: backupData.task_logs.length
+      task_logs: backupData.task_logs.length,
     });
 
-    return new Response(
-      JSON.stringify(backupData),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'Content-Disposition': `attachment; filename="eva-backup-${new Date().toISOString().split('T')[0]}.json"`
-        }
-      }
-    );
-
+    return new Response(JSON.stringify(backupData), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="eva-backup-${new Date().toISOString().split('T')[0]}.json"`,
+      },
+    });
   } catch (error) {
     console.error('Error during backup:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

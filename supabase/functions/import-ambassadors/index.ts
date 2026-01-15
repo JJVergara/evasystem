@@ -3,7 +3,12 @@
  * Handles bulk import of ambassadors for an organization
  */
 
-import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  badRequestResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -54,8 +59,8 @@ Deno.serve(async (req) => {
       .select('email, rut')
       .eq('organization_id', organizationId);
 
-    const existingEmails = new Set(existingAmbassadors?.map(a => a.email) || []);
-    const existingRuts = new Set(existingAmbassadors?.map(a => a.rut) || []);
+    const existingEmails = new Set(existingAmbassadors?.map((a) => a.email) || []);
+    const existingRuts = new Set(existingAmbassadors?.map((a) => a.rut) || []);
 
     const results: {
       successful: number;
@@ -66,7 +71,7 @@ Deno.serve(async (req) => {
       successful: 0,
       failed: 0,
       duplicates: 0,
-      errors: []
+      errors: [],
     };
 
     const validAmbassadors = [];
@@ -75,14 +80,18 @@ Deno.serve(async (req) => {
       // Check for duplicates
       if (existingEmails.has(ambassador.email) || existingRuts.has(ambassador.rut)) {
         results.duplicates++;
-        results.errors.push(`Duplicado: ${ambassador.first_name} ${ambassador.last_name} (${ambassador.email})`);
+        results.errors.push(
+          `Duplicado: ${ambassador.first_name} ${ambassador.last_name} (${ambassador.email})`
+        );
         continue;
       }
 
       // Validate required fields
       if (!ambassador.first_name || !ambassador.last_name || !ambassador.email || !ambassador.rut) {
         results.failed++;
-        results.errors.push(`Campos requeridos faltantes: ${ambassador.first_name} ${ambassador.last_name}`);
+        results.errors.push(
+          `Campos requeridos faltantes: ${ambassador.first_name} ${ambassador.last_name}`
+        );
         continue;
       }
 
@@ -103,7 +112,7 @@ Deno.serve(async (req) => {
         global_points: 0,
         events_participated: 0,
         completed_tasks: 0,
-        failed_tasks: 0
+        failed_tasks: 0,
       });
 
       // Add to existing sets to prevent duplicates within the same import
@@ -126,24 +135,22 @@ Deno.serve(async (req) => {
     }
 
     // Create import log
-    await supabase
-      .from('import_logs')
-      .insert({
-        user_id: userData.id,
-        organization_id: organizationId,
-        type: 'embassadors',
-        source: 'manual_import',
-        file_name: 'bulk_import.json',
-        status: 'completed',
-        result_json: results
-      });
+    await supabase.from('import_logs').insert({
+      user_id: userData.id,
+      organization_id: organizationId,
+      type: 'embassadors',
+      source: 'manual_import',
+      file_name: 'bulk_import.json',
+      status: 'completed',
+      result_json: results,
+    });
 
     // Create feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: null,
       p_type: results.failed > 0 ? 'warning' : 'success',
-      p_message: `Importación completada: ${results.successful} exitosos, ${results.failed} fallidos, ${results.duplicates} duplicados`
+      p_message: `Importación completada: ${results.successful} exitosos, ${results.failed} fallidos, ${results.duplicates} duplicados`,
     });
 
     // Create event log
@@ -156,24 +163,26 @@ Deno.serve(async (req) => {
         successful: results.successful,
         failed: results.failed,
         duplicates: results.duplicates,
-        import_timestamp: new Date().toISOString()
-      }
+        import_timestamp: new Date().toISOString(),
+      },
     });
 
     return jsonResponse({
       success: true,
       message: 'Importación de embajadores completada',
-      data: results
+      data: results,
     });
-
   } catch (error) {
     console.error('Error in import-ambassadors:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    return jsonResponse({
-      success: false,
-      message: 'Error en importación de embajadores',
-      error: errorMessage
-    }, { status: 400 });
+    return jsonResponse(
+      {
+        success: false,
+        message: 'Error en importación de embajadores',
+        error: errorMessage,
+      },
+      { status: 400 }
+    );
   }
 });

@@ -4,7 +4,12 @@
  */
 
 import { corsHeaders } from '../shared/constants.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  badRequestResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -76,7 +81,7 @@ Deno.serve(async (req) => {
         global_points: 0,
         events_participated: 0,
         completed_tasks: 0,
-        failed_tasks: 0
+        failed_tasks: 0,
       })
       .select()
       .single();
@@ -91,7 +96,7 @@ Deno.serve(async (req) => {
       p_user_id: userData.id,
       p_event_id: null,
       p_type: 'success',
-      p_message: `Embajador "${ambassadorData.first_name} ${ambassadorData.last_name}" creado exitosamente. Estado: Pendiente de aprobación.`
+      p_message: `Embajador "${ambassadorData.first_name} ${ambassadorData.last_name}" creado exitosamente. Estado: Pendiente de aprobación.`,
     });
 
     // Create ambassador log
@@ -103,24 +108,29 @@ Deno.serve(async (req) => {
         ambassador_name: `${ambassadorData.first_name} ${ambassadorData.last_name}`,
         instagram_user: ambassadorData.instagram_user,
         email: ambassadorData.email,
-        created_timestamp: new Date().toISOString()
-      }
+        created_timestamp: new Date().toISOString(),
+      },
     });
 
-    return jsonResponse({
-      success: true,
-      message: 'Embajador creado exitosamente',
-      data: ambassadorResult
-    }, { status: 201 });
-
+    return jsonResponse(
+      {
+        success: true,
+        message: 'Embajador creado exitosamente',
+        data: ambassadorResult,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error in create-ambassador:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    return jsonResponse({
-      success: false,
-      message: 'Error al crear embajador',
-      error: errorMessage
-    }, { status: 400 });
+    return jsonResponse(
+      {
+        success: false,
+        message: 'Error al crear embajador',
+        error: errorMessage,
+      },
+      { status: 400 }
+    );
   }
 });

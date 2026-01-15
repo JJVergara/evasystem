@@ -16,7 +16,7 @@ function base64UrlDecode(input: string): string {
   const pad = input.length % 4;
   if (pad) input += '='.repeat(4 - pad);
   const decoded = atob(input);
-  const bytes = new Uint8Array([...decoded].map(c => c.charCodeAt(0)));
+  const bytes = new Uint8Array([...decoded].map((c) => c.charCodeAt(0)));
   const decoder = new TextDecoder();
   return decoder.decode(bytes);
 }
@@ -40,7 +40,7 @@ async function verifySignedRequest(signedRequest: string): Promise<Record<string
   const mac = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
   const bytes = new Uint8Array(mac);
   let binary = '';
-  bytes.forEach(b => binary += String.fromCharCode(b));
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
   const expectedB64Url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   if (expectedB64Url !== sig) throw new Error('Signature mismatch');
@@ -74,7 +74,9 @@ Deno.serve(async (req) => {
       try {
         if (signedRequest) {
           const parsed = await verifySignedRequest(signedRequest);
-          userRef = String(parsed.user_id || (parsed.user as Record<string, unknown>)?.id || 'unknown');
+          userRef = String(
+            parsed.user_id || (parsed.user as Record<string, unknown>)?.id || 'unknown'
+          );
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : String(e);
@@ -85,11 +87,13 @@ Deno.serve(async (req) => {
       const statusUrl = `https://awpfslcepylnipaolmvv.functions.supabase.co/functions/v1/facebook-data-deletion?code=${code}`;
 
       // TODO: Optionally mark records for deletion for this userRef
-      console.log(`Data deletion request received for user: ${userRef}, confirmation code: ${code}`);
+      console.log(
+        `Data deletion request received for user: ${userRef}, confirmation code: ${code}`
+      );
 
       return jsonResponse({
         url: statusUrl,
-        confirmation_code: code
+        confirmation_code: code,
       });
     }
 
@@ -99,12 +103,11 @@ Deno.serve(async (req) => {
       const code = url.searchParams.get('code') || 'unknown';
       return jsonResponse({
         status: 'pending',
-        confirmation_code: code
+        confirmation_code: code,
       });
     }
 
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
-
   } catch (e) {
     console.error('facebook-data-deletion error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);

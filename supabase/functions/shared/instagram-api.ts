@@ -4,7 +4,7 @@
  */
 
 import { INSTAGRAM_API_BASE, STORY_INSIGHTS_METRICS } from './constants.ts';
-import { StoryInsights, MediaItem } from './types.ts';
+import type { StoryInsights, MediaItem } from './types.ts';
 
 export class InstagramApiError extends Error {
   constructor(
@@ -20,10 +20,7 @@ export class InstagramApiError extends Error {
 /**
  * Build Instagram Graph API URL
  */
-export function buildInstagramApiUrl(
-  endpoint: string,
-  params?: Record<string, string>
-): string {
+export function buildInstagramApiUrl(endpoint: string, params?: Record<string, string>): string {
   const url = new URL(`${INSTAGRAM_API_BASE}/${endpoint}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -44,11 +41,11 @@ export async function fetchStoryInsights(
   try {
     const url = buildInstagramApiUrl(`${storyId}/insights`, {
       metric: STORY_INSIGHTS_METRICS,
-      access_token: accessToken
+      access_token: accessToken,
     });
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new InstagramApiError(
@@ -57,7 +54,7 @@ export async function fetchStoryInsights(
         error
       );
     }
-    
+
     const data = await response.json();
     const insights: StoryInsights = {
       reach: 0,
@@ -66,12 +63,12 @@ export async function fetchStoryInsights(
       profile_visits: 0,
       total_interactions: 0,
       views: 0,
-      navigation: undefined
+      navigation: undefined,
     };
-    
+
     for (const metric of data.data || []) {
       const value = metric.values?.[0]?.value;
-      
+
       switch (metric.name) {
         case 'reach':
           insights.reach = value || 0;
@@ -117,7 +114,7 @@ export async function fetchStoryInsights(
           break;
       }
     }
-    
+
     return insights;
   } catch (error) {
     if (error instanceof InstagramApiError) throw error;
@@ -137,19 +134,16 @@ export async function fetchAccountMedia(
     limit?: number;
   } = {}
 ): Promise<MediaItem[]> {
-  const {
-    fields = 'id,media_type,media_product_type,timestamp',
-    limit = 50
-  } = options;
-  
+  const { fields = 'id,media_type,media_product_type,timestamp', limit = 50 } = options;
+
   const url = buildInstagramApiUrl(`${accountId}/media`, {
     fields,
     limit: limit.toString(),
-    access_token: accessToken
+    access_token: accessToken,
   });
-  
+
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new InstagramApiError(
@@ -158,7 +152,7 @@ export async function fetchAccountMedia(
       error
     );
   }
-  
+
   const data = await response.json();
   return data.data || [];
 }
@@ -185,19 +179,17 @@ export async function fetchAccountStories(
     fields?: string;
   } = {}
 ): Promise<StoryItem[]> {
-  const {
-    fields = 'id,timestamp,media_type'
-  } = options;
-  
+  const { fields = 'id,timestamp,media_type' } = options;
+
   const url = buildInstagramApiUrl(`${accountId}/stories`, {
     fields,
-    access_token: accessToken
+    access_token: accessToken,
   });
-  
+
   console.log(`Fetching stories from: ${accountId}/stories`);
-  
+
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     const error = await response.json();
     // Don't throw if no stories found or permission issue
@@ -211,7 +203,7 @@ export async function fetchAccountStories(
       error
     );
   }
-  
+
   const data = await response.json();
   console.log(`Found ${data.data?.length || 0} active stories`);
   return data.data || [];
@@ -220,16 +212,13 @@ export async function fetchAccountStories(
 /**
  * Check if story exists (is still accessible)
  */
-export async function checkStoryExists(
-  storyId: string,
-  accessToken: string
-): Promise<boolean> {
+export async function checkStoryExists(storyId: string, accessToken: string): Promise<boolean> {
   try {
     const url = buildInstagramApiUrl(storyId, {
       fields: 'id',
-      access_token: accessToken
+      access_token: accessToken,
     });
-    
+
     const response = await fetch(url);
     return response.ok;
   } catch {
@@ -247,11 +236,11 @@ export async function fetchAccountInfo(
 ) {
   const url = buildInstagramApiUrl(accountId, {
     fields,
-    access_token: accessToken
+    access_token: accessToken,
   });
-  
+
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new InstagramApiError(
@@ -260,7 +249,7 @@ export async function fetchAccountInfo(
       error
     );
   }
-  
+
   return await response.json();
 }
 
@@ -274,11 +263,11 @@ export async function fetchMediaInsights(
 ) {
   const url = buildInstagramApiUrl(`${mediaId}/insights`, {
     metric: metrics,
-    access_token: accessToken
+    access_token: accessToken,
   });
-  
+
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     const error = await response.json();
     // Don't throw for insights that aren't available yet
@@ -291,26 +280,22 @@ export async function fetchMediaInsights(
       error
     );
   }
-  
+
   return await response.json();
 }
 
 /**
  * Fetch mentioned media (tags)
  */
-export async function fetchMentionedMedia(
-  accountId: string,
-  accessToken: string,
-  limit = 50
-) {
+export async function fetchMentionedMedia(accountId: string, accessToken: string, limit = 50) {
   const url = buildInstagramApiUrl(`${accountId}/tags`, {
     fields: 'id,media_type,media_product_type,timestamp,username',
     limit: limit.toString(),
-    access_token: accessToken
+    access_token: accessToken,
   });
-  
+
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new InstagramApiError(
@@ -319,7 +304,7 @@ export async function fetchMentionedMedia(
       error
     );
   }
-  
+
   const data = await response.json();
   return data.data || [];
 }
@@ -333,7 +318,7 @@ export async function sendInstagramMessage(
   accessToken: string
 ) {
   const url = buildInstagramApiUrl('me/messages', {
-    access_token: accessToken
+    access_token: accessToken,
   });
 
   const response = await fetch(url, {
@@ -343,8 +328,8 @@ export async function sendInstagramMessage(
     },
     body: JSON.stringify({
       recipient: { id: recipientId },
-      message: { text: messageText }
-    })
+      message: { text: messageText },
+    }),
   });
 
   if (!response.ok) {
@@ -384,14 +369,14 @@ export async function sendInstagramMessageWithQuickReplies(
   accessToken: string
 ) {
   const url = buildInstagramApiUrl('me/messages', {
-    access_token: accessToken
+    access_token: accessToken,
   });
 
   // Instagram limits quick replies to 13 buttons, titles to 20 chars
-  const limitedReplies = quickReplies.slice(0, 13).map(reply => ({
+  const limitedReplies = quickReplies.slice(0, 13).map((reply) => ({
     content_type: reply.content_type,
     title: reply.title.substring(0, 20),
-    payload: reply.payload
+    payload: reply.payload,
   }));
 
   const response = await fetch(url, {
@@ -403,9 +388,9 @@ export async function sendInstagramMessageWithQuickReplies(
       recipient: { id: recipientId },
       message: {
         text: messageText,
-        quick_replies: limitedReplies
-      }
-    })
+        quick_replies: limitedReplies,
+      },
+    }),
   });
 
   if (!response.ok) {
@@ -419,4 +404,3 @@ export async function sendInstagramMessageWithQuickReplies(
 
   return await response.json();
 }
-

@@ -5,7 +5,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './constants.ts';
-import { SupabaseClient } from './types.ts';
+import type { SupabaseClient } from './types.ts';
 
 export interface AuthResult {
   user: { id: string; [key: string]: unknown };
@@ -49,29 +49,30 @@ export async function authenticateRequest(
       return {
         user: { id: 'system', isCron: true },
         supabase,
-        isCron: true
+        isCron: true,
       };
     }
   }
 
   // Require authentication
   if (!authHeader && options.requireAuth) {
-    return new Response(
-      JSON.stringify({ error: 'Authentication required' }),
-      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   if (authHeader) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
 
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return { user, supabase };
@@ -90,7 +91,7 @@ export async function verifyOrganizationAccess(
   organizationId: string
 ): Promise<boolean> {
   if (userId === 'system') return true; // Cron jobs have full access
-  
+
   const { data: org, error } = await supabase
     .from('organizations')
     .select('id')
@@ -109,11 +110,10 @@ export async function verifyOrganizationMembership(
   userId: string,
   organizationId: string
 ): Promise<boolean> {
-  const { data: isMember, error } = await supabase
-    .rpc('is_organization_member', {
-      user_auth_id: userId,
-      org_id: organizationId
-    });
+  const { data: isMember, error } = await supabase.rpc('is_organization_member', {
+    user_auth_id: userId,
+    org_id: organizationId,
+  });
 
   return !error && isMember === true;
 }
@@ -126,8 +126,9 @@ export async function getUserOrganization(
   userId: string
 ): Promise<string | null> {
   // Use get_user_organizations RPC which queries organization_members
-  const { data: userOrgs, error } = await supabase
-    .rpc('get_user_organizations', { user_auth_id: userId });
+  const { data: userOrgs, error } = await supabase.rpc('get_user_organizations', {
+    user_auth_id: userId,
+  });
 
   if (error || !userOrgs || userOrgs.length === 0) {
     // Fallback to users.organization_id for backwards compatibility
@@ -136,7 +137,7 @@ export async function getUserOrganization(
       .select('organization_id')
       .eq('auth_user_id', userId)
       .single();
-    
+
     return userData?.organization_id ?? null;
   }
 
@@ -174,6 +175,6 @@ export async function getOrganizationWithCredentials(
   return {
     ...org,
     access_token: tokenData.access_token,
-    token_expiry: tokenData.token_expiry
+    token_expiry: tokenData.token_expiry,
   };
 }

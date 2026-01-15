@@ -11,21 +11,21 @@ import { InstagramApiError } from './instagram-api.ts';
  */
 export function handleError(error: unknown): Response {
   console.error('Function error:', error);
-  
+
   // Instagram API errors
   if (error instanceof InstagramApiError) {
     console.error('Instagram API error:', {
       message: error.message,
       statusCode: error.statusCode,
-      fbError: error.fbError
+      fbError: error.fbError,
     });
     return errorResponse(error.message, error.statusCode || 500);
   }
-  
+
   // Standard Error objects
   if (error instanceof Error) {
     const message = error.message;
-    
+
     // Common error patterns
     if (message.includes('Unauthorized') || message.includes('Invalid authentication')) {
       return errorResponse(message, 401);
@@ -39,10 +39,10 @@ export function handleError(error: unknown): Response {
     if (message.includes('Bad request') || message.includes('Invalid')) {
       return errorResponse(message, 400);
     }
-    
+
     return errorResponse(message, 500);
   }
-  
+
   // Unknown error type
   return errorResponse('An unexpected error occurred', 500);
 }
@@ -65,11 +65,7 @@ export function withErrorHandling<T extends unknown[], R>(
 /**
  * Assert condition or throw error
  */
-export function assert(
-  condition: unknown,
-  message: string,
-  statusCode = 400
-): asserts condition {
+export function assert(condition: unknown, message: string, statusCode = 400): asserts condition {
   if (!condition) {
     const error = new Error(message);
     (error as Error & { statusCode: number }).statusCode = statusCode;
@@ -84,10 +80,9 @@ export function validateRequired<T extends Record<string, unknown>>(
   data: T,
   fields: (keyof T)[]
 ): void {
-  const missing = fields.filter(field => !data[field]);
-  
+  const missing = fields.filter((field) => !data[field]);
+
   if (missing.length > 0) {
     throw new Error(`Missing required fields: ${missing.join(', ')}`);
   }
 }
-

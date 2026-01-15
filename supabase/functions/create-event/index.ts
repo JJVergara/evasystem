@@ -3,7 +3,12 @@
  * Creates a new event for an organization
  */
 
-import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  badRequestResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -60,7 +65,7 @@ Deno.serve(async (req) => {
         main_hashtag: eventData.main_hashtag,
         instagram_account: eventData.instagram_account,
         organization_id: organizationId,
-        active: true
+        active: true,
       })
       .select()
       .single();
@@ -75,7 +80,7 @@ Deno.serve(async (req) => {
       p_user_id: userData.id,
       p_event_id: eventResult.id,
       p_type: 'success',
-      p_message: `Evento "${eventData.name}" creado exitosamente`
+      p_message: `Evento "${eventData.name}" creado exitosamente`,
     });
 
     // Create event log
@@ -87,24 +92,29 @@ Deno.serve(async (req) => {
         event_name: eventData.name,
         event_type: eventData.event_type,
         hashtag: eventData.main_hashtag,
-        created_timestamp: new Date().toISOString()
-      }
+        created_timestamp: new Date().toISOString(),
+      },
     });
 
-    return jsonResponse({
-      success: true,
-      message: 'Evento creado exitosamente',
-      data: eventResult
-    }, { status: 201 });
-
+    return jsonResponse(
+      {
+        success: true,
+        message: 'Evento creado exitosamente',
+        data: eventResult,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error in create-event:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    return jsonResponse({
-      success: false,
-      message: 'Error al crear evento',
-      error: errorMessage
-    }, { status: 400 });
+    return jsonResponse(
+      {
+        success: false,
+        message: 'Error al crear evento',
+        error: errorMessage,
+      },
+      { status: 400 }
+    );
   }
 });

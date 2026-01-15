@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { FiestaSelector } from '@/components/Fiestas/FiestaSelector';
 import { AppBackground } from './AppBackground';

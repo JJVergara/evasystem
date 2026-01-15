@@ -1,19 +1,20 @@
 /**
  * Collect Story Insights Function
- * 
+ *
  * This function fetches insights for active Instagram Stories (<24h old)
  * using the Instagram Graph API and stores snapshots in Supabase.
- * 
+ *
  * Flow:
  * 1. GET /{instagram_business_account_id}/stories - Get all active story IDs
  * 2. GET /{story_id}/insights?metric=... - Get insights for each story
  * 3. Store snapshots in story_insights_snapshots table
- * 
+ *
  * Designed to be called by a cron job every 2 hours.
  */
 
 import { corsHeaders, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
-import { Organization, SupabaseClient, StoryInsights } from '../shared/types.ts';
+import type { Organization, SupabaseClient } from '../shared/types.ts';
+import { StoryInsights } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
@@ -29,9 +30,9 @@ Deno.serve(async (req) => {
     // Authenticate request (allows both cron and user requests)
     const authResult = await authenticateRequest(req, { requireAuth: false, allowCron: true });
     if (authResult instanceof Response) return authResult;
-    
+
     const { user, supabase, isCron } = authResult;
-    
+
     let targetOrgId: string | null = null;
 
     if (isCron) {
@@ -99,7 +100,7 @@ Deno.serve(async (req) => {
             organization_id: org.id,
             organization_name: org.name,
             success: false,
-            error: 'No Instagram token found'
+            error: 'No Instagram token found',
           });
           continue;
         }
@@ -107,33 +108,28 @@ Deno.serve(async (req) => {
         // Check token expiry
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
           console.log(`Token expired for organization ${org.name}`);
-          
-          await supabase
-            .from('notifications')
-            .insert({
-              organization_id: org.id,
-              type: 'token_expired',
-              message: 'Tu token de Instagram ha expirado. Reconecta tu cuenta para continuar recolectando insights de Stories.',
-              priority: 'high'
-            });
-          
+
+          await supabase.from('notifications').insert({
+            organization_id: org.id,
+            type: 'token_expired',
+            message:
+              'Tu token de Instagram ha expirado. Reconecta tu cuenta para continuar recolectando insights de Stories.',
+            priority: 'high',
+          });
+
           results.push({
             organization_id: org.id,
             organization_name: org.name,
             success: false,
-            error: 'Token expired'
+            error: 'Token expired',
           });
           continue;
         }
 
         const decryptedToken = await safeDecryptToken(tokenData.access_token);
-        
+
         // Collect insights for this organization
-        const orgResult = await collectOrganizationStoryInsights(
-          supabase,
-          org,
-          decryptedToken
-        );
+        const orgResult = await collectOrganizationStoryInsights(supabase, org, decryptedToken);
 
         totalStoriesFound += orgResult.storiesFound;
         totalSnapshotsCreated += orgResult.snapshotsCreated;
@@ -142,24 +138,23 @@ Deno.serve(async (req) => {
           organization_id: org.id,
           organization_name: org.name,
           success: true,
-          ...orgResult
+          ...orgResult,
         });
-
       } catch (error) {
         console.error(`Error processing organization ${org.name}:`, error);
         results.push({
           organization_id: org.id,
           organization_name: org.name,
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     }
 
     console.log(
       `Story insights collection completed: ` +
-      `${totalStoriesFound} stories found, ` +
-      `${totalSnapshotsCreated} snapshots created`
+        `${totalStoriesFound} stories found, ` +
+        `${totalSnapshotsCreated} snapshots created`
     );
 
     return jsonResponse({
@@ -168,9 +163,8 @@ Deno.serve(async (req) => {
       totalStoriesFound,
       totalSnapshotsCreated,
       isCron,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     return handleError(error);
   }
@@ -184,7 +178,6 @@ async function collectOrganizationStoryInsights(
   organization: Organization,
   accessToken: string
 ): Promise<{ storiesFound: number; snapshotsCreated: number; errors: string[] }> {
-  
   let storiesFound = 0;
   let snapshotsCreated = 0;
   const errors: string[] = [];
@@ -210,7 +203,7 @@ async function collectOrganizationStoryInsights(
     for (const story of stories) {
       try {
         const storyId = story.id;
-        
+
         if (!storyId) {
           console.log('Skipping story without ID');
           continue;
@@ -219,7 +212,9 @@ async function collectOrganizationStoryInsights(
         // Calculate story age for metadata
         const storyAge = story.timestamp ? calculateStoryAgeHours(story.timestamp) : null;
 
-        console.log(`Fetching insights for story ${storyId} (age: ${storyAge?.toFixed(1) || 'unknown'}h)`);
+        console.log(
+          `Fetching insights for story ${storyId} (age: ${storyAge?.toFixed(1) || 'unknown'}h)`
+        );
 
         // Step 2a: Fetch insights from Instagram API
         // GET /{story_id}/insights?metric=impressions,reach,replies,...
@@ -243,7 +238,7 @@ async function collectOrganizationStoryInsights(
         // Step 2c: Store snapshot in database
         // Parse navigation breakdown if available
         const navBreakdown = typeof insights.navigation === 'object' ? insights.navigation : null;
-        
+
         const snapshot = {
           social_mention_id: existingMention?.id || null,
           organization_id: organization.id,
@@ -261,14 +256,14 @@ async function collectOrganizationStoryInsights(
           views: insights.views || 0,
           // Navigation breakdown
           exits: navBreakdown?.tap_exit ?? insights.exits ?? 0,
-          taps_forward: navBreakdown 
-            ? ((navBreakdown.tap_forward ?? 0) + (navBreakdown.swipe_forward ?? 0))
+          taps_forward: navBreakdown
+            ? (navBreakdown.tap_forward ?? 0) + (navBreakdown.swipe_forward ?? 0)
             : (insights.taps_forward ?? 0),
           taps_back: navBreakdown?.tap_back ?? insights.taps_back ?? 0,
           navigation: insights.navigation ?? {},
           // Legacy (deprecated)
           impressions: insights.impressions ?? 0,
-          raw_insights: insights
+          raw_insights: insights,
         };
 
         const { error: insertError } = await supabase
@@ -282,13 +277,11 @@ async function collectOrganizationStoryInsights(
           snapshotsCreated++;
           console.log(`Created snapshot for story ${storyId}`);
         }
-
       } catch (error) {
         console.error(`Error processing story ${story.id}:`, error);
         errors.push(`Story ${story.id} error: ${error.message}`);
       }
     }
-
   } catch (error) {
     console.error(`Error in collectOrganizationStoryInsights:`, error);
     errors.push(`Organization processing error: ${error.message}`);

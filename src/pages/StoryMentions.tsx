@@ -7,7 +7,7 @@ import { StoryMentionDetails } from '@/components/StoryMentions/StoryMentionDeta
 import { useStoryMentions } from '@/hooks/useStoryMentions';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { useToast } from '@/hooks/use-toast';
-import { StoryMention } from '@/types/storyMentions';
+import type { StoryMention } from '@/types/storyMentions';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function StoryMentions() {

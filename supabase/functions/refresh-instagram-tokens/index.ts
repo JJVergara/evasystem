@@ -7,7 +7,11 @@
  * Tokens are refreshed 7 days before expiry to ensure continuous service.
  */
 
-import { corsHeaders, INSTAGRAM_TOKEN_REFRESH, DEFAULT_TOKEN_EXPIRY_MS } from '../shared/constants.ts';
+import {
+  corsHeaders,
+  INSTAGRAM_TOKEN_REFRESH,
+  DEFAULT_TOKEN_EXPIRY_MS,
+} from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
@@ -38,15 +42,17 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
 
     // Allow both Bearer token and x-cron-secret header
-    const providedSecret = authHeader?.replace('Bearer ', '') ||
-                          req.headers.get('x-cron-secret');
+    const providedSecret = authHeader?.replace('Bearer ', '') || req.headers.get('x-cron-secret');
 
     if (cronSecret && providedSecret !== cronSecret) {
       console.error('Unauthorized cron call - invalid secret');
-      return jsonResponse({
-        error: 'unauthorized',
-        message: 'Invalid cron secret'
-      }, { status: 401 });
+      return jsonResponse(
+        {
+          error: 'unauthorized',
+          message: 'Invalid cron secret',
+        },
+        { status: 401 }
+      );
     }
 
     const supabase = createSupabaseClient();
@@ -99,7 +105,7 @@ Deno.serve(async (req) => {
     }
 
     // ===== CREATE NOTIFICATIONS FOR FAILURES =====
-    const failures = results.filter(r => !r.success);
+    const failures = results.filter((r) => !r.success);
     if (failures.length > 0) {
       console.log(`${failures.length} token refresh failures - creating notifications`);
       await createFailureNotifications(supabase, failures);
@@ -109,15 +115,15 @@ Deno.serve(async (req) => {
     const summary = {
       timestamp: new Date().toISOString(),
       totalProcessed: results.length,
-      successful: results.filter(r => r.success).length,
+      successful: results.filter((r) => r.success).length,
       failed: failures.length,
-      results: results.map(r => ({
+      results: results.map((r) => ({
         type: r.type,
         id: r.id,
         success: r.success,
         error: r.error,
-        newExpiry: r.newExpiry
-      }))
+        newExpiry: r.newExpiry,
+      })),
     };
 
     console.log('=== INSTAGRAM TOKEN REFRESH CRON COMPLETE ===');
@@ -126,17 +132,19 @@ Deno.serve(async (req) => {
     return jsonResponse({
       success: true,
       message: 'Token refresh completed',
-      summary
+      summary,
     });
-
   } catch (error) {
     console.error('=== INSTAGRAM TOKEN REFRESH CRON ERROR ===');
     console.error('Error:', error);
 
-    return jsonResponse({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return jsonResponse(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 });
 
@@ -173,7 +181,7 @@ async function refreshOrganizationToken(
       .update({
         access_token: encryptedNewToken,
         token_expiry: newExpiryDate.toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('organization_id', organization_id);
 
@@ -188,9 +196,8 @@ async function refreshOrganizationToken(
       type: 'organization',
       id: organization_id,
       success: true,
-      newExpiry: newExpiryDate.toISOString()
+      newExpiry: newExpiryDate.toISOString(),
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to refresh organization token ${organization_id}:`, errorMessage);
@@ -199,7 +206,7 @@ async function refreshOrganizationToken(
       type: 'organization',
       id: organization_id,
       success: false,
-      error: errorMessage
+      error: errorMessage,
     };
   }
 }
@@ -237,7 +244,7 @@ async function refreshAmbassadorToken(
       .update({
         access_token: encryptedNewToken,
         token_expiry: newExpiryDate.toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('embassador_id', embassador_id);
 
@@ -252,9 +259,8 @@ async function refreshAmbassadorToken(
       type: 'ambassador',
       id: embassador_id,
       success: true,
-      newExpiry: newExpiryDate.toISOString()
+      newExpiry: newExpiryDate.toISOString(),
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Failed to refresh ambassador token ${embassador_id}:`, errorMessage);
@@ -263,7 +269,7 @@ async function refreshAmbassadorToken(
       type: 'ambassador',
       id: embassador_id,
       success: false,
-      error: errorMessage
+      error: errorMessage,
     };
   }
 }
@@ -276,7 +282,8 @@ async function refreshInstagramToken(accessToken: string): Promise<{
   token_type: string;
   expires_in: number;
 }> {
-  const url = `${INSTAGRAM_TOKEN_REFRESH}?` +
+  const url =
+    `${INSTAGRAM_TOKEN_REFRESH}?` +
     `grant_type=ig_refresh_token&` +
     `access_token=${encodeURIComponent(accessToken)}`;
 
@@ -286,9 +293,7 @@ async function refreshInstagramToken(accessToken: string): Promise<{
   if (!response.ok || data.error) {
     console.error('Instagram token refresh error:', data.error || data);
     throw new Error(
-      data.error?.message ||
-      data.error_message ||
-      'Failed to refresh Instagram token'
+      data.error?.message || data.error_message || 'Failed to refresh Instagram token'
     );
   }
 
@@ -324,20 +329,21 @@ async function createFailureNotifications(
         await supabase.from('notifications').insert({
           organization_id: organizationId,
           type: 'token_refresh_failed',
-          title: failure.type === 'organization'
-            ? 'Instagram Connection Needs Attention'
-            : 'Ambassador Instagram Connection Needs Attention',
+          title:
+            failure.type === 'organization'
+              ? 'Instagram Connection Needs Attention'
+              : 'Ambassador Instagram Connection Needs Attention',
           message: `Failed to automatically refresh Instagram token. ${
             failure.type === 'ambassador'
-              ? 'Please reconnect the ambassador\'s Instagram account.'
-              : 'Please reconnect your organization\'s Instagram account in Settings.'
+              ? "Please reconnect the ambassador's Instagram account."
+              : "Please reconnect your organization's Instagram account in Settings."
           } Error: ${failure.error}`,
           priority: 'high',
           metadata: {
             type: failure.type,
             entity_id: failure.id,
-            error: failure.error
-          }
+            error: failure.error,
+          },
         });
 
         console.log(`Created failure notification for ${failure.type} ${failure.id}`);

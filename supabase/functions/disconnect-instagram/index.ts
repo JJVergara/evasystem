@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     // Authenticate user
     const authResult = await authenticateRequest(req);
     if (authResult instanceof Response) return authResult;
-    
+
     const { user, supabase: supabaseClient } = authResult;
 
     // Get user's organization
@@ -31,11 +31,10 @@ Deno.serve(async (req) => {
     }
 
     // Verify user has access to this organization
-    const { data: hasAccess } = await supabaseClient
-      .rpc('is_organization_member', {
-        user_auth_id: user.id,
-        org_id: organizationId
-      });
+    const { data: hasAccess } = await supabaseClient.rpc('is_organization_member', {
+      user_auth_id: user.id,
+      org_id: organizationId,
+    });
 
     if (!hasAccess) {
       throw new Error('No access to this organization');
@@ -49,7 +48,7 @@ Deno.serve(async (req) => {
         instagram_username: null,
         facebook_page_id: null,
         instagram_business_account_id: null,
-        last_instagram_sync: null
+        last_instagram_sync: null,
       })
       .eq('id', organizationId);
 
@@ -62,9 +61,8 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       success: true,
-      message: 'Instagram account disconnected successfully'
+      message: 'Instagram account disconnected successfully',
     });
-
   } catch (error) {
     return handleError(error);
   }

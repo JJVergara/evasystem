@@ -18,7 +18,7 @@ import {
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { StoryMention } from '@/types/storyMentions';
+import type { StoryMention } from '@/types/storyMentions';
 
 interface StoryMentionDetailsProps {
   mention: StoryMention | null;

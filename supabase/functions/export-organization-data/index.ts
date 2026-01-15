@@ -4,7 +4,12 @@
  */
 
 import { corsHeaders } from '../shared/constants.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse, notFoundResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  notFoundResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -49,13 +54,22 @@ Deno.serve(async (req) => {
         organization_name: org.name,
         export_timestamp: new Date().toISOString(),
         export_format: format,
-        exported_by: user.id
-      }
+        exported_by: user.id,
+      },
     };
 
     // Define what tables to export
-    const availableTables = ['embassadors', 'fiestas', 'events', 'tasks', 'leaderboards', 'organization_settings', 'notifications'];
-    const tablesToExport = tables === 'all' ? availableTables : (Array.isArray(tables) ? tables : [tables]);
+    const availableTables = [
+      'embassadors',
+      'fiestas',
+      'events',
+      'tasks',
+      'leaderboards',
+      'organization_settings',
+      'notifications',
+    ];
+    const tablesToExport =
+      tables === 'all' ? availableTables : Array.isArray(tables) ? tables : [tables];
 
     // Export organization data
     exportData.organization = org;
@@ -80,7 +94,7 @@ Deno.serve(async (req) => {
       // Export events for these fiestas
       const fiestaList = exportData.fiestas as Array<{ id: string }>;
       if (tablesToExport.includes('events') && fiestaList.length > 0) {
-        const fiestaIds = fiestaList.map(f => f.id);
+        const fiestaIds = fiestaList.map((f) => f.id);
         const { data: events } = await supabaseClient
           .from('events')
           .select('*')
@@ -92,7 +106,7 @@ Deno.serve(async (req) => {
     // Export tasks
     const embassadorList = exportData.embassadors as Array<{ id: string }> | undefined;
     if (tablesToExport.includes('tasks') && embassadorList?.length) {
-      const embassadorIds = embassadorList.map(e => e.id);
+      const embassadorIds = embassadorList.map((e) => e.id);
       const { data: tasks } = await supabaseClient
         .from('tasks')
         .select('*')
@@ -103,7 +117,7 @@ Deno.serve(async (req) => {
     // Export leaderboards
     const eventList = exportData.events as Array<{ id: string }> | undefined;
     if (tablesToExport.includes('leaderboards') && eventList?.length) {
-      const eventIds = eventList.map(e => e.id);
+      const eventIds = eventList.map((e) => e.id);
       const { data: leaderboards } = await supabaseClient
         .from('leaderboards')
         .select('*')
@@ -131,7 +145,10 @@ Deno.serve(async (req) => {
 
     // Sanitize sensitive fields before packaging
     if (exportData.organization) {
-      const { meta_token, token_expiry, ...safeOrg } = exportData.organization as Record<string, unknown>;
+      const { meta_token, token_expiry, ...safeOrg } = exportData.organization as Record<
+        string,
+        unknown
+      >;
       exportData.organization = safeOrg;
     }
     if (Array.isArray(exportData.embassadors)) {
@@ -142,26 +159,27 @@ Deno.serve(async (req) => {
     }
 
     // Log the export operation
-    await supabaseClient
-      .from('import_logs')
-      .insert({
-        user_id: user.id,
-        organization_id: organizationId,
-        type: 'export',
-        source: 'api',
-        file_name: `export-${org.name}-${new Date().toISOString().split('T')[0]}`,
-        status: 'completed',
-        result_json: {
-          tables_exported: tablesToExport,
-          record_counts: Object.keys(exportData).reduce((acc, key) => {
+    await supabaseClient.from('import_logs').insert({
+      user_id: user.id,
+      organization_id: organizationId,
+      type: 'export',
+      source: 'api',
+      file_name: `export-${org.name}-${new Date().toISOString().split('T')[0]}`,
+      status: 'completed',
+      result_json: {
+        tables_exported: tablesToExport,
+        record_counts: Object.keys(exportData).reduce(
+          (acc, key) => {
             if (Array.isArray(exportData[key])) {
               acc[key] = (exportData[key] as unknown[]).length;
             }
             return acc;
-          }, {} as Record<string, number>),
-          timestamp: new Date().toISOString()
-        }
-      });
+          },
+          {} as Record<string, number>
+        ),
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     let responseContent: string;
     let contentType: string;
@@ -173,9 +191,9 @@ Deno.serve(async (req) => {
       if (csvData.length > 0) {
         const headers = Object.keys(csvData[0]).join(',');
         const rows = csvData.map((row) =>
-          Object.values(row).map(val =>
-            typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
-          ).join(',')
+          Object.values(row)
+            .map((val) => (typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val))
+            .join(',')
         );
         responseContent = [headers, ...rows].join('\n');
       } else {
@@ -192,18 +210,14 @@ Deno.serve(async (req) => {
 
     console.log('Export completed successfully for organization:', organizationId);
 
-    return new Response(
-      responseContent,
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': contentType,
-          'Content-Disposition': `attachment; filename="${fileName}"`
-        }
-      }
-    );
-
+    return new Response(responseContent, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+      },
+    });
   } catch (error) {
     console.error('Error during export:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

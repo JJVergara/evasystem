@@ -14,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Users, Check, X, Clock, Instagram, MessageCircle } from 'lucide-react';
-import { useAmbassadorRequests, AmbassadorRequest } from '@/hooks/useAmbassadorRequests';
+import type { AmbassadorRequest } from '@/hooks/useAmbassadorRequests';
+import { useAmbassadorRequests } from '@/hooks/useAmbassadorRequests';
 import { toast } from 'sonner';
 
 interface ApprovalFormData {

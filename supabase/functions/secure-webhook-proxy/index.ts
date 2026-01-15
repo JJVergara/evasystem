@@ -4,7 +4,13 @@
  */
 
 import { corsHeaders } from '../shared/constants.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse, badRequestResponse, unauthorizedResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  badRequestResponse,
+  unauthorizedResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 // Whitelist of allowed webhook domains
@@ -13,7 +19,7 @@ const ALLOWED_DOMAINS = [
   'webhook.site',
   'n8n.cloud',
   'pipedream.com',
-  'rquevedos.app.n8n.cloud' // Specific n8n instance
+  'rquevedos.app.n8n.cloud', // Specific n8n instance
 ];
 
 const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // 2MB
@@ -77,8 +83,8 @@ Deno.serve(async (req) => {
     }
 
     // Check if domain is in allowlist
-    const isAllowed = ALLOWED_DOMAINS.some(domain =>
-      url.hostname === domain || url.hostname.endsWith('.' + domain)
+    const isAllowed = ALLOWED_DOMAINS.some(
+      (domain) => url.hostname === domain || url.hostname.endsWith('.' + domain)
     );
 
     if (!isAllowed) {
@@ -94,7 +100,7 @@ Deno.serve(async (req) => {
       organization_id: organizationId,
       user_id: user.id,
       timestamp: new Date().toISOString(),
-      request_id: requestId
+      request_id: requestId,
     };
 
     console.log(`[${requestId}] Proxying request to:`, webhookUrl);
@@ -108,10 +114,10 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'EVA-System-Webhook-Proxy/1.0'
+          'User-Agent': 'EVA-System-Webhook-Proxy/1.0',
         },
         body: JSON.stringify(payload),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -126,21 +132,24 @@ Deno.serve(async (req) => {
 
       console.log(`[${requestId}] Webhook response status:`, response.status);
 
-      return jsonResponse({
-        success: response.ok,
-        status: response.status,
-        data: responseData,
-        request_id: requestId
-      }, { status: response.ok ? 200 : 400 });
-
+      return jsonResponse(
+        {
+          success: response.ok,
+          status: response.status,
+          data: responseData,
+          request_id: requestId,
+        },
+        { status: response.ok ? 200 : 400 }
+      );
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         return errorResponse('Webhook request timed out', 504);
       }
-      throw new Error(`Webhook request failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+      throw new Error(
+        `Webhook request failed: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
+      );
     }
-
   } catch (error) {
     console.error('Webhook proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

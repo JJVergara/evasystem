@@ -1,6 +1,11 @@
 import { corsHeaders } from '../shared/constants.ts';
 import { SupabaseClient } from '../shared/types.ts';
-import { corsPreflightResponse, jsonResponse, unauthorizedResponse, badRequestResponse } from '../shared/responses.ts';
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  unauthorizedResponse,
+  badRequestResponse,
+} from '../shared/responses.ts';
 import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
 import { handleError, validateRequired } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
@@ -15,12 +20,16 @@ Deno.serve(async (req) => {
     // Authenticate user
     const authResult = await authenticateRequest(req);
     if (authResult instanceof Response) return authResult;
-    
+
     const { user, supabase } = authResult;
 
     // Parse and validate request body
     const { recipientId, message, organizationId } = await req.json();
-    validateRequired({ recipientId, message, organizationId }, ['recipientId', 'message', 'organizationId']);
+    validateRequired({ recipientId, message, organizationId }, [
+      'recipientId',
+      'message',
+      'organizationId',
+    ]);
 
     // Verify user owns the organization
     const { data: organization, error: orgError } = await supabase
@@ -31,7 +40,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (orgError || !organization) {
-      return jsonResponse({ error: 'Organization not found or unauthorized'       }, { status: 404 });
+      return jsonResponse({ error: 'Organization not found or unauthorized' }, { status: 404 });
     }
 
     // Get organization's Instagram access token
@@ -42,12 +51,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (tokenError || !tokenData?.access_token) {
-      return jsonResponse({ error: 'Instagram access token not found for organization'}, { status: 400 });
+      return jsonResponse(
+        { error: 'Instagram access token not found for organization' },
+        { status: 400 }
+      );
     }
 
     // Check if token is expired
     if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-      return jsonResponse({ error: 'Instagram access token has expired'       }, { status: 400 });
+      return jsonResponse({ error: 'Instagram access token has expired' }, { status: 400 });
     }
 
     // Decrypt token for API call
@@ -61,15 +73,14 @@ Deno.serve(async (req) => {
       organizationId,
       recipientId,
       messageId: responseData.message_id,
-      sentBy: user.id
+      sentBy: user.id,
     });
 
-    return jsonResponse({ 
-      success: true, 
+    return jsonResponse({
+      success: true,
       messageId: responseData.message_id,
-      recipientId 
+      recipientId,
     });
-
   } catch (error) {
     return handleError(error);
   }

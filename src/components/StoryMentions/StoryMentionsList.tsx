@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { StoryMention } from '@/types/storyMentions';
+import type { StoryMention } from '@/types/storyMentions';
 
 interface StoryMentionsListProps {
   mentions: StoryMention[];

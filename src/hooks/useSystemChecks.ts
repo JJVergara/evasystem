@@ -3,6 +3,7 @@ import { useMemo, useRef, useEffect } from 'react';
 import { useCurrentOrganization } from './useCurrentOrganization';
 import { useInstagramConnection } from './useInstagramConnection';
 import { supabase } from '@/integrations/supabase/client';
+import { QUERY_KEYS } from '@/constants';
 
 export interface SystemCheck {
   name: string;
@@ -128,8 +129,11 @@ export function useSystemChecks() {
     connectionRef.current = { isConnected, isTokenExpired };
   }, [isConnected, isTokenExpired]);
 
-  // Stable queryKey - only changes when organization changes
-  const queryKey = useMemo(() => ['systemChecks', organization?.id], [organization?.id]);
+  // Stable queryKey using centralized QUERY_KEYS - only changes when organization changes
+  const queryKey = useMemo(
+    () => QUERY_KEYS.systemChecks(organization?.id || ''),
+    [organization?.id]
+  );
 
   const {
     data: systemChecks = [],
@@ -163,7 +167,7 @@ export function useSystemChecks() {
   };
 
   const invalidateSystemChecks = () => {
-    queryClient.invalidateQueries({ queryKey: ['systemChecks'] });
+    queryClient.invalidateQueries({ queryKey });
   };
 
   return {
