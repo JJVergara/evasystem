@@ -607,13 +607,6 @@ async function handleMessages(
     'type:',
     typeof instagramUserId);
 
-
-
-
-
-
-
-    
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username')
