@@ -695,6 +695,10 @@ Code formatting is enforced using Prettier with the following configuration (`.p
 - Trailing commas: ES5
 - Print width: 100 characters
 
+**Automatic Formatting:**
+- **On save (VS Code)**: The `.vscode/` settings configure format-on-save, so pressing `Cmd+S` automatically runs Prettier on the current file
+- **On commit**: A pre-commit hook runs Prettier on staged files before each commit, ensuring all committed code is properly formatted
+
 Run `npm run format` to format all files, or `npm run format:check` to verify formatting.
 
 ### ESLint
