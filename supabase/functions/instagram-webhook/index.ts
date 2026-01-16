@@ -8,7 +8,7 @@ import type {
   MessageData,
   Fiesta,
 } from '../shared/types.ts';
-import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { corsPreflightResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
