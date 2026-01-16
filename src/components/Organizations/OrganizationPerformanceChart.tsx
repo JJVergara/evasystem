@@ -43,12 +43,6 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
     },
   };
 
-  const formatReachData = monthlyData.map((item) => ({
-    ...item,
-    reachFormatted:
-      item.reach > 1000 ? `${(item.reach / 1000).toFixed(1)}K` : item.reach.toString(),
-  }));
-
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <Card>

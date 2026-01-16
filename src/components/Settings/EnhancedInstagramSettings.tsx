@@ -116,7 +116,7 @@ export function EnhancedInstagramSettings() {
       } else {
         toast.error(data?.error_description || 'Error desconocido');
       }
-    } catch (err) {
+    } catch {
       toast.error('Error de conexión');
     } finally {
       setIsDiagnosing(false);

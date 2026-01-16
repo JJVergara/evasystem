@@ -19,7 +19,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Settings,
 } from 'lucide-react';
 import { useFiestaMetrics } from '@/hooks/useFiestaMetrics';
 import { MetricCard } from './MetricCard';

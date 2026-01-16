@@ -21,13 +21,12 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        console.error('Error syncing Instagram data:', error);
+        void ('Error syncing Instagram data:', error);
         toast.error('Error al sincronizar datos de Instagram');
         return false;
       }
 
       if (data?.success) {
-        const totalProcessed = data.totalProcessed || 0;
         const newMentions =
           data.results?.reduce(
             (sum: number, r: { newMentions?: number }) => sum + (r.newMentions || 0),
@@ -52,7 +51,7 @@ export function useInstagramSync() {
         return false;
       }
     } catch (error) {
-      console.error('Error syncing Instagram:', error);
+      void ('Error syncing Instagram:', error);
       toast.error('Error inesperado al sincronizar');
       return false;
     } finally {
@@ -77,14 +76,14 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        console.error('Error getting Instagram profile:', error);
+        void ('Error getting Instagram profile:', error);
         toast.error('Error al obtener perfil de Instagram');
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error getting Instagram profile:', error);
+      void ('Error getting Instagram profile:', error);
       toast.error('Error inesperado al obtener perfil');
       return null;
     } finally {
@@ -109,14 +108,14 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        console.error('Error getting Instagram media:', error);
+        void ('Error getting Instagram media:', error);
         toast.error('Error al obtener feed de Instagram');
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error getting Instagram media:', error);
+      void ('Error getting Instagram media:', error);
       toast.error('Error inesperado al obtener feed');
       return null;
     } finally {
@@ -141,14 +140,14 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        console.error('Error getting Instagram tags:', error);
+        void ('Error getting Instagram tags:', error);
         toast.error('Error al obtener menciones de Instagram');
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error getting Instagram tags:', error);
+      void ('Error getting Instagram tags:', error);
       toast.error('Error inesperado al obtener menciones');
       return null;
     } finally {
@@ -170,7 +169,7 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        console.error('Error refreshing token:', error);
+        void ('Error refreshing token:', error);
         toast.error('Error al renovar token de Instagram');
         return false;
       }
@@ -183,7 +182,7 @@ export function useInstagramSync() {
         return false;
       }
     } catch (error) {
-      console.error('Error refreshing token:', error);
+      void ('Error refreshing token:', error);
       toast.error('Error inesperado al renovar token');
       return false;
     } finally {

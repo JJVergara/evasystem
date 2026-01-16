@@ -19,13 +19,6 @@ import {
 import { Label } from '@/components/ui/label';
 import { useInstagramDiagnostics } from '@/hooks/useInstagramDiagnostics';
 
-interface DiagnosticsResult {
-  name: string;
-  status: 'success' | 'error' | 'pending';
-  message: string;
-  details?: Record<string, unknown>;
-}
-
 export const InstagramDiagnosticsPanel: React.FC = () => {
   const { isRunning, connectionTests, webhookStatus, runConnectionTests, testWebhookDelivery } =
     useInstagramDiagnostics();

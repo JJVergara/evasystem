@@ -82,7 +82,7 @@ export function useRealNotifications() {
           old?.map((n) => (n.id === notificationId ? { ...n, read_status: true } : n))
         );
       } catch (error) {
-        console.error('Error marking notification as read:', error);
+        void ('Error marking notification as read:', error);
       }
     },
     [queryClient, queryKey]
@@ -104,7 +104,7 @@ export function useRealNotifications() {
         old?.map((n) => ({ ...n, read_status: true }))
       );
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      void ('Error marking all notifications as read:', error);
     }
   }, [organization?.id, queryClient, queryKey]);
 

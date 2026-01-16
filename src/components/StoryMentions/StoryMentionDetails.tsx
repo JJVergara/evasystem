@@ -15,7 +15,7 @@ import {
   CheckCircle,
   Clock,
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { StoryMention } from '@/types/storyMentions';
@@ -54,7 +54,7 @@ export function StoryMentionDetails({
         title: 'Respuesta enviada',
         description: 'Tu mensaje ha sido enviado correctamente',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error al enviar',
         description: 'No se pudo enviar la respuesta',

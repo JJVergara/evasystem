@@ -1,11 +1,6 @@
 import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
-import {
-  corsPreflightResponse,
-  jsonResponse,
-  unauthorizedResponse,
-  badRequestResponse,
-} from '../shared/responses.ts';
-import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
+import { corsPreflightResponse } from '../shared/responses.ts';
+import { authenticateRequest } from '../shared/auth.ts';
 import { handleError, validateRequired } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
 

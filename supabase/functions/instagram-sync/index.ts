@@ -10,7 +10,7 @@ import type {
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
-import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
+import { safeDecryptToken } from '../shared/crypto.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,30 +26,31 @@ Deno.serve(async (req) => {
 
     const isCronJob = !authHeader;
     let targetOrgId: string | null = null;
-    let userId: string | null = null;
 
     if (isCronJob) {
       if (!cronSecretHeader || !expectedCronSecret || cronSecretHeader !== expectedCronSecret) {
-        console.error('Unauthorized cron request: Invalid or missing CRON_SECRET');
+        void ('Unauthorized cron request: Invalid or missing CRON_SECRET');
         return new Response(JSON.stringify({ error: 'Unauthorized: Invalid cron secret' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      console.log('Starting Instagram sync process... (CRON JOB)');
+      void ('Starting Instagram sync process... (CRON JOB)');
 
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch (_) {
+      } catch {
+        void 0;
       }
     } else {
-      console.log('Starting Instagram sync process... (USER REQUEST)');
+      void ('Starting Instagram sync process... (USER REQUEST)');
 
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch (_) {
+      } catch {
+        void 0;
       }
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
@@ -64,8 +65,6 @@ Deno.serve(async (req) => {
       if (authError || !user) {
         throw new Error('Unauthorized');
       }
-
-      userId = user.id;
 
       const { data: userData, error: userError } = await supabaseClient
         .from('users')
@@ -99,16 +98,16 @@ Deno.serve(async (req) => {
     const { data: organizations, error: orgsError } = await organizationsQuery;
 
     if (orgsError) {
-      console.error('Error fetching organizations:', orgsError);
+      void ('Error fetching organizations:', orgsError);
       throw new Error('Failed to fetch organizations');
     }
 
-    console.log(
+    void (
       `Found ${organizations?.length || 0} organization(s) ${targetOrgId ? `(targeted: ${targetOrgId})` : ''}`
     );
 
     if (targetOrgId && (!organizations || organizations.length === 0)) {
-      console.log(`Target organization ${targetOrgId} not found or has no Instagram connected`);
+      void (`Target organization ${targetOrgId} not found or has no Instagram connected`);
     }
 
     const results: SyncResult[] = [];
@@ -116,7 +115,7 @@ Deno.serve(async (req) => {
 
     for (const org of organizations || []) {
       try {
-        console.log(`Syncing data for organization: ${org.name} (${org.id})`);
+        void (`Syncing data for organization: ${org.name} (${org.id})`);
 
         const { data: tokenData, error: tokenError } = await supabaseClient
           .from('organization_instagram_tokens')
@@ -125,12 +124,12 @@ Deno.serve(async (req) => {
           .single();
 
         if (tokenError || !tokenData) {
-          console.log(`No Instagram token found for organization ${org.name}`);
+          void (`No Instagram token found for organization ${org.name}`);
           continue;
         }
 
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-          console.log(`Token expired for organization ${org.name}, creating notification`);
+          void (`Token expired for organization ${org.name}, creating notification`);
 
           await supabaseClient.from('notifications').insert({
             organization_id: org.id,
@@ -144,7 +143,7 @@ Deno.serve(async (req) => {
         }
 
         if (!org.instagram_user_id) {
-          console.log(`No Instagram User ID for organization ${org.name}`);
+          void (`No Instagram User ID for organization ${org.name}`);
           continue;
         }
 
@@ -161,7 +160,7 @@ Deno.serve(async (req) => {
           .update({ last_instagram_sync: new Date().toISOString() })
           .eq('id', org.id);
 
-        console.log(`Sync completed for ${org.name}:`, syncResult);
+        void (`Sync completed for ${org.name}:`, syncResult);
         results.push({
           organization_id: org.id,
           organization_name: org.name,
@@ -171,7 +170,7 @@ Deno.serve(async (req) => {
 
         totalProcessed++;
       } catch (error) {
-        console.error(`Error syncing organization ${org.name}:`, error);
+        void (`Error syncing organization ${org.name}:`, error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         results.push({
           organization_id: org.id,
@@ -182,13 +181,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Instagram sync completed: ${totalProcessed} organizations processed`);
+    void (`Instagram sync completed: ${totalProcessed} organizations processed`);
 
     if (isCronJob && totalProcessed > 0) {
       const successCount = results.filter((r) => r.success).length;
       const failureCount = results.filter((r) => !r.success).length;
 
-      console.log(`Cron sync summary: ${successCount} successful, ${failureCount} failed`);
+      void (`Cron sync summary: ${successCount} successful, ${failureCount} failed`);
     }
 
     return jsonResponse({
@@ -209,7 +208,7 @@ async function syncOrganizationInstagramData(
   igUserId: string,
   accessToken: string
 ) {
-  console.log(`Syncing Instagram data for organization ${organizationId}, User ID: ${igUserId}`);
+  void (`Syncing Instagram data for organization ${organizationId}, User ID: ${igUserId}`);
 
   try {
     const instagramMetrics = {
@@ -229,7 +228,7 @@ async function syncOrganizationInstagramData(
       instagramMetrics.totalFollowers += metricsData.followers_count || 0;
       instagramMetrics.totalPosts += metricsData.media_count || 0;
     } else {
-      console.warn(`Failed to fetch metrics for user ${igUserId}:`, metricsData);
+      void (`Failed to fetch metrics for user ${igUserId}:`, metricsData);
     }
 
     const mediaUrl = `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=id,media_type,media_product_type,timestamp,username&limit=50&access_token=${accessToken}`;
@@ -296,16 +295,16 @@ async function syncOrganizationInstagramData(
 
                 await supabaseClient.from('story_insights_snapshots').insert(snapshot);
 
-                console.log(`Created story insights snapshot during sync for story ${media.id}`);
+                void (`Created story insights snapshot during sync for story ${media.id}`);
               }
             }
           }
         } catch (error) {
-          console.warn(`Error getting insights for media ${media.id}:`, error);
+          void (`Error getting insights for media ${media.id}:`, error);
         }
       }
     } else {
-      console.warn(`Failed to fetch media for user ${igUserId}:`, mediaData);
+      void (`Failed to fetch media for user ${igUserId}:`, mediaData);
     }
 
     const mentionResults = await processInstagramMentionsAndTags(
@@ -326,10 +325,10 @@ async function syncOrganizationInstagramData(
       });
     }
 
-    console.log(`Instagram metrics for organization ${organizationId}:`, instagramMetrics);
+    void (`Instagram metrics for organization ${organizationId}:`, instagramMetrics);
     return instagramMetrics;
   } catch (error) {
-    console.error(`Error syncing Instagram data for organization ${organizationId}:`, error);
+    void (`Error syncing Instagram data for organization ${organizationId}:`, error);
     throw error;
   }
 }
@@ -347,7 +346,7 @@ async function processInstagramMentionsAndTags(
     .not('instagram_user', 'is', null);
 
   if (ambassadorsError) {
-    console.warn('Error loading ambassadors for org', organizationId, ambassadorsError);
+    void ('Error loading ambassadors for org', organizationId, ambassadorsError);
     return { newMentions: 0, newTags: 0 };
   }
 
@@ -365,7 +364,7 @@ async function processInstagramMentionsAndTags(
     .eq('organization_id', organizationId);
 
   if (fiestasError) {
-    console.warn('Error loading fiestas for org', organizationId, fiestasError);
+    void ('Error loading fiestas for org', organizationId, fiestasError);
   }
 
   const fiestaIds = (fiestas || []).map((f: Fiesta) => f.id);
@@ -394,7 +393,7 @@ async function processInstagramMentionsAndTags(
     const mentionsData = await mentionsRes.json();
 
     if (mentionsRes.ok && Array.isArray(mentionsData.data)) {
-      console.log(
+      void (
         `Found ${mentionsData.data.length} mentioned media for organization ${organizationId}`
       );
 
@@ -410,10 +409,10 @@ async function processInstagramMentionsAndTags(
         if (isNew) newMentions++;
       }
     } else {
-      console.warn('Failed to load mentioned_media:', mentionsData?.error || mentionsData);
+      void ('Failed to load mentioned_media:', mentionsData?.error || mentionsData);
     }
   } catch (err) {
-    console.warn('Error fetching mentioned_media:', err);
+    void ('Error fetching mentioned_media:', err);
   }
 
   try {
@@ -422,7 +421,7 @@ async function processInstagramMentionsAndTags(
     const tagsData = await tagsRes.json();
 
     if (tagsRes.ok && Array.isArray(tagsData.data)) {
-      console.log(`Found ${tagsData.data.length} tagged media for organization ${organizationId}`);
+      void (`Found ${tagsData.data.length} tagged media for organization ${organizationId}`);
 
       for (const t of tagsData.data) {
         const isNew = await processMentionOrTag(
@@ -436,10 +435,10 @@ async function processInstagramMentionsAndTags(
         if (isNew) newTags++;
       }
     } else {
-      console.warn('Failed to load tags:', tagsData?.error || tagsData);
+      void ('Failed to load tags:', tagsData?.error || tagsData);
     }
   } catch (err) {
-    console.warn('Error fetching tags:', err);
+    void ('Error fetching tags:', err);
   }
 
   return { newMentions, newTags };
@@ -496,7 +495,7 @@ async function processMentionOrTag(
       .single();
 
     if (socialMentionError) {
-      console.error('Error creating social mention:', socialMentionError);
+      void ('Error creating social mention:', socialMentionError);
       return false;
     }
 
@@ -514,12 +513,12 @@ async function processMentionOrTag(
         last_status_update: new Date().toISOString(),
       });
 
-      console.log(`Created ${type} task for ambassador ${ambassador.id} (${mediaItem.username})`);
+      void (`Created ${type} task for ambassador ${ambassador.id} (${mediaItem.username})`);
     }
 
     return true;
   } catch (err) {
-    console.warn(`Error processing ${type} media:`, err);
+    void (`Error processing ${type} media:`, err);
     return false;
   }
 }

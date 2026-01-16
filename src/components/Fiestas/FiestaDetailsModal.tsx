@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Hash, Clock, Users } from 'lucide-react';
+import { Calendar, MapPin, Hash, Clock } from 'lucide-react';
 import type { Fiesta } from '@/hooks/useFiestas';
 
 interface FiestaDetailsModalProps {

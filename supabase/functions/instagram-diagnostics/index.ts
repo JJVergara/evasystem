@@ -1,14 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import type { Organization, SupabaseClient, Notification } from '../shared/types.ts';
-import {
-  corsPreflightResponse,
-  jsonResponse,
-  unauthorizedResponse,
-  badRequestResponse,
-  notFoundResponse,
-} from '../shared/responses.ts';
-import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
+import { corsPreflightResponse } from '../shared/responses.ts';
 import { handleError } from '../shared/error-handler.ts';
 
 Deno.serve(async (req) => {
@@ -423,7 +416,7 @@ async function testWebhookDelivery(org: Organization) {
       app_id_used: creds[0].meta_app_id,
     };
   } catch (error) {
-    console.error('Webhook test error:', error);
+    void ('Webhook test error:', error);
     return {
       test_sent: false,
       error: error.message,

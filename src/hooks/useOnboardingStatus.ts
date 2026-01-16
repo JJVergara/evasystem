@@ -91,7 +91,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
       }
     }
   } catch (error) {
-    console.error('Error checking Instagram status:', error);
+    void ('Error checking Instagram status:', error);
   }
 
   let fiestaCompleted = false;
@@ -104,7 +104,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
 
     fiestaCompleted = !error && (fiestas?.length || 0) > 0;
   } catch (error) {
-    console.error('Error checking fiestas:', error);
+    void ('Error checking fiestas:', error);
   }
 
   let ambassadorsCompleted = false;
@@ -117,7 +117,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
 
     ambassadorsCompleted = !error && (ambassadors?.length || 0) > 0;
   } catch (error) {
-    console.error('Error checking ambassadors:', error);
+    void ('Error checking ambassadors:', error);
   }
 
   const steps: OnboardingStep[] = [

@@ -51,7 +51,7 @@ export function MetaAppCredentialsForm({
       });
 
       if (error) {
-        console.error('Error checking credentials status:', error);
+        void ('Error checking credentials status:', error);
         return;
       }
 
@@ -60,7 +60,7 @@ export function MetaAppCredentialsForm({
         setLastUpdated(data[0].updated_at);
       }
     } catch (error) {
-      console.error('Error checking credentials status:', error);
+      void ('Error checking credentials status:', error);
     }
   };
 
@@ -88,7 +88,7 @@ export function MetaAppCredentialsForm({
       });
 
       if (error) {
-        console.error('Error saving credentials:', error);
+        void ('Error saving credentials:', error);
         toast.error('Error al guardar credenciales: ' + error.message);
         return;
       }
@@ -96,7 +96,7 @@ export function MetaAppCredentialsForm({
       toast.success('Credenciales de Meta guardadas exitosamente');
       onCredentialsSaved();
     } catch (error) {
-      console.error('Error saving credentials:', error);
+      void ('Error saving credentials:', error);
       toast.error('Error inesperado al guardar credenciales');
     } finally {
       setLoading(false);

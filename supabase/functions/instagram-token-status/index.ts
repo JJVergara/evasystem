@@ -1,6 +1,6 @@
 import { corsHeaders, TOKEN_REFRESH_THRESHOLD_DAYS } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
-import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
+import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 
 const TOKEN_WARNING_THRESHOLD_DAYS = 14;
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.log('No authorization header provided');
+      void ('No authorization header provided');
       return jsonResponse({
         success: true,
         data: {
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
 
     if (authError || !user) {
-      console.log('User authentication failed:', authError?.message);
+      void ('User authentication failed:', authError?.message);
       return jsonResponse({
         success: true,
         data: {
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log('Checking token status for user:', user.id);
+    void ('Checking token status for user:', user.id);
 
     const { data: userOrgs, error: orgsError } = await supabaseClient.rpc(
       'get_user_organizations',
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     );
 
     if (orgsError || !userOrgs || userOrgs.length === 0) {
-      console.log('No organizations found for user:', orgsError?.message);
+      void ('No organizations found for user:', orgsError?.message);
       return jsonResponse({
         success: true,
         data: {
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     }
 
     const organizationId = userOrgs[0].organization_id;
-    console.log('Found organization for user:', user.id, 'org:', organizationId);
+    void ('Found organization for user:', user.id, 'org:', organizationId);
 
     const { data: orgData, error: orgError } = await supabaseClient
       .from('organizations')
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (orgError) {
-      console.error('Failed to fetch organization data:', orgError);
+      void ('Failed to fetch organization data:', orgError);
       return jsonResponse({
         success: false,
         error: 'Organization data not found',
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       .single();
 
     const hasToken = !tokenError && tokenData;
-    console.log('Token status for org', organizationId, ':', hasToken ? 'found' : 'not found');
+    void ('Token status for org', organizationId, ':', hasToken ? 'found' : 'not found');
 
     const isConnected = !!hasToken;
     const now = new Date();

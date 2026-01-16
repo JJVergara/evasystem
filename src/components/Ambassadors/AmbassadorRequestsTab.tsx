@@ -59,7 +59,8 @@ export function AmbassadorRequestsTab() {
       await approveRequest(selectedRequest.id, approvalForm);
       setSelectedRequest(null);
       setApprovalForm({ first_name: '', last_name: '', email: '', date_of_birth: '', rut: '' });
-    } catch (error) {
+    } catch {
+      void 0;
     } finally {
       setActionLoading(false);
     }
@@ -70,7 +71,8 @@ export function AmbassadorRequestsTab() {
     try {
       await rejectRequest(requestId, rejectionReason);
       setRejectionReason('');
-    } catch (error) {
+    } catch {
+      void 0;
     } finally {
       setActionLoading(false);
     }

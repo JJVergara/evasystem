@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
     return corsPreflightResponse();
   }
 
-  console.log('=== INSTAGRAM TOKEN REFRESH CRON START ===');
-  console.log('Timestamp:', new Date().toISOString());
+  void ('=== INSTAGRAM TOKEN REFRESH CRON START ===');
+  void ('Timestamp:', new Date().toISOString());
 
   try {
     const cronSecret = Deno.env.get('CRON_SECRET');
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const providedSecret = authHeader?.replace('Bearer ', '') || req.headers.get('x-cron-secret');
 
     if (cronSecret && providedSecret !== cronSecret) {
-      console.error('Unauthorized cron call - invalid secret');
+      void ('Unauthorized cron call - invalid secret');
       return jsonResponse(
         {
           error: 'unauthorized',
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const thresholdDate = new Date(Date.now() + TOKEN_REFRESH_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
     const now = new Date();
 
-    console.log('Checking for tokens expiring before:', thresholdDate.toISOString());
+    void ('Checking for tokens expiring before:', thresholdDate.toISOString());
 
     const { data: expiringOrgTokens, error: orgQueryError } = await supabase
       .from('organization_instagram_tokens')
@@ -57,16 +57,16 @@ Deno.serve(async (req) => {
       .gt('token_expiry', now.toISOString());
 
     if (orgQueryError) {
-      console.error('Error querying organization tokens:', orgQueryError);
+      void ('Error querying organization tokens:', orgQueryError);
     } else if (expiringOrgTokens && expiringOrgTokens.length > 0) {
-      console.log(`Found ${expiringOrgTokens.length} organization tokens to refresh`);
+      void (`Found ${expiringOrgTokens.length} organization tokens to refresh`);
 
       for (const tokenRecord of expiringOrgTokens) {
         const result = await refreshOrganizationToken(supabase, tokenRecord);
         results.push(result);
       }
     } else {
-      console.log('No organization tokens need refreshing');
+      void ('No organization tokens need refreshing');
     }
 
     const { data: expiringAmbassadorTokens, error: ambassadorQueryError } = await supabase
@@ -76,21 +76,21 @@ Deno.serve(async (req) => {
       .gt('token_expiry', now.toISOString());
 
     if (ambassadorQueryError) {
-      console.error('Error querying ambassador tokens:', ambassadorQueryError);
+      void ('Error querying ambassador tokens:', ambassadorQueryError);
     } else if (expiringAmbassadorTokens && expiringAmbassadorTokens.length > 0) {
-      console.log(`Found ${expiringAmbassadorTokens.length} ambassador tokens to refresh`);
+      void (`Found ${expiringAmbassadorTokens.length} ambassador tokens to refresh`);
 
       for (const tokenRecord of expiringAmbassadorTokens) {
         const result = await refreshAmbassadorToken(supabase, tokenRecord);
         results.push(result);
       }
     } else {
-      console.log('No ambassador tokens need refreshing');
+      void ('No ambassador tokens need refreshing');
     }
 
     const failures = results.filter((r) => !r.success);
     if (failures.length > 0) {
-      console.log(`${failures.length} token refresh failures - creating notifications`);
+      void (`${failures.length} token refresh failures - creating notifications`);
       await createFailureNotifications(supabase, failures);
     }
 
@@ -108,8 +108,8 @@ Deno.serve(async (req) => {
       })),
     };
 
-    console.log('=== INSTAGRAM TOKEN REFRESH CRON COMPLETE ===');
-    console.log('Summary:', JSON.stringify(summary, null, 2));
+    void ('=== INSTAGRAM TOKEN REFRESH CRON COMPLETE ===');
+    void ('Summary:', JSON.stringify(summary, null, 2));
 
     return jsonResponse({
       success: true,
@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
       summary,
     });
   } catch (error) {
-    console.error('=== INSTAGRAM TOKEN REFRESH CRON ERROR ===');
-    console.error('Error:', error);
+    void ('=== INSTAGRAM TOKEN REFRESH CRON ERROR ===');
+    void ('Error:', error);
 
     return jsonResponse(
       {
@@ -136,8 +136,8 @@ async function refreshOrganizationToken(
 ): Promise<RefreshResult> {
   const { organization_id, access_token, token_expiry } = tokenRecord;
 
-  console.log(`Refreshing organization token: ${organization_id}`);
-  console.log(`Current expiry: ${token_expiry}`);
+  void (`Refreshing organization token: ${organization_id}`);
+  void (`Current expiry: ${token_expiry}`);
 
   try {
     const decryptedToken = await safeDecryptToken(access_token);
@@ -163,8 +163,8 @@ async function refreshOrganizationToken(
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 
-    console.log(`Successfully refreshed organization token: ${organization_id}`);
-    console.log(`New expiry: ${newExpiryDate.toISOString()}`);
+    void (`Successfully refreshed organization token: ${organization_id}`);
+    void (`New expiry: ${newExpiryDate.toISOString()}`);
 
     return {
       type: 'organization',
@@ -174,7 +174,7 @@ async function refreshOrganizationToken(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Failed to refresh organization token ${organization_id}:`, errorMessage);
+    void (`Failed to refresh organization token ${organization_id}:`, errorMessage);
 
     return {
       type: 'organization',
@@ -191,8 +191,8 @@ async function refreshAmbassadorToken(
 ): Promise<RefreshResult> {
   const { embassador_id, access_token, token_expiry } = tokenRecord;
 
-  console.log(`Refreshing ambassador token: ${embassador_id}`);
-  console.log(`Current expiry: ${token_expiry}`);
+  void (`Refreshing ambassador token: ${embassador_id}`);
+  void (`Current expiry: ${token_expiry}`);
 
   try {
     const decryptedToken = await safeDecryptToken(access_token);
@@ -218,8 +218,8 @@ async function refreshAmbassadorToken(
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 
-    console.log(`Successfully refreshed ambassador token: ${embassador_id}`);
-    console.log(`New expiry: ${newExpiryDate.toISOString()}`);
+    void (`Successfully refreshed ambassador token: ${embassador_id}`);
+    void (`New expiry: ${newExpiryDate.toISOString()}`);
 
     return {
       type: 'ambassador',
@@ -229,7 +229,7 @@ async function refreshAmbassadorToken(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Failed to refresh ambassador token ${embassador_id}:`, errorMessage);
+    void (`Failed to refresh ambassador token ${embassador_id}:`, errorMessage);
 
     return {
       type: 'ambassador',
@@ -254,13 +254,13 @@ async function refreshInstagramToken(accessToken: string): Promise<{
   const data = await response.json();
 
   if (!response.ok || data.error) {
-    console.error('Instagram token refresh error:', data.error || data);
+    void ('Instagram token refresh error:', data.error || data);
     throw new Error(
       data.error?.message || data.error_message || 'Failed to refresh Instagram token'
     );
   }
 
-  console.log('Instagram token refreshed successfully');
+  void ('Instagram token refreshed successfully');
   return data;
 }
 
@@ -305,10 +305,10 @@ async function createFailureNotifications(
           },
         });
 
-        console.log(`Created failure notification for ${failure.type} ${failure.id}`);
+        void (`Created failure notification for ${failure.type} ${failure.id}`);
       }
     } catch (notifError) {
-      console.error(`Failed to create notification for ${failure.type} ${failure.id}:`, notifError);
+      void (`Failed to create notification for ${failure.type} ${failure.id}:`, notifError);
     }
   }
 }

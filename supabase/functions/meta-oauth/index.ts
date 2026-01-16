@@ -14,9 +14,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
-  console.log('=== INSTAGRAM OAUTH REQUEST DEBUG ===');
-  console.log('Request method:', req.method);
-  console.log('Request URL:', req.url);
+  void ('=== INSTAGRAM OAUTH REQUEST DEBUG ===');
+  void ('Request method:', req.method);
+  void ('Request URL:', req.url);
   try {
     const supabaseClient = createSupabaseClient();
     const url = new URL(req.url);
@@ -27,10 +27,11 @@ Deno.serve(async (req) => {
         if (typeof body?.action === 'string') {
           action = body.action;
         }
-      } catch (_err) {
+      } catch {
+        void 0;
       }
     }
-    console.log('Action parameter:', action);
+    void ('Action parameter:', action);
     switch (action) {
       case 'authorize':
         return handleAuthorize(req, supabaseClient);
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
       case 'diagnose':
         return handleDiagnose(req, supabaseClient);
       default:
-        console.log('Invalid action or no action specified:', action);
+        void ('Invalid action or no action specified:', action);
         return new Response(
           JSON.stringify({
             error: 'invalid_action',
@@ -57,11 +58,11 @@ Deno.serve(async (req) => {
         );
     }
   } catch (error) {
-    console.error('=== INSTAGRAM OAUTH MAIN ERROR ===');
+    void ('=== INSTAGRAM OAUTH MAIN ERROR ===');
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : 'Error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', {
+    void ('Error details:', {
       name: errorName,
       message: errorMessage,
       stack: errorStack,
@@ -82,29 +83,6 @@ Deno.serve(async (req) => {
     );
   }
 });
-async function getOrganizationCredentials(supabaseClient, organizationId) {
-  const { data: orgCreds, error: orgError } = await supabaseClient.rpc(
-    'get_organization_credentials_secure',
-    {
-      p_organization_id: organizationId,
-    }
-  );
-  if (!orgError && orgCreds && orgCreds.length > 0) {
-    const creds = orgCreds[0];
-    console.log('Using organization-specific Instagram credentials');
-    return {
-      app_id: creds.meta_app_id,
-      app_secret: creds.meta_app_secret,
-      webhook_verify_token: creds.webhook_verify_token,
-    };
-  }
-  console.log('Using global Instagram credentials as fallback');
-  return {
-    app_id: Deno.env.get('INSTAGRAM_APP_ID'),
-    app_secret: Deno.env.get('INSTAGRAM_APP_SECRET'),
-    webhook_verify_token: Deno.env.get('WEBHOOK_VERIFY_TOKEN'),
-  };
-}
 async function handleAuthorize(req, supabaseClient) {
   try {
     const authHeader = req.headers.get('Authorization') || '';
@@ -200,7 +178,7 @@ async function handleAuthorize(req, supabaseClient) {
     const appSecret = Deno.env.get('INSTAGRAM_APP_SECRET');
     const REDIRECT_URI = `https://evasystem-psi.vercel.app/meta-oauth`;
     if (!appId || !appSecret) {
-      console.error('Missing Instagram credentials');
+      void ('Missing Instagram credentials');
       return jsonResponse(
         {
           error: 'configuration_error',
@@ -242,7 +220,7 @@ async function handleAuthorize(req, supabaseClient) {
       expires_at: expiresAt,
     });
     if (stateError) {
-      console.error('Error storing OAuth state:', stateError);
+      void ('Error storing OAuth state:', stateError);
       return jsonResponse(
         {
           error: 'database_error',
@@ -264,7 +242,7 @@ async function handleAuthorize(req, supabaseClient) {
       authUrl,
     });
   } catch (error) {
-    console.error('Error in handleAuthorize:', error);
+    void ('Error in handleAuthorize:', error);
     return jsonResponse(
       {
         error: 'authorization_failed',
@@ -306,7 +284,7 @@ async function handleCallback(req, supabaseClient) {
     );
   }
   if (metaError) {
-    console.error('Instagram OAuth error received from frontend:', metaError);
+    void ('Instagram OAuth error received from frontend:', metaError);
     return jsonResponse(
       {
         success: false,
@@ -384,7 +362,7 @@ async function handleCallback(req, supabaseClient) {
     try {
       decoded = JSON.parse(atob(state));
     } catch (e) {
-      console.error('Failed to decode state payload:', e);
+      void ('Failed to decode state payload:', e);
       return jsonResponse(
         {
           success: false,
@@ -408,17 +386,17 @@ async function handleCallback(req, supabaseClient) {
         }
       );
     }
-    console.log('=== CALLBACK PROCESSING ===');
-    console.log('DB state row:', {
+    void ('=== CALLBACK PROCESSING ===');
+    void ('DB state row:', {
       db_type: stateData.type,
       db_user_id: stateData.user_id,
       db_ambassador_id: stateData.ambassador_id,
       db_organization_id: stateData.organization_id,
     });
-    console.log('Decoded state payload:', decoded);
-    console.log('Starting token exchange...');
+    void ('Decoded state payload:', decoded);
+    void ('Starting token exchange...');
     const tokenData = await exchangeCodeForToken(code);
-    console.log('Token exchange successful, updating database...');
+    void ('Token exchange successful, updating database...');
     if (stateData.type === 'ambassador') {
       const ambassadorId = stateData.ambassador_id ?? decoded.ambassador_id ?? null;
       if (!ambassadorId) {
@@ -505,9 +483,9 @@ async function handleCallback(req, supabaseClient) {
       }
     );
   } catch (error) {
-    console.error('=== CALLBACK ERROR ===');
+    void ('=== CALLBACK ERROR ===');
     const err = error;
-    console.error('Error details:', {
+    void ('Error details:', {
       name: err?.name,
       message: err?.message,
       stack: err?.stack,
@@ -586,7 +564,7 @@ async function exchangeCodeForToken(code) {
 }
 async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, tokenData) {
   try {
-    console.log('Updating ambassador Instagram data for ambassador:', ambassadorId);
+    void ('Updating ambassador Instagram data for ambassador:', ambassadorId);
     if (!tokenData.access_token) {
       throw new Error('No access token provided');
     }
@@ -595,7 +573,7 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
     );
     const userData = await userResponse.json();
     if (!userResponse.ok || userData.error) {
-      console.error('Error fetching /me:', userData.error || userData);
+      void ('Error fetching /me:', userData.error || userData);
       throw new Error(userData.error?.message || 'Failed to fetch Instagram user profile data');
     }
     const instagramData = {
@@ -620,7 +598,7 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
       }
     );
     if (tokenError) {
-      console.error('Failed to store ambassador token:', tokenError);
+      void ('Failed to store ambassador token:', tokenError);
       throw new Error('Failed to store ambassador token');
     }
     const { error: updateError } = await supabaseClient
@@ -634,18 +612,18 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
       })
       .eq('id', ambassadorId);
     if (updateError) {
-      console.error('Failed to update ambassador:', updateError);
+      void ('Failed to update ambassador:', updateError);
       throw new Error('Failed to update ambassador data');
     }
-    console.log('Ambassador Instagram data updated successfully');
+    void ('Ambassador Instagram data updated successfully');
   } catch (error) {
-    console.error('Error updating ambassador Instagram data:', error);
+    void ('Error updating ambassador Instagram data:', error);
     throw error;
   }
 }
 async function updateOrganizationInstagramData(supabaseClient, organizationId, tokenData) {
   try {
-    console.log('Updating organization Instagram data for:', organizationId);
+    void ('Updating organization Instagram data for:', organizationId);
     if (!tokenData.access_token) {
       throw new Error('No access token provided');
     }
@@ -653,17 +631,17 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       `${INSTAGRAM_API_BASE}/me?fields=id,user_id,username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(tokenData.access_token)}`
     );
     const userData = await userResponse.json();
-    console.log('DEBUG: Instagram /me API response:', {
+    void ('DEBUG: Instagram /me API response:', {
       id: userData.id,
       user_id: userData.user_id,
       username: userData.username,
       all_keys: Object.keys(userData),
     });
     if (!userResponse.ok || userData.error) {
-      console.error('Error fetching /me:', userData.error || userData);
+      void ('Error fetching /me:', userData.error || userData);
       throw new Error(userData.error?.message || 'Failed to fetch Instagram user profile data');
     }
-    console.log('DEBUG: Instagram /me API response:', {
+    void ('DEBUG: Instagram /me API response:', {
       id: userData.id,
       user_id: userData.user_id,
       username: userData.username,
@@ -674,7 +652,7 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       instagram_username: userData.username,
       instagram_user_id: userData.user_id || userData.id,
     };
-    console.log(
+    void (
       `Instagram Business Account connected: @${instagramData.instagram_username} (${instagramData.instagram_user_id})`
     );
     const expiryDate = tokenData.expires_in
@@ -693,7 +671,7 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       }
     );
     if (tokenError) {
-      console.error('Failed to store organization token:', tokenError);
+      void ('Failed to store organization token:', tokenError);
       throw new Error('Failed to store organization token');
     }
     const { error: updateError } = await supabaseClient
@@ -707,12 +685,12 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       })
       .eq('id', organizationId);
     if (updateError) {
-      console.error('Failed to update organization:', updateError);
+      void ('Failed to update organization:', updateError);
       throw new Error('Failed to update organization data');
     }
     try {
       if (instagramData.instagram_business_account_id) {
-        console.log('Subscribing Instagram Business Account to webhooks...');
+        void ('Subscribing Instagram Business Account to webhooks...');
         const igWebhookResponse = await fetch(
           `${INSTAGRAM_API_BASE}/${instagramData.instagram_business_account_id}/subscribed_apps`,
           {
@@ -728,17 +706,17 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
         );
         const igWebhookData = await igWebhookResponse.json();
         if (igWebhookResponse.ok) {
-          console.log('Instagram webhook subscription successful:', igWebhookData);
+          void ('Instagram webhook subscription successful:', igWebhookData);
         } else {
-          console.warn('Instagram webhook subscription failed:', igWebhookData);
+          void ('Instagram webhook subscription failed:', igWebhookData);
         }
       }
     } catch (webhookError) {
-      console.warn('Webhook subscription failed:', webhookError);
+      void ('Webhook subscription failed:', webhookError);
     }
-    console.log('Organization Instagram data updated successfully');
+    void ('Organization Instagram data updated successfully');
   } catch (error) {
-    console.error('Error updating organization Instagram data:', error);
+    void ('Error updating organization Instagram data:', error);
     throw error;
   }
 }
@@ -867,7 +845,7 @@ async function handleTokenRefresh(req, supabaseClient) {
     throw new Error('Missing organization_id or ambassador_id');
   } catch (err) {
     const error = err;
-    console.error('Token refresh error:', error);
+    void ('Token refresh error:', error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -890,16 +868,13 @@ async function exchangeTokenForLongLived(accessToken) {
   const response = await fetch(url);
   const data = await response.json();
   if (!response.ok || data.error) {
-    console.error('Token exchange error:', data.error || data);
+    void ('Token exchange error:', data.error || data);
     throw new Error(
       data.error?.message || data.error_message || 'Failed to refresh Instagram token'
     );
   }
-  console.log('Instagram token refreshed successfully');
+  void ('Instagram token refreshed successfully');
   return data;
-}
-async function subscribeToPageWebhooks(pageId, accessToken) {
-  console.log('Skipping Page Webhook subscription (not applicable for Instagram Login flow)');
 }
 async function handleDiagnose(req, supabaseClient) {
   try {
@@ -955,14 +930,14 @@ async function handleDiagnose(req, supabaseClient) {
         error_description: 'No Instagram token found. Please connect Instagram first.',
       });
     }
-    console.log('Token last updated at:', tokenData.updated_at);
+    void ('Token last updated at:', tokenData.updated_at);
     const accessToken = await safeDecryptToken(tokenData.access_token);
-    console.log('Token decrypted, length:', accessToken?.length || 0);
+    void ('Token decrypted, length:', accessToken?.length || 0);
     const meResponse = await fetch(
       `${INSTAGRAM_API_BASE}/me?fields=id,username,account_type&access_token=${encodeURIComponent(accessToken)}`
     );
     const meData = await meResponse.json();
-    console.log('Instagram API /me returned:', meData);
+    void ('Instagram API /me returned:', meData);
     if (!meResponse.ok || meData.error) {
       return jsonResponse({
         success: false,
@@ -984,7 +959,7 @@ async function handleDiagnose(req, supabaseClient) {
       },
     });
   } catch (error) {
-    console.error('Diagnose error:', error);
+    void ('Diagnose error:', error);
     return jsonResponse({
       success: false,
       error: 'diagnose_error',

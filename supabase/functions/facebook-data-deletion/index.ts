@@ -67,13 +67,13 @@ Deno.serve(async (req) => {
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : String(e);
-        console.warn('Could not verify signed_request:', errorMessage);
+        void ('Could not verify signed_request:', errorMessage);
       }
 
       const code = crypto.randomUUID();
       const statusUrl = `https://awpfslcepylnipaolmvv.functions.supabase.co/functions/v1/facebook-data-deletion?code=${code}`;
 
-      console.log(
+      void (
         `Data deletion request received for user: ${userRef}, confirmation code: ${code}`
       );
 
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   } catch (e) {
-    console.error('facebook-data-deletion error:', e);
+    void ('facebook-data-deletion error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);
     return errorResponse(errorMessage, 500);
   }

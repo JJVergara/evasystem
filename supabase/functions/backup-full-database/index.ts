@@ -1,10 +1,5 @@
 import { corsHeaders } from '../shared/constants.ts';
-import {
-  corsPreflightResponse,
-  jsonResponse,
-  errorResponse,
-  unauthorizedResponse,
-} from '../shared/responses.ts';
+import { corsPreflightResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest } from '../shared/auth.ts';
 
 interface BackupData {
@@ -34,7 +29,7 @@ Deno.serve(async (req) => {
     }
     const { user, supabase: supabaseClient } = authResult;
 
-    console.log('Starting full database backup for user:', user.id);
+    void ('Starting full database backup for user:', user.id);
 
     const backupData: BackupData = {
       timestamp: new Date().toISOString(),
@@ -138,15 +133,15 @@ Deno.serve(async (req) => {
     backupData.import_logs = importLogs || [];
 
     backupData.organizations = (backupData.organizations || []).map((o) => {
-      const { meta_token, token_expiry, ...safe } = o as Record<string, unknown>;
+      const { meta_token: _meta_token, token_expiry: _token_expiry, ...safe } = o as Record<string, unknown>;
       return safe;
     });
     backupData.embassadors = (backupData.embassadors || []).map((a) => {
-      const { instagram_access_token, token_expires_at, ...safe } = a as Record<string, unknown>;
+      const { instagram_access_token: _instagram_access_token, token_expires_at: _token_expires_at, ...safe } = a as Record<string, unknown>;
       return safe;
     });
 
-    console.log('Backup completed successfully. Data summary:', {
+    void ('Backup completed successfully. Data summary:', {
       organizations: backupData.organizations.length,
       embassadors: backupData.embassadors.length,
       fiestas: backupData.fiestas.length,
@@ -169,7 +164,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error('Error during backup:', error);
+    void ('Error during backup:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error creating backup: ${errorMessage}`, 500);
   }

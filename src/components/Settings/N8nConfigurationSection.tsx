@@ -69,7 +69,7 @@ export function N8nConfigurationSection() {
         setConnectionStatus('error');
         toast.error('Error de conexión: ' + response.statusText);
       }
-    } catch (error) {
+    } catch {
       setConnectionStatus('error');
       toast.error('Error de red: No se pudo conectar con n8n');
     } finally {
@@ -93,7 +93,7 @@ export function N8nConfigurationSection() {
         n8n_webhook_url: n8nUrl,
       });
       toast.success('Configuración guardada exitosamente');
-    } catch (error) {
+    } catch {
       toast.error('Error al guardar la configuración');
     }
   };

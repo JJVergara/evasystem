@@ -35,14 +35,16 @@ export default function StoryMentions() {
   const handleMarkAsProcessed = async (mentionId: string) => {
     try {
       await markAsProcessed(mentionId);
-    } catch (error) {
+    } catch {
+      // Error is handled by the hook
     }
   };
 
   const handleFlagAsEarlyDelete = async (mentionId: string) => {
     try {
       await flagAsEarlyDelete(mentionId);
-    } catch (error) {
+    } catch {
+      // Error is handled by the hook
     }
   };
 
@@ -50,7 +52,8 @@ export default function StoryMentions() {
     if (message) {
       try {
         await sendReply(mention, message);
-      } catch (error) {
+      } catch {
+        // Error is handled by the hook
       }
     } else {
       setSelectedMention(mention);
@@ -58,7 +61,7 @@ export default function StoryMentions() {
     }
   };
 
-  const handleCreateLead = (mention: StoryMention) => {
+  const handleCreateLead = (_mention: StoryMention) => {
     toast({
       title: 'Función en desarrollo',
       description: 'La integración con CRM estará disponible próximamente',
@@ -90,7 +93,7 @@ export default function StoryMentions() {
 
       fetchStoryMentions();
     } catch (error) {
-      console.error('Error running worker:', error);
+      void ('Error running worker:', error);
       toast({
         title: 'Error',
         description: 'No se pudo ejecutar el worker de estados',
@@ -141,12 +144,12 @@ export default function StoryMentions() {
                 );
 
                 if (resolveError) {
-                  console.error('Error resolving story mentions:', resolveError);
+                  void ('Error resolving story mentions:', resolveError);
                 } else {
-                  console.log('Story mentions resolved:', resolveData);
+                  void ('Story mentions resolved:', resolveData);
                 }
               } catch (error) {
-                console.error('Error calling resolve function:', error);
+                void ('Error calling resolve function:', error);
               }
 
               handleRunWorker();

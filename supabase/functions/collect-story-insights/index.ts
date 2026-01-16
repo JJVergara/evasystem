@@ -1,11 +1,9 @@
-import { corsHeaders, STORY_INSIGHTS_METRICS } from '../shared/constants.ts';
 import type { Organization, SupabaseClient } from '../shared/types.ts';
-import { StoryInsights } from '../shared/types.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
-import { fetchAccountStories, fetchStoryInsights, StoryItem } from '../shared/instagram-api.ts';
+import { fetchAccountStories, fetchStoryInsights } from '../shared/instagram-api.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,14 +19,15 @@ Deno.serve(async (req) => {
     let targetOrgId: string | null = null;
 
     if (isCron) {
-      console.log('Starting Story insights collection... (CRON JOB)');
+      void ('Starting Story insights collection... (CRON JOB)');
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch (_) {
+      } catch {
+        void 0;
       }
     } else {
-      console.log('Starting Story insights collection... (USER REQUEST)');
+      void ('Starting Story insights collection... (USER REQUEST)');
       targetOrgId = await getUserOrganization(supabase, user.id);
     }
 
@@ -44,11 +43,11 @@ Deno.serve(async (req) => {
     const { data: organizations, error: orgsError } = await organizationsQuery;
 
     if (orgsError) {
-      console.error('Error fetching organizations:', orgsError);
+      void ('Error fetching organizations:', orgsError);
       throw new Error('Failed to fetch organizations');
     }
 
-    console.log(`Found ${organizations?.length || 0} organization(s) to process`);
+    void (`Found ${organizations?.length || 0} organization(s) to process`);
 
     interface OrgResult {
       organization_id: string;
@@ -66,7 +65,7 @@ Deno.serve(async (req) => {
 
     for (const org of organizations || []) {
       try {
-        console.log(`Processing organization: ${org.name} (${org.id})`);
+        void (`Processing organization: ${org.name} (${org.id})`);
 
         const { data: tokenData, error: tokenError } = await supabase
           .from('organization_instagram_tokens')
@@ -75,7 +74,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (tokenError || !tokenData) {
-          console.log(`No Instagram token found for organization ${org.name}`);
+          void (`No Instagram token found for organization ${org.name}`);
           results.push({
             organization_id: org.id,
             organization_name: org.name,
@@ -86,7 +85,7 @@ Deno.serve(async (req) => {
         }
 
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-          console.log(`Token expired for organization ${org.name}`);
+          void (`Token expired for organization ${org.name}`);
 
           await supabase.from('notifications').insert({
             organization_id: org.id,
@@ -119,7 +118,7 @@ Deno.serve(async (req) => {
           ...orgResult,
         });
       } catch (error) {
-        console.error(`Error processing organization ${org.name}:`, error);
+        void (`Error processing organization ${org.name}:`, error);
         results.push({
           organization_id: org.id,
           organization_name: org.name,
@@ -129,7 +128,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(
+    void (
       `Story insights collection completed: ` +
         `${totalStoriesFound} stories found, ` +
         `${totalSnapshotsCreated} snapshots created`
@@ -166,7 +165,7 @@ async function collectOrganizationStoryInsights(
     );
 
     storiesFound = stories.length;
-    console.log(`Found ${storiesFound} active stories for ${organization.name}`);
+    void (`Found ${storiesFound} active stories for ${organization.name}`);
 
     if (storiesFound === 0) {
       return { storiesFound, snapshotsCreated, errors };
@@ -177,24 +176,24 @@ async function collectOrganizationStoryInsights(
         const storyId = story.id;
 
         if (!storyId) {
-          console.log('Skipping story without ID');
+          void ('Skipping story without ID');
           continue;
         }
 
         const storyAge = story.timestamp ? calculateStoryAgeHours(story.timestamp) : null;
 
-        console.log(
+        void (
           `Fetching insights for story ${storyId} (age: ${storyAge?.toFixed(1) || 'unknown'}h)`
         );
 
         const insights = await fetchStoryInsights(storyId, accessToken);
 
         if (!insights) {
-          console.log(`No insights available for story ${storyId}`);
+          void (`No insights available for story ${storyId}`);
           continue;
         }
 
-        console.log(`Story ${storyId} insights:`, JSON.stringify(insights));
+        void (`Story ${storyId} insights:`, JSON.stringify(insights));
 
         const { data: existingMention } = await supabase
           .from('social_mentions')
@@ -233,19 +232,19 @@ async function collectOrganizationStoryInsights(
           .insert(snapshot);
 
         if (insertError) {
-          console.error(`Error inserting snapshot for story ${storyId}:`, insertError);
+          void (`Error inserting snapshot for story ${storyId}:`, insertError);
           errors.push(`Failed to insert snapshot for ${storyId}: ${insertError.message}`);
         } else {
           snapshotsCreated++;
-          console.log(`Created snapshot for story ${storyId}`);
+          void (`Created snapshot for story ${storyId}`);
         }
       } catch (error) {
-        console.error(`Error processing story ${story.id}:`, error);
+        void (`Error processing story ${story.id}:`, error);
         errors.push(`Story ${story.id} error: ${error.message}`);
       }
     }
   } catch (error) {
-    console.error(`Error in collectOrganizationStoryInsights:`, error);
+    void (`Error in collectOrganizationStoryInsights:`, error);
     errors.push(`Organization processing error: ${error.message}`);
   }
 

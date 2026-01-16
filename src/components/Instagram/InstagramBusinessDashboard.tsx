@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Instagram, Users, Image, Tag, RefreshCw, ExternalLink } from 'lucide-react';
+import { Instagram, Image, Tag, RefreshCw, ExternalLink } from 'lucide-react';
 import { useInstagramSync } from '@/hooks/useInstagramSync';
 import { toast } from 'sonner';
 
@@ -67,7 +67,7 @@ export function InstagramBusinessDashboard() {
         setTags(tagsData.tags);
       }
     } catch (error) {
-      console.error('Error loading Instagram data:', error);
+      void ('Error loading Instagram data:', error);
       toast.error('Error al cargar datos de Instagram');
     } finally {
       setLoading(false);

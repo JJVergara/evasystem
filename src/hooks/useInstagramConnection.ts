@@ -21,14 +21,14 @@ async function fetchTokenStatus(): Promise<TokenStatus> {
   const { data, error } = await supabase.functions.invoke('instagram-token-status');
 
   if (error) {
-    console.error('Network error invoking token status:', error);
+    void ('Network error invoking token status:', error);
     throw error;
   }
 
   if (data?.success) {
     return data.data;
   } else {
-    console.log('Token status check reported error:', data);
+    void ('Token status check reported error:', data);
     return {
       isConnected: false,
       isTokenExpired: false,
@@ -38,8 +38,7 @@ async function fetchTokenStatus(): Promise<TokenStatus> {
 
 export function useInstagramConnection() {
   const { user } = useAuth();
-  const { organization, loading, updateOrganization, refreshOrganization } =
-    useCurrentOrganization();
+  const { organization, loading, refreshOrganization } = useCurrentOrganization();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
   const queryClient = useQueryClient();
@@ -52,7 +51,6 @@ export function useInstagramConnection() {
   const {
     data: tokenStatus = { isConnected: false, isTokenExpired: false },
     isLoading: isLoadingTokenStatus,
-    isFetching,
     refetch,
   } = useQuery({
     queryKey,
@@ -72,7 +70,7 @@ export function useInstagramConnection() {
       urlParams.has('status') || urlParams.has('state') || urlParams.has('code');
 
     if (hasOAuthParams) {
-      console.log('OAuth callback detected, refreshing token status...');
+      void ('OAuth callback detected, refreshing token status...');
 
       try {
         const cleanUrl = window.location.pathname + '?tab=instagram';
@@ -80,17 +78,17 @@ export function useInstagramConnection() {
           try {
             window.history.replaceState({}, document.title, cleanUrl);
           } catch (error) {
-            console.warn('Could not clean URL parameters (fallback):', error);
+            void ('Could not clean URL parameters (fallback):', error);
           }
         }, 100);
       } catch (error) {
-        console.warn('Could not clean URL parameters:', error);
+        void ('Could not clean URL parameters:', error);
       }
 
       queryClient.invalidateQueries({ queryKey });
 
       setTimeout(() => {
-        console.log('Refreshing token status again after OAuth callback...');
+        void ('Refreshing token status again after OAuth callback...');
         queryClient.invalidateQueries({ queryKey });
       }, 2000);
     }
@@ -114,7 +112,7 @@ export function useInstagramConnection() {
       try {
         await refreshOrganization();
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
+      } catch {
         toast.error('No se pudo preparar tu organización. Reintenta.');
         return;
       }
@@ -128,7 +126,7 @@ export function useInstagramConnection() {
     try {
       setIsConnecting(true);
 
-      console.log('Attempting Instagram connection for organization:', organization.id);
+      void ('Attempting Instagram connection for organization:', organization.id);
 
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=authorize', {
         body: {
@@ -139,7 +137,7 @@ export function useInstagramConnection() {
       });
 
       if (error) {
-        console.error('Error initiating Instagram connection:', error);
+        void ('Error initiating Instagram connection:', error);
 
         let errorMessage = 'Error al conectar con Instagram';
         let errorDescription = undefined;
@@ -179,7 +177,7 @@ export function useInstagramConnection() {
         });
       }
     } catch (error) {
-      console.error('Error connecting Instagram:', error);
+      void ('Error connecting Instagram:', error);
       toast.error('Error inesperado al conectar Instagram');
     } finally {
       setIsConnecting(false);
@@ -191,12 +189,12 @@ export function useInstagramConnection() {
 
     try {
       setIsConnecting(true);
-      console.log('Disconnecting Instagram...');
+      void ('Disconnecting Instagram...');
 
       const { data, error } = await supabase.functions.invoke('disconnect-instagram');
 
       if (error) {
-        console.error('Disconnect error:', error);
+        void ('Disconnect error:', error);
         toast.error('Error al desconectar', {
           description: error.message || 'No se pudo desconectar Instagram',
         });
@@ -214,7 +212,7 @@ export function useInstagramConnection() {
       await refreshOrganization();
       toast.success('Instagram desconectado exitosamente');
     } catch (error) {
-      console.error('Error disconnecting Instagram:', error);
+      void ('Error disconnecting Instagram:', error);
       toast.error('Error inesperado', {
         description: 'No se pudo completar la desconexión',
       });
@@ -236,7 +234,7 @@ export function useInstagramConnection() {
 
     try {
       setIsRefreshingToken(true);
-      console.log('Refreshing Instagram token for organization:', organization.id);
+      void ('Refreshing Instagram token for organization:', organization.id);
 
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=refresh', {
         body: {
@@ -245,7 +243,7 @@ export function useInstagramConnection() {
       });
 
       if (error) {
-        console.error('Token refresh error:', error);
+        void ('Token refresh error:', error);
         toast.error('Error al renovar token', {
           description: error.message || 'No se pudo renovar el token de Instagram',
         });
@@ -253,7 +251,7 @@ export function useInstagramConnection() {
       }
 
       if (!data?.success) {
-        console.error('Token refresh failed:', data);
+        void ('Token refresh failed:', data);
         toast.error('Error al renovar token', {
           description: data?.error || 'No se pudo renovar el token de Instagram',
         });
@@ -266,7 +264,7 @@ export function useInstagramConnection() {
       });
       return true;
     } catch (error) {
-      console.error('Unexpected error refreshing token:', error);
+      void ('Unexpected error refreshing token:', error);
       toast.error('Error inesperado', {
         description: 'No se pudo renovar el token de Instagram',
       });

@@ -39,7 +39,7 @@ interface OnboardingStep {
 
 export default function Onboarding() {
   const { user, loading: authLoading } = useAuth();
-  const { profile, loading: profileLoading } = useUserProfile();
+  const { loading: profileLoading } = useUserProfile();
   const { organization, updateOrganization, loading: orgLoading } = useCurrentOrganization();
   const { fiestas } = useFiestas();
   const {
@@ -49,7 +49,7 @@ export default function Onboarding() {
   } = useInstagramConnection();
   const navigate = useNavigate();
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep] = useState(0);
   const [editingOrg, setEditingOrg] = useState(false);
   const [orgName, setOrgName] = useState('');
   const [orgDescription, setOrgDescription] = useState('');
@@ -68,12 +68,12 @@ export default function Onboarding() {
           .eq('organization_id', organization.id);
 
         if (error) {
-          console.error('Error checking ambassadors:', error);
+          void ('Error checking ambassadors:', error);
         } else {
           setAmbassadorCount(count || 0);
         }
       } catch (error) {
-        console.error('Error checking ambassadors:', error);
+        void ('Error checking ambassadors:', error);
       } finally {
         setCheckingAmbassadors(false);
       }
@@ -118,7 +118,7 @@ export default function Onboarding() {
     try {
       await connectInstagram();
     } catch (error) {
-      console.error('Error connecting Instagram:', error);
+      void ('Error connecting Instagram:', error);
       toast.error('Error al conectar Instagram');
     }
   };

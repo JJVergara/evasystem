@@ -29,7 +29,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  LineChart,
   Line,
   BarChart,
   Bar,
@@ -64,7 +63,7 @@ export function StoryInsightsDashboard() {
       );
       refresh();
     } catch (err) {
-      console.error('Error collecting insights:', err);
+      void ('Error collecting insights:', err);
       toast.error('Error al recolectar insights de Stories');
     } finally {
       setIsCollecting(false);

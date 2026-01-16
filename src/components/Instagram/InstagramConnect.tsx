@@ -24,7 +24,7 @@ export function InstagramConnect({
   entityId,
   organizationId,
   currentStatus = { isConnected: false },
-  onConnectionChange,
+  onConnectionChange: _onConnectionChange,
 }: InstagramConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const { user } = useAuth();
@@ -57,7 +57,7 @@ export function InstagramConnect({
         body.ambassador_id = entityId;
       }
 
-      console.log('Initiating Instagram connection', {
+      void ('Initiating Instagram connection', {
         type,
         orgId,
         ambassador_id: body.ambassador_id,
@@ -68,7 +68,7 @@ export function InstagramConnect({
       });
 
       if (error) {
-        console.error('Supabase function error:', error);
+        void ('Supabase function error:', error);
         let errorMessage = 'Error al conectar con Instagram';
 
         if (
@@ -89,17 +89,17 @@ export function InstagramConnect({
       }
 
       if (data?.authUrl) {
-        console.log('Redirecting to Instagram OAuth:', data.authUrl);
+        void ('Redirecting to Instagram OAuth:', data.authUrl);
         window.location.href = data.authUrl;
       } else {
-        console.error('No authUrl in response:', data);
+        void ('No authUrl in response:', data);
         const msg =
           data?.error_description ||
           'No se pudo generar la URL de autorización. Verifica la configuración de Meta.';
         throw new Error(msg);
       }
     } catch (err) {
-      console.error('Error connecting Instagram:', err);
+      void ('Error connecting Instagram:', err);
       const message = err instanceof Error ? err.message : 'Error al conectar con Instagram';
       toast.error(message);
       setIsConnecting(false);

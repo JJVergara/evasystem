@@ -2,10 +2,10 @@ import { errorResponse } from './responses.ts';
 import { InstagramApiError } from './instagram-api.ts';
 
 export function handleError(error: unknown): Response {
-  console.error('Function error:', error);
+  void ('Function error:', error);
 
   if (error instanceof InstagramApiError) {
-    console.error('Instagram API error:', {
+    void ('Instagram API error:', {
       message: error.message,
       statusCode: error.statusCode,
       fbError: error.fbError,

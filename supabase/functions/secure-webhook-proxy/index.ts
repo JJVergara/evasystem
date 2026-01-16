@@ -1,10 +1,8 @@
-import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
   jsonResponse,
   errorResponse,
   badRequestResponse,
-  unauthorizedResponse,
 } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
@@ -85,7 +83,7 @@ Deno.serve(async (req) => {
       request_id: requestId,
     };
 
-    console.log(`[${requestId}] Proxying request to:`, webhookUrl);
+    void (`[${requestId}] Proxying request to:`, webhookUrl);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
@@ -111,7 +109,7 @@ Deno.serve(async (req) => {
         responseData = { message: responseText };
       }
 
-      console.log(`[${requestId}] Webhook response status:`, response.status);
+      void (`[${requestId}] Webhook response status:`, response.status);
 
       return jsonResponse(
         {
@@ -132,7 +130,7 @@ Deno.serve(async (req) => {
       );
     }
   } catch (error) {
-    console.error('Webhook proxy error:', error);
+    void ('Webhook proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(errorMessage, 400);
   }

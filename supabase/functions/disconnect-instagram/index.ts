@@ -1,6 +1,5 @@
-import { corsHeaders } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
-import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
+import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 import { handleError, assert } from '../shared/error-handler.ts';
 
 Deno.serve(async (req) => {
@@ -23,7 +22,7 @@ Deno.serve(async (req) => {
       .eq('organization_id', organizationId);
 
     if (tokenError) {
-      console.error('Failed to delete organization tokens:', tokenError);
+      void ('Failed to delete organization tokens:', tokenError);
       throw new Error('Failed to disconnect Instagram tokens');
     }
 
@@ -48,11 +47,11 @@ Deno.serve(async (req) => {
       .eq('id', organizationId);
 
     if (updateError) {
-      console.error('Failed to disconnect Instagram:', updateError);
+      void ('Failed to disconnect Instagram:', updateError);
       throw new Error('Failed to disconnect Instagram account');
     }
 
-    console.log('Instagram account disconnected successfully for organization:', organizationId);
+    void ('Instagram account disconnected successfully for organization:', organizationId);
 
     return jsonResponse({
       success: true,

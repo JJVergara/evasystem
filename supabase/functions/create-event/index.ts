@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (eventError) {
-      console.error('Error creating event:', eventError);
+      void ('Error creating event:', eventError);
       return errorResponse(`Error creating event: ${eventError.message}`, 400);
     }
 
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error in create-event:', error);
+    void ('Error in create-event:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

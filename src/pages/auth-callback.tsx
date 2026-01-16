@@ -38,7 +38,7 @@ export default function AuthCallback() {
           }, 2000);
         }, 1500);
       } catch (error) {
-        console.error('Error processing Instagram callback:', error);
+        void ('Error processing Instagram callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error procesando autorización');
         toast.error('Error conectando Instagram');

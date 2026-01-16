@@ -45,13 +45,13 @@ async function fetchOrganizationsData(userId: string): Promise<{
       const lockTime = parseInt(existingLock);
       const now = Date.now();
       if (now - lockTime < 10000) {
-        console.log('⚠️ Organization creation in progress (locked), skipping...');
+        void ('Organization creation in progress (locked), skipping...');
         return { currentOrganization: null, userOrganizations: [] };
       }
     }
 
     localStorage.setItem(lockKey, Date.now().toString());
-    console.log('User has no organizations, creating default organization...');
+    void ('User has no organizations, creating default organization...');
 
     try {
       const { data: userProfile } = await supabase
@@ -61,7 +61,7 @@ async function fetchOrganizationsData(userId: string): Promise<{
         .single();
 
       if (userProfile?.organization_id) {
-        console.log('✅ Organization already exists, refreshing...');
+        void ('Organization already exists, refreshing...');
         localStorage.removeItem(lockKey);
         const { data: retryOrgs } = await supabase.rpc('get_user_organizations', {
           user_auth_id: userId,
@@ -95,12 +95,12 @@ async function fetchOrganizationsData(userId: string): Promise<{
         .single();
 
       if (createError) {
-        console.error('Error creating organization:', createError);
+        void ('Error creating organization:', createError);
         localStorage.removeItem(lockKey);
         throw createError;
       }
 
-      console.log('✅ Organization created:', newOrg.id);
+      void ('Organization created:', newOrg.id);
 
       const { data: refreshedOrgs } = await supabase.rpc('get_user_organizations', {
         user_auth_id: userId,
@@ -165,7 +165,10 @@ export const useCurrentOrganization = () => {
 
   const queryKey = ['currentOrganization', user?.id];
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<{
+    currentOrganization: OrganizationMembership | null;
+    userOrganizations: OrganizationMembership[];
+  }>({
     queryKey,
     queryFn: () => fetchOrganizationsData(user!.id),
     enabled: !!user?.id,
@@ -188,7 +191,7 @@ export const useCurrentOrganization = () => {
 
         await queryClient.invalidateQueries({ queryKey });
       } catch (error) {
-        console.error('Error switching organization:', error);
+        void ('Error switching organization:', error);
         throw error;
       }
     },
@@ -196,34 +199,6 @@ export const useCurrentOrganization = () => {
   );
 
   const organization = currentOrganization?.organization || null;
-
-  const updateOrganization = useCallback(
-    async (updates: Partial<OrganizationMembership['organization']>) => {
-      if (!currentOrganization?.organization) return false;
-
-      try {
-        const { error } = await supabase
-          .from('organizations')
-          .update(updates)
-          .eq('id', currentOrganization.organization.id);
-
-        if (error) {
-          console.error('Error updating organization:', error);
-          toast.error('Error al actualizar organización');
-          return false;
-        }
-
-        await queryClient.invalidateQueries({ queryKey });
-        toast.success('Organización actualizada');
-        return true;
-      } catch (error) {
-        console.error('Error updating organization:', error);
-        toast.error('Error inesperado');
-        return false;
-      }
-    },
-    [currentOrganization, queryClient, queryKey]
-  );
 
   const fetchOrganizations = useCallback(() => {
     return refetch();
@@ -233,11 +208,9 @@ export const useCurrentOrganization = () => {
     currentOrganization,
     userOrganizations,
     loading: isLoading,
-    error: error as Error | null,
     fetchOrganizations,
     switchOrganization,
     organization,
-    updateOrganization,
     refreshOrganization: fetchOrganizations,
   };
 };

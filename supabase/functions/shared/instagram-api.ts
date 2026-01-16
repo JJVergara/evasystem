@@ -102,7 +102,7 @@ export async function fetchStoryInsights(
     return insights;
   } catch (error) {
     if (error instanceof InstagramApiError) throw error;
-    console.error('Error fetching story insights:', error);
+    void ('Error fetching story insights:', error);
     return null;
   }
 }
@@ -160,14 +160,14 @@ export async function fetchAccountStories(
     access_token: accessToken,
   });
 
-  console.log(`Fetching stories from: ${accountId}/stories`);
+  void (`Fetching stories from: ${accountId}/stories`);
 
   const response = await fetch(url);
 
   if (!response.ok) {
     const error = await response.json();
     if (error.error?.code === 100 || error.error?.code === 190) {
-      console.log(`No stories accessible for account ${accountId}: ${error.error?.message}`);
+      void (`No stories accessible for account ${accountId}: ${error.error?.message}`);
       return [];
     }
     throw new InstagramApiError(
@@ -178,7 +178,7 @@ export async function fetchAccountStories(
   }
 
   const data = await response.json();
-  console.log(`Found ${data.data?.length || 0} active stories`);
+  void (`Found ${data.data?.length || 0} active stories`);
   return data.data || [];
 }
 

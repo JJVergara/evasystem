@@ -20,8 +20,8 @@ const MetaOAuthProxy = () => {
         const errorCode = searchParams.get('error_code');
         const errorMessage = searchParams.get('error_message');
 
-        console.log('=== META OAUTH PROXY DEBUG ===');
-        console.log('Callback received:', {
+        void ('=== META OAUTH PROXY DEBUG ===');
+        void ('Callback received:', {
           action,
           code: !!code,
           state: !!state,
@@ -32,7 +32,7 @@ const MetaOAuthProxy = () => {
         });
 
         if (error) {
-          console.error('Meta OAuth error:', { error, errorCode, errorMessage });
+          void ('Meta OAuth error:', { error, errorCode, errorMessage });
           const errorMsg = errorMessage || `Meta OAuth error: ${error}`;
           setStatus('error');
           setErrorDetails(errorMsg);
@@ -49,7 +49,7 @@ const MetaOAuthProxy = () => {
         if (!code || !state) {
           const missingMsg =
             `Missing required parameters: ${!code ? 'code' : ''} ${!state ? 'state' : ''}`.trim();
-          console.error('Missing OAuth parameters:', { code: !!code, state: !!state });
+          void ('Missing OAuth parameters:', { code: !!code, state: !!state });
           setStatus('error');
           setErrorDetails(missingMsg);
           toast.error(missingMsg);
@@ -63,7 +63,7 @@ const MetaOAuthProxy = () => {
         }
 
         try {
-          console.log('Invoking edge function with callback data...');
+          void ('Invoking edge function with callback data...');
 
           const { data, error: functionError } = await supabase.functions.invoke(
             'meta-oauth?action=callback',
@@ -79,10 +79,10 @@ const MetaOAuthProxy = () => {
             }
           );
 
-          console.log('Edge function response:', { data, error: functionError });
+          void ('Edge function response:', { data, error: functionError });
 
           if (functionError) {
-            console.error('Edge function error:', functionError);
+            void ('Edge function error:', functionError);
             const errorMsg = functionError.message || 'Error en la función de autenticación';
             setStatus('error');
             setErrorDetails(errorMsg);
@@ -94,7 +94,7 @@ const MetaOAuthProxy = () => {
               : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(errorMsg);
             setTimeout(() => navigate(errorRedirectPath), 2000);
           } else if (data?.success === false || data?.error) {
-            console.error('Callback processing error:', data);
+            void ('Callback processing error:', data);
 
             let userFriendlyMsg = 'Error procesando la autorización';
             if (data?.error === 'meta_api_error') {
@@ -122,7 +122,7 @@ const MetaOAuthProxy = () => {
               : '/settings?tab=instagram&status=error&error=' + encodeURIComponent(userFriendlyMsg);
             setTimeout(() => navigate(errorRedirectPath), 2000);
           } else if (data?.success === true) {
-            console.log('Instagram connection successful!');
+            void ('Instagram connection successful!');
             setStatus('success');
             toast.success('Instagram conectado exitosamente');
 
@@ -132,7 +132,7 @@ const MetaOAuthProxy = () => {
                 : '/settings?tab=instagram&status=success';
             setTimeout(() => navigate(redirectPath), 1000);
           } else {
-            console.warn('Unexpected response format:', data);
+            void ('Unexpected response format:', data);
             const errorMsg = 'Respuesta inesperada del servidor';
             setStatus('error');
             setErrorDetails(errorMsg);
@@ -145,8 +145,8 @@ const MetaOAuthProxy = () => {
             setTimeout(() => navigate(errorRedirectPath), 2000);
           }
         } catch (error) {
-          console.error('=== PROXY EXCEPTION ===');
-          console.error('Proxy error:', error);
+          void ('=== PROXY EXCEPTION ===');
+          void ('Proxy error:', error);
           const errorMsg =
             error instanceof Error ? error.message : 'Error inesperado en la conexión';
           setStatus('error');
@@ -160,7 +160,7 @@ const MetaOAuthProxy = () => {
           setTimeout(() => navigate(errorRedirectPath), 2000);
         }
       } else {
-        console.log('Not a callback action, redirecting to settings');
+        void ('Not a callback action, redirecting to settings');
         navigate('/settings');
       }
     };

@@ -52,7 +52,7 @@ export function DeleteAmbassadorModal({
       onAmbassadorDeleted();
       onClose();
     } catch (error) {
-      console.error('Error deleting ambassador:', error);
+      void ('Error deleting ambassador:', error);
       toast.error('Error al eliminar embajador');
     } finally {
       setLoading(false);

@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseClient = createSupabaseClient();
 
-    console.log('Starting OAuth states cleanup...');
+    void ('Starting OAuth states cleanup...');
 
     const { data, error } = await supabaseClient
       .from('oauth_states')
@@ -18,12 +18,12 @@ Deno.serve(async (req) => {
       .select('id');
 
     if (error) {
-      console.error('Error cleaning up OAuth states:', error);
+      void ('Error cleaning up OAuth states:', error);
       throw error;
     }
 
     const deletedCount = data?.length || 0;
-    console.log(`Cleaned up ${deletedCount} expired OAuth states`);
+    void (`Cleaned up ${deletedCount} expired OAuth states`);
 
     return jsonResponse({
       success: true,
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       deleted_count: deletedCount,
     });
   } catch (error) {
-    console.error('OAuth cleanup error:', error);
+    void ('OAuth cleanup error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(errorMessage, 500);
   }

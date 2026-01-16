@@ -74,15 +74,6 @@ const defaultSettings: OrganizationSettings = {
   },
 };
 
-interface SettingsRow {
-  general_settings: Record<string, unknown> | null;
-  instagram_settings: Record<string, unknown> | null;
-  notification_settings: Record<string, unknown> | null;
-  permission_settings: Record<string, unknown> | null;
-  appearance_settings: Record<string, unknown> | null;
-  integration_settings: Record<string, unknown> | null;
-}
-
 async function fetchOrganizationSettingsData(
   organizationId: string
 ): Promise<OrganizationSettings> {
@@ -143,7 +134,7 @@ async function fetchOrganizationSettingsData(
   });
 
   if (insertError) {
-    console.error('Error creating default settings:', insertError);
+    void ('Error creating default settings:', insertError);
   }
 
   return defaultSettings;
@@ -156,11 +147,7 @@ export function useOrganizationSettings() {
 
   const queryKey = ['organizationSettings', organization?.id];
 
-  const {
-    data: settings,
-    isLoading: settingsLoading,
-    error,
-  } = useQuery({
+  const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey,
     queryFn: () => fetchOrganizationSettingsData(organization!.id),
     enabled: !!organization?.id,

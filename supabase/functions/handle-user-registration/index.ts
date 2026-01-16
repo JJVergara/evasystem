@@ -1,4 +1,4 @@
-import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
       name,
       organizationName,
       organizationDescription,
-      mainInstagramAccount,
       authUserId,
     } = await req.json();
 
@@ -100,7 +99,7 @@ Deno.serve(async (req) => {
       });
 
       if (memberError) {
-        console.log('Membership may already exist:', memberError.message);
+        void ('Membership may already exist:', memberError.message);
       }
 
       const { data: updatedUserData, error: updateError } = await supabase
@@ -149,7 +148,7 @@ Deno.serve(async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error in handle-user-registration:', error);
+    void ('Error in handle-user-registration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

@@ -18,19 +18,15 @@ import { EnhancedInstagramSettings } from '@/components/Settings/EnhancedInstagr
 import { N8nConfigurationSection } from '@/components/Settings/N8nConfigurationSection';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 
 export default function SettingsContent() {
   const { organization, refreshOrganization, updateOrganization } = useCurrentOrganization();
-
-  const { profile } = useUserProfile();
   const {
     settings,
     loading: settingsLoading,
     saving,
     updateGeneralSettings,
-    updateInstagramSettings,
     updateNotificationSettings,
     updatePermissionSettings,
     updateAppearanceSettings,
@@ -64,7 +60,6 @@ export default function SettingsContent() {
     const refresh = () => {
       if (isMounted && refreshOrganization && !hasRefreshed) {
         hasRefreshed = true;
-        console.log('SettingsContent: Refreshing organization...');
         refreshOrganization();
       }
     };

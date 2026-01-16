@@ -162,7 +162,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
     if (mentionsError) {
       insightsErrorFlag = true;
-      console.warn('Error fetching social mentions for story insights:', mentionsError);
+      void ('Error fetching social mentions for story insights:', mentionsError);
     } else if (socialMentions && socialMentions.length > 0) {
       const mentionIds = socialMentions.map((m) => m.id);
 
@@ -213,7 +213,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
       if (insightsError) {
         insightsErrorFlag = true;
-        console.warn('Error fetching story insights:', insightsError);
+        void ('Error fetching story insights:', insightsError);
       } else if (storyInsightsData && storyInsightsData.length > 0) {
         const mentionToStoryMap = new Map<string, string>();
         socialMentions.forEach((mention) => {
@@ -259,7 +259,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
     }
   } catch (insightsErr) {
     insightsErrorFlag = true;
-    console.warn('Error processing story insights:', insightsErr);
+    void ('Error processing story insights:', insightsErr);
   }
 
   const totalReach = tasks?.reduce((sum, t) => sum + (t.reach_count || 0), 0) || 0;

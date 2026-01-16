@@ -4,13 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Instagram, Calendar, Users, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
-import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { SimpleDashboardContent } from './SimpleDashboardContent';
 
 export function EVABrandedDashboard() {
   const navigate = useNavigate();
   const { steps, overallProgress } = useOnboardingStatus();
-  const { organization } = useCurrentOrganization();
 
   const pendingRecommendedSteps = steps.filter((step) => !step.required && !step.completed);
 

@@ -82,7 +82,7 @@ export default function UserProfile() {
         });
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      void ('Error fetching user data:', error);
       toast.error('Error al cargar datos del usuario');
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ export default function UserProfile() {
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
     } catch (error) {
-      console.error('Error updating profile:', error);
+      void ('Error updating profile:', error);
       toast.error('Error al actualizar perfil');
     } finally {
       setSaving(false);

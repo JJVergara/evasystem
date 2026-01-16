@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { GlassPanel } from '@/components/Layout/GlassPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,9 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
-interface ImportExportRealProps {}
-
-export default function ImportExportReal({}: ImportExportRealProps) {
+export default function ImportExportReal() {
   const { organization } = useCurrentOrganization();
   const [activeTab, setActiveTab] = useState('import');
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -76,7 +73,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Error during import:', error);
+      void ('Error during import:', error);
       toast.error('Error durante la importación');
     } finally {
       setIsProcessing(false);
@@ -132,7 +129,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
 
       toast.success(`Exportación completada: ${data.length} registros`);
     } catch (error) {
-      console.error('Error during export:', error);
+      void ('Error during export:', error);
       toast.error('Error durante la exportación');
     } finally {
       setIsProcessing(false);

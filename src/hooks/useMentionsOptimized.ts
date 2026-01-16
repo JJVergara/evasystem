@@ -117,7 +117,7 @@ export function useMentionsOptimized(
       const { data: mentionsData, error: fetchError, count } = await query;
 
       if (fetchError) {
-        console.error('Error fetching social mentions:', fetchError);
+        void ('Error fetching social mentions:', fetchError);
         throw new Error('Error al cargar menciones');
       }
 
@@ -188,7 +188,7 @@ export function useMentionsOptimized(
         queryKey: QUERY_KEYS.socialMentions(organization?.id || ''),
       });
     } catch (error) {
-      console.error('Error assigning mention:', error);
+      void ('Error assigning mention:', error);
       toast.error('Error al asignar mención');
     }
   };

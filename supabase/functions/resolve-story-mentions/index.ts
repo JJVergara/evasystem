@@ -1,6 +1,5 @@
-import { corsHeaders, INSTAGRAM_API_BASE } from '../shared/constants.ts';
+import { INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import type { MediaItem } from '../shared/types.ts';
-import { SupabaseClient } from '../shared/types.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
@@ -17,7 +16,7 @@ Deno.serve(async (req) => {
     const { organizationId, mentionId } = await req.json();
 
     if (!mentionId) {
-      console.error('Missing mentionId parameter');
+      void ('Missing mentionId parameter');
       return jsonResponse(
         {
           success: false,
@@ -28,7 +27,7 @@ Deno.serve(async (req) => {
     }
 
     if (!organizationId) {
-      console.error('Missing organizationId parameter');
+      void ('Missing organizationId parameter');
       return jsonResponse(
         {
           success: false,
@@ -38,7 +37,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Resolving story mention ${mentionId} for organization ${organizationId}`);
+    void (`Resolving story mention ${mentionId} for organization ${organizationId}`);
 
     const { data: mention, error: mentionError } = await supabase
       .from('social_mentions')
@@ -48,7 +47,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (mentionError || !mention) {
-      console.error('Mention not found:', mentionError);
+      void ('Mention not found:', mentionError);
       return jsonResponse(
         {
           success: false,
@@ -65,7 +64,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!tokenInfo || !tokenInfo.access_token) {
-      console.error('No Instagram token found for organization');
+      void ('No Instagram token found for organization');
 
       await supabase
         .from('social_mentions')
@@ -86,7 +85,7 @@ Deno.serve(async (req) => {
     }
 
     if (tokenInfo.token_expiry && new Date(tokenInfo.token_expiry) < new Date()) {
-      console.error('Instagram token expired');
+      void ('Instagram token expired');
 
       await supabase
         .from('social_mentions')
@@ -140,9 +139,9 @@ Deno.serve(async (req) => {
                 .eq('id', mentionId);
 
               if (updateError) {
-                console.error('Error updating mention with resolved data:', updateError);
+                void ('Error updating mention with resolved data:', updateError);
               } else {
-                console.log('Successfully resolved story media for mention');
+                void ('Successfully resolved story media for mention');
               }
 
               return jsonResponse({
@@ -155,7 +154,7 @@ Deno.serve(async (req) => {
           }
         }
       } catch (error) {
-        console.error('Error calling Instagram API:', error);
+        void ('Error calling Instagram API:', error);
       }
     }
 
@@ -172,7 +171,7 @@ Deno.serve(async (req) => {
       .eq('id', mentionId);
 
     if (updateError) {
-      console.error('Error updating mention with fallback:', updateError);
+      void ('Error updating mention with fallback:', updateError);
     }
 
     return jsonResponse({

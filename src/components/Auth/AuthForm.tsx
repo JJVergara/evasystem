@@ -3,10 +3,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Instagram, BarChart3, Users, Zap, Shield } from 'lucide-react';
+import { Instagram, BarChart3, Users, Zap, Shield } from 'lucide-react';
 import { ModernLogo } from '@/components/Logo/ModernLogo';
 
 export function AuthForm() {
@@ -38,7 +37,7 @@ export function AuthForm() {
           description: 'Revisa tu email para confirmar tu cuenta.',
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Algo salió mal. Inténtalo de nuevo.',

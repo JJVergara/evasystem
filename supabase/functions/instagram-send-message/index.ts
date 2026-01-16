@@ -1,12 +1,5 @@
-import { corsHeaders } from '../shared/constants.ts';
-import { SupabaseClient } from '../shared/types.ts';
-import {
-  corsPreflightResponse,
-  jsonResponse,
-  unauthorizedResponse,
-  badRequestResponse,
-} from '../shared/responses.ts';
-import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
+import { authenticateRequest } from '../shared/auth.ts';
 import { handleError, validateRequired } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
 import { sendInstagramMessage } from '../shared/instagram-api.ts';
@@ -61,7 +54,7 @@ Deno.serve(async (req) => {
 
     const responseData = await sendInstagramMessage(recipientId, message, decryptedToken);
 
-    console.log('Instagram message sent successfully:', {
+    void ('Instagram message sent successfully:', {
       organizationId,
       recipientId,
       messageId: responseData.message_id,

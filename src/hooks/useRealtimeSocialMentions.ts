@@ -50,7 +50,7 @@ export function useRealtimeSocialMentions({
         },
         (payload: RealtimePostgresChangesPayload<SocialMentionRecord>) => {
           const newRecord = payload.new as SocialMentionRecord;
-          console.log('New social mention:', payload);
+          void ('New social mention:', payload);
 
           const mentionType = newRecord.mention_type;
           const username = newRecord.instagram_username;
@@ -97,7 +97,7 @@ export function useRealtimeSocialMentions({
         (payload: RealtimePostgresChangesPayload<SocialMentionRecord>) => {
           const newRecord = payload.new as SocialMentionRecord;
           const oldRecord = payload.old as SocialMentionRecord;
-          console.log('Social mention updated:', payload);
+          void ('Social mention updated:', payload);
 
           if (newRecord.processed && !oldRecord.processed) {
             toast.success('Mención procesada', {
@@ -122,7 +122,7 @@ export function useRealtimeSocialMentions({
         },
         (payload: RealtimePostgresChangesPayload<AmbassadorRequestRecord>) => {
           const newRecord = payload.new as AmbassadorRequestRecord;
-          console.log('New ambassador request:', payload);
+          void ('New ambassador request:', payload);
 
           toast.info('Nueva solicitud de embajador', {
             description: `@${newRecord.instagram_username} quiere ser embajador`,
@@ -148,7 +148,7 @@ export function useRealtimeSocialMentions({
         (payload: RealtimePostgresChangesPayload<AmbassadorRequestRecord>) => {
           const newRecord = payload.new as AmbassadorRequestRecord;
           const oldRecord = payload.old as AmbassadorRequestRecord;
-          console.log('Ambassador request updated:', payload);
+          void ('Ambassador request updated:', payload);
 
           if (newRecord.status !== oldRecord.status) {
             if (newRecord.status === 'approved') {

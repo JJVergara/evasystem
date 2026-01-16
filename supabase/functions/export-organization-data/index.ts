@@ -1,10 +1,5 @@
 import { corsHeaders } from '../shared/constants.ts';
-import {
-  corsPreflightResponse,
-  jsonResponse,
-  errorResponse,
-  notFoundResponse,
-} from '../shared/responses.ts';
+import { corsPreflightResponse, notFoundResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
@@ -21,7 +16,7 @@ Deno.serve(async (req) => {
 
     const { organizationId, format = 'json', tables = 'all' } = await req.json();
 
-    console.log('Starting organization export:', { organizationId, format, tables });
+    void ('Starting organization export:', { organizationId, format, tables });
 
     const hasAccess = await verifyOrganizationAccess(supabaseClient, user.id, organizationId);
     if (!hasAccess) {
@@ -185,7 +180,7 @@ Deno.serve(async (req) => {
       fileName = `eva-export-${org.name}-${new Date().toISOString().split('T')[0]}.json`;
     }
 
-    console.log('Export completed successfully for organization:', organizationId);
+    void ('Export completed successfully for organization:', organizationId);
 
     return new Response(responseContent, {
       status: 200,
@@ -196,7 +191,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error('Error during export:', error);
+    void ('Error during export:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error exporting data: ${errorMessage}`, 500);
   }

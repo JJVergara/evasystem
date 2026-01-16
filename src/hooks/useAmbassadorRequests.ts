@@ -18,7 +18,7 @@ async function fetchRequests(organizationId: string): Promise<AmbassadorRequest[
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching ambassador requests:', error);
+    void ('Error fetching ambassador requests:', error);
     throw new Error('Error al cargar solicitudes de embajadores');
   }
 
@@ -90,7 +90,7 @@ export function useAmbassadorRequests() {
           .in('id', request.source_mention_ids);
 
         if (updateMentionsError) {
-          console.error('Error updating social mentions:', updateMentionsError);
+          void ('Error updating social mentions:', updateMentionsError);
         }
       }
 

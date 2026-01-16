@@ -1,13 +1,6 @@
-import {
-  corsHeaders,
-  STORY_INSIGHTS_METRICS,
-  INSTAGRAM_API_BASE,
-  VERIFICATION_INTERVALS,
-  STORY_EXPIRATION_MS,
-} from '../shared/constants.ts';
+import { STORY_INSIGHTS_METRICS, INSTAGRAM_API_BASE } from '../shared/constants.ts';
 import type { MentionUpdateData, InsightsMap } from '../shared/types.ts';
-import { SupabaseClient } from '../shared/types.ts';
-import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 import { safeDecryptToken } from '../shared/crypto.ts';
@@ -23,7 +16,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { source = 'manual', type = 'expiry' } = body;
 
-    console.log(
+    void (
       `Story mentions state worker started at: ${new Date().toISOString()}, source: ${source}, type: ${type}`
     );
 
@@ -33,7 +26,6 @@ Deno.serve(async (req) => {
 
     if (type === 'verification') {
       const now = new Date();
-      const currentMinutes = now.getMinutes();
 
       const intervals = [60, 720, 1380];
 
@@ -54,14 +46,14 @@ Deno.serve(async (req) => {
           .lte('mentioned_at', windowEnd.toISOString());
 
         if (verifyError) {
-          console.error(
+          void (
             `Error fetching mentions for ${intervalMinutes}min verification:`,
             verifyError
           );
           continue;
         }
 
-        console.log(
+        void (
           `Found ${mentionsToVerify?.length || 0} mentions for ${intervalMinutes}min verification`
         );
 
@@ -87,7 +79,7 @@ Deno.serve(async (req) => {
                   );
                   storyExists = response.ok;
                 } catch (error) {
-                  console.error(`Error checking story ${mention.instagram_story_id}:`, error);
+                  void (`Error checking story ${mention.instagram_story_id}:`, error);
                 }
               }
             }
@@ -113,7 +105,7 @@ Deno.serve(async (req) => {
               .eq('id', mention.id);
 
             if (updateError) {
-              console.error(`Error updating mention ${mention.id}:`, updateError);
+              void (`Error updating mention ${mention.id}:`, updateError);
             } else {
               verificationCount++;
 
@@ -130,7 +122,7 @@ Deno.serve(async (req) => {
               }
             }
           } catch (error) {
-            console.error(`Error verifying mention ${mention.id}:`, error);
+            void (`Error verifying mention ${mention.id}:`, error);
           }
         }
       }
@@ -144,9 +136,9 @@ Deno.serve(async (req) => {
       .lt('expires_at', new Date().toISOString());
 
     if (expiredError) {
-      console.error('Error fetching expired mentions:', expiredError);
+      void ('Error fetching expired mentions:', expiredError);
     } else {
-      console.log(`Found ${expiredMentions?.length || 0} expired story mentions to process`);
+      void (`Found ${expiredMentions?.length || 0} expired story mentions to process`);
 
       for (const mention of expiredMentions || []) {
         try {
@@ -197,15 +189,15 @@ Deno.serve(async (req) => {
 
                 if (!snapshotError) {
                   finalSnapshotCreated = true;
-                  console.log(
+                  void (
                     `Created final insights snapshot for story ${mention.instagram_story_id}`
                   );
                 } else {
-                  console.error(`Error creating final snapshot:`, snapshotError);
+                  void (`Error creating final snapshot:`, snapshotError);
                 }
               }
             } catch (error) {
-              console.error(
+              void (
                 `Error fetching final insights for story ${mention.instagram_story_id}:`,
                 error
               );
@@ -222,7 +214,7 @@ Deno.serve(async (req) => {
             .eq('id', mention.id);
 
           if (updateError) {
-            console.error(`Error updating mention ${mention.id}:`, updateError);
+            void (`Error updating mention ${mention.id}:`, updateError);
             continue;
           }
 
@@ -245,12 +237,12 @@ Deno.serve(async (req) => {
             notificationCount++;
           }
         } catch (error) {
-          console.error(`Error processing expired mention ${mention.id}:`, error);
+          void (`Error processing expired mention ${mention.id}:`, error);
         }
       }
     }
 
-    console.log(
+    void (
       `Story mentions worker completed. Verified: ${verificationCount}, Expired processed: ${processedCount}, Notifications sent: ${notificationCount}`
     );
 

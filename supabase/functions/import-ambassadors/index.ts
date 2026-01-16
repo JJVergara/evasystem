@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       data: results,
     });
   } catch (error) {
-    console.error('Error in import-ambassadors:', error);
+    void ('Error in import-ambassadors:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

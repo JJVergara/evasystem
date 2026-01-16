@@ -1,6 +1,5 @@
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest } from '../shared/auth.ts';
-import { SupabaseClient } from '../shared/types.ts';
 
 interface RestoreResults {
   success: boolean;
@@ -24,8 +23,8 @@ Deno.serve(async (req) => {
     const { backupData, options } = await req.json();
     const { overwriteExisting = false, selectiveTables = [] } = options || {};
 
-    console.log('Starting data restoration for user:', user.id);
-    console.log('Restore options:', { overwriteExisting, selectiveTables });
+    void ('Starting data restoration for user:', user.id);
+    void ('Restore options:', { overwriteExisting, selectiveTables });
 
     const results: RestoreResults = {
       success: true,
@@ -64,12 +63,12 @@ Deno.serve(async (req) => {
 
         if (tableName === 'organizations') {
           processedData = processedData.map((org) => {
-            const { meta_token, token_expiry, created_by, ...rest } = org;
+            const { meta_token: _meta_token, token_expiry: _token_expiry, created_by: _created_by, ...rest } = org;
             return { ...rest, created_by: user.id };
           });
         } else if (tableName === 'users') {
           processedData = processedData.map((u) => {
-            const { role, auth_user_id, ...rest } = u;
+            const { role: _role, auth_user_id: _auth_user_id, ...rest } = u;
             return { ...rest, auth_user_id: user.id };
           });
         } else {
@@ -142,10 +141,10 @@ Deno.serve(async (req) => {
       }
 
       if (backupData[tableName]) {
-        console.log(`Restoring ${tableName}...`);
+        void (`Restoring ${tableName}...`);
         const restored = await restoreTable(tableName, backupData[tableName]);
         results.restored[tableName] = restored;
-        console.log(`Restored ${restored} records in ${tableName}`);
+        void (`Restored ${restored} records in ${tableName}`);
       }
     }
 
@@ -170,11 +169,11 @@ Deno.serve(async (req) => {
       results.summary += ` ${results.errors.length} errors occurred.`;
     }
 
-    console.log('Restoration completed:', results);
+    void ('Restoration completed:', results);
 
     return jsonResponse(results);
   } catch (error) {
-    console.error('Error during restoration:', error);
+    void ('Error during restoration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error restoring data: ${errorMessage}`, 500);
   }

@@ -65,7 +65,7 @@ export function SimpleCreateEventModal({
       setOrganizations(data || []);
       setOrganizationsLoaded(true);
     } catch (error) {
-      console.error('Error loading organizations:', error);
+      void ('Error loading organizations:', error);
       toast.error('Error al cargar organizaciones');
     }
   };
@@ -80,7 +80,7 @@ export function SimpleCreateEventModal({
         return;
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('events')
         .insert([
           {
@@ -102,7 +102,7 @@ export function SimpleCreateEventModal({
       onClose();
       onEventCreated();
     } catch (error) {
-      console.error('Error creating event:', error);
+      void ('Error creating event:', error);
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);

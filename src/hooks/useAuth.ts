@@ -20,14 +20,14 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, !!session);
+      void ('Auth state changed:', event, !!session);
 
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
       if (event === 'SIGNED_OUT') {
-        console.log('User signed out - redirecting to auth');
+        void ('User signed out - redirecting to auth');
         localStorage.clear();
         sessionStorage.clear();
         setTimeout(() => {
@@ -48,7 +48,7 @@ export function useAuth() {
 
   const ensureUserProfile = async (authUser: User) => {
     try {
-      console.log('Ensuring user profile for:', authUser.id);
+      void ('Ensuring user profile for:', authUser.id);
 
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
@@ -57,23 +57,23 @@ export function useAuth() {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Error checking existing user:', fetchError);
+        void ('Error checking existing user:', fetchError);
         return;
       }
 
       if (!existingUser) {
-        console.log('User does not exist, will need to create profile after organization setup');
+        void ('User does not exist, will need to create profile after organization setup');
       } else {
-        console.log('User already exists:', existingUser);
+        void ('User already exists:', existingUser);
       }
     } catch (error) {
-      console.error('Error in ensureUserProfile:', error);
+      void ('Error in ensureUserProfile:', error);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Attempting to sign in:', email);
+      void ('Attempting to sign in:', email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -81,10 +81,10 @@ export function useAuth() {
       });
 
       if (error) {
-        console.error('Sign in error:', error);
+        void ('Sign in error:', error);
         toast.error(error.message);
       } else {
-        console.log('Sign in successful:', data);
+        void ('Sign in successful:', data);
         toast.success('¡Bienvenido de vuelta!');
         setTimeout(() => {
           navigate('/', { replace: true });
@@ -93,7 +93,7 @@ export function useAuth() {
 
       return { data, error };
     } catch (error) {
-      console.error('Sign in error:', error);
+      void ('Sign in error:', error);
       toast.error('Error al iniciar sesión');
       return { data: null, error: error as AuthError };
     }
@@ -101,7 +101,7 @@ export function useAuth() {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      console.log('Attempting to sign up:', email);
+      void ('Attempting to sign up:', email);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -115,16 +115,16 @@ export function useAuth() {
       });
 
       if (error) {
-        console.error('Sign up error:', error);
+        void ('Sign up error:', error);
         toast.error(error.message);
       } else {
-        console.log('Sign up successful:', data);
+        void ('Sign up successful:', data);
         toast.success('¡Cuenta creada correctamente! Ahora puedes iniciar sesión.');
       }
 
       return { data, error };
     } catch (error) {
-      console.error('Sign up error:', error);
+      void ('Sign up error:', error);
       toast.error('Error al crear cuenta');
       return { data: null, error: error as AuthError };
     }
@@ -132,18 +132,18 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      console.log('Attempting to sign out');
+      void ('Attempting to sign out');
 
       setLoading(true);
 
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('Sign out error:', error);
+        void ('Sign out error:', error);
         toast.error('Error al cerrar sesión');
         setLoading(false);
       } else {
-        console.log('Sign out successful');
+        void ('Sign out successful');
         localStorage.clear();
         sessionStorage.clear();
 
@@ -158,7 +158,7 @@ export function useAuth() {
 
       return { error };
     } catch (error) {
-      console.error('Sign out error:', error);
+      void ('Sign out error:', error);
       toast.error('Error al cerrar sesión');
       setLoading(false);
       return { error };

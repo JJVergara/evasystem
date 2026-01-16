@@ -51,7 +51,7 @@ export function UserProfileDropdown() {
         setUserData(userRecord);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      void ('Error fetching user data:', error);
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export function UserProfileDropdown() {
     try {
       await signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      void ('Error signing out:', error);
       toast.error('Error al cerrar sesión');
     }
   };

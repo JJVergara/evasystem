@@ -1,4 +1,3 @@
-import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
   jsonResponse,
@@ -75,7 +74,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (ambassadorError) {
-      console.error('Error creating ambassador:', ambassadorError);
+      void ('Error creating ambassador:', ambassadorError);
       return errorResponse(`Error creating ambassador: ${ambassadorError.message}`, 400);
     }
 
@@ -107,7 +106,7 @@ Deno.serve(async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error in create-ambassador:', error);
+    void ('Error in create-ambassador:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

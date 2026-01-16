@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Calendar, MapPin, Clock, Hash, DollarSign, Target, User, Instagram } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -87,7 +80,7 @@ export default function CreateEventModal({
         .single();
 
       if (userError || !userData) {
-        console.error('Error getting user data:', userError);
+        void ('Error getting user data:', userError);
         toast.error('Error al obtener datos del usuario');
         return;
       }
@@ -101,16 +94,16 @@ export default function CreateEventModal({
         organization_id: userData.organization_id,
       };
 
-      console.log('Creando evento con datos:', eventData);
+      void ('Creando evento con datos:', eventData);
 
-      const { data: newEvent, error: eventError } = await supabase
+      const { error: eventError } = await supabase
         .from('events')
         .insert(eventData)
         .select()
         .single();
 
       if (eventError) {
-        console.error('Error creating event:', eventError);
+        void ('Error creating event:', eventError);
         toast.error('Error al crear evento: ' + eventError.message);
         return;
       }
@@ -120,7 +113,7 @@ export default function CreateEventModal({
       onClose();
       onEventCreated();
     } catch (error) {
-      console.error('Error creating event:', error);
+      void ('Error creating event:', error);
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);

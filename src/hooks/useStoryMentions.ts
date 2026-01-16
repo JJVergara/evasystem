@@ -52,7 +52,7 @@ async function fetchStoryMentionsData(organizationId: string): Promise<StoryMent
     .order('mentioned_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching story mentions:', error);
+    void ('Error fetching story mentions:', error);
     throw error;
   }
 
@@ -115,7 +115,7 @@ export function useStoryMentions() {
           filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
-          console.log('New story mention received:', payload);
+          void ('New story mention received:', payload);
           if (payload.new.mention_type === 'story_referral') {
             queryClient.invalidateQueries({ queryKey });
             toast({
@@ -134,7 +134,7 @@ export function useStoryMentions() {
           filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
-          console.log('Story mention updated:', payload);
+          void ('Story mention updated:', payload);
           if (payload.new.mention_type === 'story_referral') {
             queryClient.invalidateQueries({ queryKey });
           }
@@ -171,7 +171,7 @@ export function useStoryMentions() {
           description: 'La mención ha sido marcada como atendida',
         });
       } catch (error) {
-        console.error('Error marking mention as processed:', error);
+        void ('Error marking mention as processed:', error);
         toast({
           title: 'Error',
           description: 'No se pudo actualizar la mención',
@@ -219,7 +219,7 @@ export function useStoryMentions() {
           description: 'La historia ha sido marcada como borrada antes de 24h',
         });
       } catch (error) {
-        console.error('Error flagging mention as early delete:', error);
+        void ('Error flagging mention as early delete:', error);
         toast({
           title: 'Error',
           description: 'No se pudo marcar la mención',
@@ -252,7 +252,7 @@ export function useStoryMentions() {
         await markAsProcessed(mention.id);
         return data;
       } catch (error) {
-        console.error('Error sending reply:', error);
+        void ('Error sending reply:', error);
         throw error;
       }
     },

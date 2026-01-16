@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -15,18 +15,14 @@ import {
   Bell,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   Instagram,
   Clock,
   User,
-  Calendar,
   Filter,
-  Check,
   Trash2,
   ExternalLink,
   Search,
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
@@ -137,7 +133,7 @@ export function NotificationCenter() {
 
       setNotifications(mockNotifications);
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      void ('Error loading notifications:', error);
       toast({
         title: 'Error',
         description: 'No se pudieron cargar las notificaciones',
@@ -188,7 +184,7 @@ export function NotificationCenter() {
         description: 'La notificación ha sido marcada como leída',
       });
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      void ('Error marking notification as read:', error);
     }
   };
 
@@ -201,7 +197,7 @@ export function NotificationCenter() {
         description: 'Se han marcado todas las notificaciones como leídas',
       });
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      void ('Error marking all notifications as read:', error);
     }
   };
 
@@ -214,7 +210,7 @@ export function NotificationCenter() {
         description: 'La notificación ha sido eliminada',
       });
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      void ('Error deleting notification:', error);
     }
   };
 

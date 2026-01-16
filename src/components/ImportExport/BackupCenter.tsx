@@ -1,24 +1,15 @@
 import { useState, useEffect } from 'react';
 import { GlassPanel } from '@/components/Layout/GlassPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   Download,
   Upload,
   Database,
-  Shield,
   History,
   AlertCircle,
   CheckCircle,
@@ -81,7 +72,7 @@ export default function BackupCenter() {
       if (error) throw error;
       setBackupLogs(data || []);
     } catch (error) {
-      console.error('Error fetching backup logs:', error);
+      void ('Error fetching backup logs:', error);
     }
   };
 
@@ -121,7 +112,7 @@ export default function BackupCenter() {
       toast.success('Respaldo completo creado y descargado exitosamente');
       fetchBackupLogs();
     } catch (error) {
-      console.error('Error creating backup:', error);
+      void ('Error creating backup:', error);
       toast.error('Error al crear el respaldo');
     } finally {
       setIsProcessing(false);
@@ -172,7 +163,7 @@ export default function BackupCenter() {
       toast.success(`Exportación ${format.toUpperCase()} completada exitosamente`);
       fetchBackupLogs();
     } catch (error) {
-      console.error('Error exporting data:', error);
+      void ('Error exporting data:', error);
       toast.error('Error al exportar los datos');
     } finally {
       setIsProcessing(false);
@@ -222,7 +213,7 @@ export default function BackupCenter() {
 
       fetchBackupLogs();
     } catch (error) {
-      console.error('Error restoring backup:', error);
+      void ('Error restoring backup:', error);
       toast.error('Error al restaurar el respaldo');
     } finally {
       setIsProcessing(false);

@@ -11,24 +11,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Plus,
-  Filter,
-  Download,
-  Search,
-  Eye,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from 'lucide-react';
+import { Download, Search, Eye, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { TaskStatusBadge } from './TaskStatusBadge';
-import { TaskFilters } from './TaskFilters';
 import { TaskStatsCards } from './TaskStatsCards';
 import { useFiestas } from '@/hooks/useFiestas';
 import { useTasksManagement } from '@/hooks/useTasksManagement';
 import { useStoriesData } from '@/hooks/useStoriesData';
-import { FiestaSelector } from '@/components/Fiestas/FiestaSelector';
 import { CreateTaskModal } from './CreateTaskModal';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/Layout/PageHeader';
@@ -36,20 +24,11 @@ import { GlassPanel } from '@/components/Layout/GlassPanel';
 
 export default function StoriesManagement() {
   const { selectedFiesta, selectedFiestaId } = useFiestas();
-  const { ambassadors, events, loading } = useStoriesData();
+  const { ambassadors, events } = useStoriesData();
   const [selectedEventId, setSelectedEventId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const {
-    tasks,
-    stats,
-    loading: tasksLoading,
-    refreshTasks,
-    updateTaskStatus,
-    deleteTask,
-  } = useTasksManagement();
+  const { tasks, stats, loading: tasksLoading } = useTasksManagement();
 
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
@@ -66,7 +45,7 @@ export default function StoriesManagement() {
   const exportTasks = async () => {
     try {
       toast.success('Funcionalidad de exportación en desarrollo');
-    } catch (error) {
+    } catch {
       toast.error('Error al exportar tareas');
     }
   };
@@ -95,10 +74,14 @@ export default function StoriesManagement() {
         description={`Gestión de historias de ${selectedFiesta?.name || 'la fiesta'}`}
       >
         <div className="flex items-center space-x-2 flex-wrap gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Tarea
-          </Button>
+          <CreateTaskModal
+            ambassadors={ambassadors.map((amb) => ({
+              id: amb.id,
+              name: `${amb.first_name} ${amb.last_name}`,
+              instagram_user: amb.instagram_user,
+            }))}
+            events={events}
+          />
           <Button variant="outline" onClick={exportTasks}>
             <Download className="h-4 w-4 mr-2" />
             Exportar
@@ -281,15 +264,6 @@ export default function StoriesManagement() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <CreateTaskModal
-        ambassadors={ambassadors.map((amb) => ({
-          id: amb.id,
-          name: `${amb.first_name} ${amb.last_name}`,
-          instagram_user: amb.instagram_user,
-        }))}
-        events={events}
-      />
     </div>
   );
 }

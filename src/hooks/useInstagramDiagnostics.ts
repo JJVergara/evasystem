@@ -151,7 +151,7 @@ export function useInstagramDiagnostics() {
       setWebhookStatus(webhookData || { configured: false, reachable: false });
       setConnectionTests([...tests]);
     } catch (error) {
-      console.error('Error running diagnostics:', error);
+      void ('Error running diagnostics:', error);
       toast.error('Error al ejecutar diagnósticos');
     } finally {
       setIsRunning(false);
@@ -175,7 +175,7 @@ export function useInstagramDiagnostics() {
       });
 
       if (error) {
-        console.error('Webhook test error:', error);
+        void ('Webhook test error:', error);
         toast.error('Error al probar webhook: ' + error.message);
       } else if (data.test_sent) {
         toast.success('Test de webhook enviado correctamente');
@@ -186,7 +186,7 @@ export function useInstagramDiagnostics() {
         toast.error('Test de webhook falló: ' + (data.error || 'Error desconocido'));
       }
     } catch (error) {
-      console.error('Error testing webhook:', error);
+      void ('Error testing webhook:', error);
       toast.error('Error al probar webhook');
     }
   };
