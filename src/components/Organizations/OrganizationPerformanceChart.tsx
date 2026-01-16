@@ -51,7 +51,6 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Eventos y Tareas por Mes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Actividad Mensual</CardTitle>
@@ -72,7 +71,6 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
         </CardContent>
       </Card>
 
-      {/* Alcance y Embajadores Activos */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Crecimiento y Alcance</CardTitle>

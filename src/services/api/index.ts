@@ -1,11 +1,3 @@
-/**
- * API Services - Clean abstraction over Supabase
- *
- * Usage:
- * import { getAmbassadors, createFiesta, getTasks } from '@/services/api';
- */
-
-// Ambassador services
 export {
   getAmbassadors,
   createAmbassador,
@@ -13,13 +5,10 @@ export {
   deleteAmbassador,
 } from './ambassadors';
 
-// Fiesta services
 export { getFiestas, createFiesta, updateFiesta } from './fiestas';
 
-// Event services
 export { getEvents, getEventsByFiesta, createEvent, updateEvent, deleteEvent } from './events';
 
-// Task services
 export {
   getTasks,
   createTask,

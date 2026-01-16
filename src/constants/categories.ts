@@ -1,10 +1,3 @@
-/**
- * Ambassador Category Constants
- *
- * Defines ranking tiers and their TypeScript types.
- * Used by @/types/ambassador.ts
- */
-
 export const AMBASSADOR_CATEGORY = {
   BRONZE: 'bronze',
   SILVER: 'silver',

@@ -65,10 +65,9 @@ function generateMonthlyPerformance(
   const monthlyData = new Map();
   const now = new Date();
 
-  // Initialize last 6 months
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = date.toISOString().slice(0, 7); // YYYY-MM format
+    const key = date.toISOString().slice(0, 7);
     monthlyData.set(key, {
       month: date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
       points: 0,
@@ -77,7 +76,6 @@ function generateMonthlyPerformance(
     });
   }
 
-  // Populate with task data
   tasks.forEach((task) => {
     const taskDate = new Date(task.created_at);
     const key = taskDate.toISOString().slice(0, 7);
@@ -110,7 +108,6 @@ function generateRecentActivities(
     status?: string;
   }> = [];
 
-  // Add task activities
   tasks.slice(0, 10).forEach((task) => {
     activities.push({
       date: task.created_at,
@@ -121,14 +118,12 @@ function generateRecentActivities(
     });
   });
 
-  // Sort by date (most recent first)
   activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return activities.slice(0, 10);
 }
 
 async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<AmbassadorMetrics> {
-  // Fetch ambassador basic info and stats
   const { data: ambassador, error: ambassadorError } = await supabase
     .from('embassadors')
     .select(
@@ -139,7 +134,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
   if (ambassadorError) throw ambassadorError;
 
-  // Fetch tasks for this ambassador
   const { data: tasks } = await supabase
     .from('tasks')
     .select(
@@ -156,12 +150,10 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
     )
     .eq('embassador_id', ambassadorId);
 
-  // Fetch story insights for this ambassador (wrapped in try-catch to not break main flow)
   let storyInsights: AmbassadorMetrics['story_insights'] = undefined;
   let insightsErrorFlag = false;
 
   try {
-    // First get social mentions for this ambassador
     const { data: socialMentions, error: mentionsError } = await supabase
       .from('social_mentions')
       .select('id, instagram_story_id')
@@ -172,7 +164,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       insightsErrorFlag = true;
       console.warn('Error fetching social mentions for story insights:', mentionsError);
     } else if (socialMentions && socialMentions.length > 0) {
-      // Then fetch story insights for those mentions
       const mentionIds = socialMentions.map((m) => m.id);
 
       interface StoryInsightSnapshot {
@@ -224,7 +215,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
         insightsErrorFlag = true;
         console.warn('Error fetching story insights:', insightsError);
       } else if (storyInsightsData && storyInsightsData.length > 0) {
-        // Create a map of mention_id -> story_id
         const mentionToStoryMap = new Map<string, string>();
         socialMentions.forEach((mention) => {
           if (mention.instagram_story_id) {
@@ -232,7 +222,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
           }
         });
 
-        // Group by story ID and get latest snapshot for each
         const storyMap = new Map<string, (typeof storyInsightsData)[0]>();
 
         storyInsightsData.forEach((snapshot) => {
@@ -241,7 +230,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
           if (!storyMap.has(storyId)) {
             storyMap.set(storyId, snapshot);
           } else {
-            // Keep the latest snapshot
             const existing = storyMap.get(storyId)!;
             if (new Date(snapshot.snapshot_at) > new Date(existing.snapshot_at)) {
               storyMap.set(storyId, snapshot);
@@ -249,7 +237,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
           }
         });
 
-        // Aggregate metrics from latest snapshots
         const latestSnapshots = Array.from(storyMap.values());
         const totalReach = latestSnapshots.reduce((sum, s) => sum + (s.reach || 0), 0);
         const totalImpressions = latestSnapshots.reduce((sum, s) => sum + (s.impressions || 0), 0);
@@ -271,12 +258,10 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       }
     }
   } catch (insightsErr) {
-    // Story insights failed but don't break the main metrics
     insightsErrorFlag = true;
     console.warn('Error processing story insights:', insightsErr);
   }
 
-  // Calculate metrics
   const totalReach = tasks?.reduce((sum, t) => sum + (t.reach_count || 0), 0) || 0;
   const avgEngagement =
     tasks?.length > 0
@@ -287,10 +272,8 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
       ? (ambassador.completed_tasks / (ambassador.completed_tasks + ambassador.failed_tasks)) * 100
       : 0;
 
-  // Generate monthly performance (last 6 months)
   const monthlyPerformance = generateMonthlyPerformance(tasks || []);
 
-  // Generate recent activities
   const tasksWithTypedEvents = (tasks || []).map((task) => {
     const taskEvents = task.events;
     let typedEvents: { name: string } | null = null;
@@ -309,7 +292,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
   });
   const recentActivities = generateRecentActivities(tasksWithTypedEvents);
 
-  // Find last activity
   const lastActivity =
     tasks?.length > 0
       ? tasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
@@ -353,8 +335,8 @@ export function useAmbassadorMetrics(ambassadorId?: string) {
     queryKey,
     queryFn: () => fetchAmbassadorMetricsData(ambassadorId!),
     enabled: !!ambassadorId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const refreshMetrics = useCallback(() => {

@@ -86,7 +86,6 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Advertencia importante */}
           <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
@@ -102,7 +101,6 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
             </CardContent>
           </Card>
 
-          {/* URLs de referencia */}
           <Card>
             <CardHeader>
               <CardTitle>URLs que necesitarás</CardTitle>
@@ -147,7 +145,6 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
             </CardContent>
           </Card>
 
-          {/* Pasos detallados */}
           <div className="space-y-4">
             {steps.map((step, index) => (
               <Card key={index}>
@@ -190,7 +187,6 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
             ))}
           </div>
 
-          {/* Siguiente paso */}
           <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">

@@ -97,11 +97,10 @@ export function useStoryMentions() {
     queryKey,
     queryFn: () => fetchStoryMentionsData(organization!.id),
     enabled: !!organization?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes - story mentions should be fresher
-    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
-  // Set up real-time subscription for new story mentions
   useEffect(() => {
     if (!organization?.id) return;
 
@@ -161,7 +160,6 @@ export function useStoryMentions() {
 
         if (error) throw error;
 
-        // Optimistically update the cache
         queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
           old?.map((mention) =>
             mention.id === mentionId ? { ...mention, processed: true } : mention
@@ -199,7 +197,6 @@ export function useStoryMentions() {
 
         if (error) throw error;
 
-        // Optimistically update the cache
         queryClient.setQueryData<StoryMention[]>(queryKey, (old) =>
           old?.map((mention) =>
             mention.id === mentionId
@@ -208,7 +205,6 @@ export function useStoryMentions() {
           )
         );
 
-        // Create notification for early deletion
         await supabase.from('notifications').insert({
           organization_id: organization?.id,
           type: 'story_early_delete',

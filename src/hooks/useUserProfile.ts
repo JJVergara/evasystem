@@ -29,7 +29,6 @@ async function fetchUserProfileData(
   userEmail: string | undefined,
   userMetadata: { full_name?: string } | null
 ): Promise<UserProfile> {
-  // First, get user profile without nested organization query
   const { data, error: fetchError } = await supabase
     .from('users')
     .select(
@@ -53,7 +52,6 @@ async function fetchUserProfileData(
   }
 
   if (!data) {
-    // Auto-create user profile if it doesn't exist
     console.log('User profile not found, creating one...');
     const { data: createdUser, error: createError } = await supabase
       .from('users')
@@ -84,7 +82,6 @@ async function fetchUserProfileData(
     }
 
     if (createdUser) {
-      // Auto-create default organization for new user
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -96,7 +93,6 @@ async function fetchUserProfileData(
         .single();
 
       if (!orgError && orgData) {
-        // Update user with organization_id
         const { data: updatedUser, error: updateError } = await supabase
           .from('users')
           .update({ organization_id: orgData.id })
@@ -122,7 +118,6 @@ async function fetchUserProfileData(
         }
       }
 
-      // Fallback if organization creation fails
       toast.success('Perfil de usuario creado exitosamente');
       return {
         ...createdUser,
@@ -134,7 +129,6 @@ async function fetchUserProfileData(
     throw new Error('Error al crear el perfil de usuario');
   }
 
-  // If user exists but doesn't have organization_id assigned, check if they have organizations
   if (!data.organization_id) {
     console.log(
       'User exists but no organization assigned, checking for available organizations...'
@@ -148,7 +142,6 @@ async function fetchUserProfileData(
       .limit(1);
 
     if (!orgError && userOrganizations && userOrganizations.length > 0) {
-      // Auto-assign the first organization found
       const firstOrg = userOrganizations[0];
       console.log('Auto-assigning organization:', firstOrg.name);
 
@@ -194,7 +187,6 @@ async function fetchUserProfileData(
         };
       }
     } else if (!orgError) {
-      // No organizations found - create one automatically
       console.log('No organizations found, creating default organization...');
 
       const { data: newOrg, error: createOrgError } = await supabase
@@ -250,7 +242,6 @@ async function fetchUserProfileData(
     }
   }
 
-  // Fetch organization info separately if user has organization_id
   let organizationData = null;
   if (data.organization_id) {
     const { data: orgInfo } = await supabase.rpc('get_organization_safe_info', {
@@ -259,7 +250,6 @@ async function fetchUserProfileData(
     organizationData = orgInfo?.[0] || null;
   }
 
-  // Update last_login if more than 1 hour has passed
   const lastLogin = data.last_login ? new Date(data.last_login) : null;
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
@@ -302,8 +292,8 @@ export function useUserProfile() {
     queryKey,
     queryFn: () => fetchUserProfileData(user!.id, user!.email, user!.user_metadata),
     enabled: !!user?.id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const refreshProfile = useCallback(() => {

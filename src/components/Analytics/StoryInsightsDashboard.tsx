@@ -123,7 +123,6 @@ export function StoryInsightsDashboard() {
 
   const { summary, daily_metrics, metrics_by_hour, recent_snapshots, max_stories_per_hour } = data;
 
-  // Color palette for stacked story bars
   const storyColors = [
     '#8b5cf6', // Purple
     '#10b981', // Green
@@ -166,7 +165,6 @@ export function StoryInsightsDashboard() {
       </PageHeader>
 
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Key Metrics */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Badge
@@ -322,7 +320,6 @@ export function StoryInsightsDashboard() {
           </div>
         </div>
 
-        {/* Averages Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardContent className="p-6">
@@ -575,13 +572,10 @@ export function StoryInsightsDashboard() {
                           );
                         }}
                       />
-                      {/* Stacked bars for each story position */}
                       {Array.from({ length: max_stories_per_hour }, (_, i) => {
-                        // Custom shape that applies rounded corners to the last non-zero bar in each stack
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const CustomBarShape = (props: any) => {
                           const { payload, ...barProps } = props;
-                          // Find the last non-zero story index for this hour
                           let lastNonZeroIndex = -1;
                           for (let j = max_stories_per_hour - 1; j >= 0; j--) {
                             const value = payload?.[`story_${j}_reach`];
@@ -590,7 +584,6 @@ export function StoryInsightsDashboard() {
                               break;
                             }
                           }
-                          // Apply rounded corners only to the last non-zero bar
                           const radius: [number, number, number, number] =
                             i === lastNonZeroIndex ? [4, 4, 0, 0] : [0, 0, 0, 0];
                           return <Rectangle {...barProps} radius={radius} />;
@@ -607,7 +600,6 @@ export function StoryInsightsDashboard() {
                           />
                         );
                       })}
-                      {/* Reference line for average - shown as dashed line at avg_reach level */}
                       <ReferenceLine
                         y={Math.round(
                           metrics_by_hour
@@ -628,7 +620,6 @@ export function StoryInsightsDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Legend */}
                 <div className="mt-4 flex flex-wrap gap-3 justify-center text-xs">
                   <span className="text-muted-foreground text-[10px] w-full text-center mb-1">
                     Colores ordenados cronológicamente (más antigua → más reciente)
@@ -656,7 +647,6 @@ export function StoryInsightsDashboard() {
                   </div>
                 </div>
 
-                {/* Best hours summary */}
                 <div className="mt-6 p-4 rounded-lg bg-muted/50">
                   <h4 className="font-medium mb-2">📊 Mejores Horarios</h4>
                   <div className="flex flex-wrap gap-2">
@@ -673,7 +663,6 @@ export function StoryInsightsDashboard() {
                   </div>
                 </div>
 
-                {/* Hours with multiple stories */}
                 {metrics_by_hour.filter((h) => h.stories_count > 1).length > 0 && (
                   <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
                     <h4 className="font-medium mb-2 text-amber-600">
@@ -735,7 +724,6 @@ export function StoryInsightsDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {recent_snapshots.map((snapshot) => {
-                      // Calculate story creation date from snapshot_at minus story_age_hours
                       const snapshotDate = new Date(snapshot.snapshot_at);
                       const storyCreatedAt = snapshot.story_age_hours
                         ? new Date(

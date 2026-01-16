@@ -74,7 +74,6 @@ export function NotificationCenter() {
     try {
       setLoading(true);
 
-      // Mock data for demonstration - replace with real Supabase queries
       const mockNotifications: Notification[] = [
         {
           id: '1',
@@ -152,7 +151,6 @@ export function NotificationCenter() {
   const filterNotifications = () => {
     let filtered = notifications;
 
-    // Filter by tab
     if (selectedTab !== 'all') {
       if (selectedTab === 'unread') {
         filtered = filtered.filter((n) => !n.read_status);
@@ -161,12 +159,10 @@ export function NotificationCenter() {
       }
     }
 
-    // Filter by priority
     if (priorityFilter !== 'all') {
       filtered = filtered.filter((n) => n.priority === priorityFilter);
     }
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(
         (n) =>
@@ -299,7 +295,6 @@ export function NotificationCenter() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
@@ -322,7 +317,6 @@ export function NotificationCenter() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-3 flex-1">
           <div className="relative flex-1 max-w-sm">
@@ -350,7 +344,6 @@ export function NotificationCenter() {
         </div>
       </div>
 
-      {/* Notifications */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="all">Todas</TabsTrigger>

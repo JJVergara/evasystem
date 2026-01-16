@@ -1,14 +1,5 @@
-/**
- * Organization type definitions
- *
- * These types represent organization-related data structures.
- */
-
 import type { MemberStatus } from '@/constants';
 
-/**
- * Core organization data
- */
 export interface Organization {
   id: string;
   name: string;
@@ -17,25 +8,19 @@ export interface Organization {
   instagram_user_id?: string | null;
   instagram_business_account_id?: string | null;
   instagram_profile_picture_url?: string | null;
-  instagram_access_token?: string | null; // Note: Usually not exposed to frontend
+  instagram_access_token?: string | null;
   instagram_token_expiry?: string | null;
   instagram_token_status?: string | null;
   created_at: string;
   created_by?: string;
 }
 
-/**
- * Organization with additional computed fields
- */
 export interface OrganizationWithStats extends Organization {
   ambassadorCount?: number;
   eventCount?: number;
   fiestaCount?: number;
 }
 
-/**
- * Organization membership data
- */
 export interface OrganizationMembership {
   id: string;
   user_id: string;
@@ -46,9 +31,6 @@ export interface OrganizationMembership {
   created_at: string;
 }
 
-/**
- * Organization member with user details
- */
 export interface OrganizationMember extends OrganizationMembership {
   user?: {
     email?: string;
@@ -56,14 +38,8 @@ export interface OrganizationMember extends OrganizationMembership {
   };
 }
 
-/**
- * Organization roles
- */
 export type OrganizationRole = 'owner' | 'admin' | 'manager' | 'viewer';
 
-/**
- * Organization permissions object
- */
 export interface OrganizationPermissions {
   manage_organization?: boolean;
   manage_members?: boolean;
@@ -73,9 +49,6 @@ export interface OrganizationPermissions {
   manage_instagram?: boolean;
 }
 
-/**
- * Default permissions by role
- */
 export const DEFAULT_PERMISSIONS: Record<OrganizationRole, OrganizationPermissions> = {
   owner: {
     manage_organization: true,
@@ -111,9 +84,6 @@ export const DEFAULT_PERMISSIONS: Record<OrganizationRole, OrganizationPermissio
   },
 };
 
-/**
- * Organization settings
- */
 export interface OrganizationSettings {
   id: string;
   organization_id: string;
@@ -126,26 +96,17 @@ export interface OrganizationSettings {
   updated_at: string;
 }
 
-/**
- * Data for creating a new organization
- */
 export interface CreateOrganizationInput {
   name: string;
   description?: string;
 }
 
-/**
- * Data for updating an organization
- */
 export interface UpdateOrganizationInput {
   name?: string;
   description?: string;
   instagram_username?: string;
 }
 
-/**
- * Role display labels (Spanish)
- */
 export const ROLE_LABELS: Record<OrganizationRole, string> = {
   owner: 'Propietario',
   admin: 'Administrador',
@@ -153,17 +114,12 @@ export const ROLE_LABELS: Record<OrganizationRole, string> = {
   viewer: 'Visualizador',
 };
 
-/**
- * Check if user has a specific permission
- */
 export function hasPermission(
   membership: Pick<OrganizationMembership, 'permissions' | 'role'>,
   permission: keyof OrganizationPermissions
 ): boolean {
-  // Owner always has all permissions
   if (membership.role === 'owner') return true;
 
-  // Check explicit permission
   return (
     membership.permissions?.[permission] ??
     DEFAULT_PERMISSIONS[membership.role]?.[permission] ??

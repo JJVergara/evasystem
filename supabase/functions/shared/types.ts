@@ -1,18 +1,7 @@
-/**
- * Shared TypeScript interfaces for Supabase Edge Functions
- * Single source of truth for data structures
- */
-
 import type { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-/**
- * Supabase client type
- */
 export type SupabaseClient = ReturnType<typeof createClient>;
 
-/**
- * Organization data structure
- */
 export interface Organization {
   id: string;
   name: string;
@@ -26,9 +15,6 @@ export interface Organization {
   created_by?: string;
 }
 
-/**
- * Ambassador/Embassador data structure
- */
 export interface Ambassador {
   id: string;
   organization_id: string;
@@ -40,9 +26,6 @@ export interface Ambassador {
   profile_picture_url?: string;
 }
 
-/**
- * Social mention data structure
- */
 export interface SocialMention {
   id: string;
   organization_id: string;
@@ -64,33 +47,15 @@ export interface SocialMention {
   inbox_link?: string;
 }
 
-/**
- * Story insights metrics
- * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
- *
- * Available STORY metrics:
- * - reach: Unique accounts that viewed the story
- * - replies: Total replies on the story
- * - shares: Number of shares
- * - profile_visits: Number of profile visits from the story
- * - total_interactions: Likes, saves, comments, shares (minus unlikes/unsaves/deleted)
- * - views: Total views (metric in development)
- * - navigation: Total navigation actions with breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
- *
- * Note: 'impressions' was deprecated in v22.0+ for media created after July 2, 2024
- */
 export interface StoryInsights {
-  // Core metrics
   reach: number;
   replies: number;
   shares: number;
 
-  // Engagement metrics
   profile_visits: number;
   total_interactions: number;
   views: number;
 
-  // Navigation breakdown (tap_forward, tap_back, tap_exit, swipe_forward)
   navigation?:
     | number
     | {
@@ -100,16 +65,12 @@ export interface StoryInsights {
         swipe_forward?: number;
       };
 
-  // Legacy fields (kept for DB compatibility)
   impressions?: number;
   exits?: number;
   taps_forward?: number;
   taps_back?: number;
 }
 
-/**
- * Instagram insights data
- */
 export interface InsightsData {
   media_id?: string;
   id?: string;
@@ -119,9 +80,7 @@ export interface InsightsData {
   }>;
   [key: string]: unknown;
 }
-/**
- * Dynamic insights map (allows additional metrics)
- */
+
 export interface InsightsMap {
   impressions?: number;
   reach?: number;
@@ -133,9 +92,6 @@ export interface InsightsMap {
   [key: string]: number | undefined;
 }
 
-/**
- * Instagram media item
- */
 export interface MediaItem {
   id: string;
   username?: string;
@@ -146,9 +102,6 @@ export interface MediaItem {
   [key: string]: unknown;
 }
 
-/**
- * Instagram comment data
- */
 export interface CommentData {
   id: string;
   text?: string;
@@ -162,9 +115,6 @@ export interface CommentData {
   [key: string]: unknown;
 }
 
-/**
- * Instagram message data
- */
 export interface MessageData {
   mid?: string;
   id?: string;
@@ -183,17 +133,11 @@ export interface MessageData {
   [key: string]: unknown;
 }
 
-/**
- * Meta OAuth token data
- */
 export type TokenData = {
   access_token: string;
-  expires_in: number; // seconds
+  expires_in: number;
 };
 
-/**
- * Social mention update data
- */
 export interface MentionUpdateData {
   checks_count: number;
   last_check_at: string;
@@ -202,9 +146,6 @@ export interface MentionUpdateData {
   processed_at?: string;
 }
 
-/**
- * Notification data structure
- */
 export interface Notification {
   created_at: string;
   type: string;
@@ -215,18 +156,12 @@ export interface Notification {
   target_id?: string;
 }
 
-/**
- * Error with structured message
- */
 export interface ErrorWithMessage {
   name?: string;
   message?: string;
   stack?: string;
 }
 
-/**
- * Instagram data for ambassadors
- */
 export interface InstagramData {
   instagram_user_id: string;
   instagram_user?: string;
@@ -234,9 +169,6 @@ export interface InstagramData {
   profile_picture_url?: string;
 }
 
-/**
- * Instagram data for organizations
- */
 export interface OrganizationInstagramData {
   facebook_page_id: string;
   instagram_business_account_id?: string;
@@ -244,9 +176,6 @@ export interface OrganizationInstagramData {
   instagram_user_id?: string;
 }
 
-/**
- * Fiesta (event/party) data structure
- */
 export interface Fiesta {
   id: string;
   organization_id?: string;
@@ -298,10 +227,6 @@ export interface MessageData {
   [key: string]: unknown;
 }
 
-/**
- * Instagram Quick Reply button for messaging
- * See: https://developers.facebook.com/docs/messenger-platform/send-messages/quick-replies
- */
 export interface QuickReply {
   content_type: 'text';
   title: string;

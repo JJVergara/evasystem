@@ -59,7 +59,6 @@ export function UserProfileDropdown() {
 
   const handleSignOut = async () => {
     try {
-      // Don't call signOut here, just use the hook's signOut which handles everything
       await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
@@ -67,7 +66,6 @@ export function UserProfileDropdown() {
     }
   };
 
-  // Show skeleton while loading
   if (loading) {
     return (
       <div className="flex items-center gap-2 p-2">
@@ -80,7 +78,6 @@ export function UserProfileDropdown() {
     );
   }
 
-  // Don't render if no user data
   if (!user || !userData) {
     return null;
   }

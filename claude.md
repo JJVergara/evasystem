@@ -406,8 +406,8 @@ The `refresh-instagram-tokens` edge function runs daily at 3 AM UTC via pg_cron:
 
 ### Key Constants (`/supabase/functions/shared/constants.ts`)
 ```typescript
-TOKEN_REFRESH_THRESHOLD_DAYS = 7    // Refresh tokens this many days before expiry
-DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000  // 60 days in milliseconds
+TOKEN_REFRESH_THRESHOLD_DAYS = 7
+DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000
 ```
 
 ### Frontend Token Status
@@ -437,16 +437,12 @@ The following cron jobs are configured in the database:
 
 ### Managing Cron Jobs
 ```sql
--- View all cron jobs
 SELECT * FROM cron.job;
 
--- View job execution history
 SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
 
--- Create a new cron job
 SELECT cron.schedule('job-name', '0 * * * *', $$ SELECT ... $$);
 
--- Delete a cron job
 SELECT cron.unschedule('job-name');
 ```
 
@@ -515,8 +511,8 @@ Global configuration in `App.tsx`:
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000,      // 10 minutes
-      gcTime: 30 * 60 * 1000,         // 30 minutes garbage collection
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       retry: (failureCount, error) => {
         if (error?.status >= 400 && error?.status < 500) return false;
         return failureCount < 1;
@@ -536,11 +532,10 @@ Use `QUERY_KEYS` from `@/constants` instead of hardcoded arrays:
 ```typescript
 import { QUERY_KEYS } from '@/constants';
 
-// Usage in hooks
-const queryKey = QUERY_KEYS.ambassadors(organizationId);
-const queryKey = QUERY_KEYS.fiestas(organizationId);
-const queryKey = QUERY_KEYS.tasks(organizationId);
-const queryKey = QUERY_KEYS.dashboardStats(userId);
+const ambassadorsKey = QUERY_KEYS.ambassadors(organizationId);
+const fiestasKey = QUERY_KEYS.fiestas(organizationId);
+const tasksKey = QUERY_KEYS.tasks(organizationId);
+const dashboardStatsKey = QUERY_KEYS.dashboardStats(userId);
 ```
 
 ### Service Layer Pattern
@@ -548,7 +543,6 @@ Use `@/services/api` for Supabase operations instead of direct calls:
 ```typescript
 import { getAmbassadors, createAmbassador } from '@/services/api';
 
-// In hooks
 const { data } = useQuery({
   queryKey: QUERY_KEYS.ambassadors(orgId),
   queryFn: () => getAmbassadors(orgId),
@@ -569,7 +563,6 @@ export function useEntities() {
   const organizationId = organization?.id;
   const queryKey = QUERY_KEYS.entities(organizationId || '');
 
-  // 1. Query using service layer
   const { data, isLoading, error } = useQuery({
     queryKey,
     queryFn: () => getEntities(organizationId!),
@@ -577,7 +570,6 @@ export function useEntities() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // 2. Mutations with cache invalidation
   const createMutation = useMutation({
     mutationFn: (data: CreateEntityInput) => createEntity(organizationId!, data),
     onSuccess: () => {
@@ -587,7 +579,6 @@ export function useEntities() {
     onError: () => toast.error('Error creating'),
   });
 
-  // 3. Combine loading states
   const loading = orgLoading || (!!organizationId && isLoading);
 
   return { data, loading, error, create: createMutation.mutateAsync };
@@ -646,6 +637,54 @@ import { useHook } from '@/hooks/useHook';
 
 ---
 
+## Coding Standards
+
+### No Comments Policy
+
+**This codebase follows a strict no-comments policy.** All code must be self-explanatory through:
+- Clear, descriptive variable and function names
+- Small, focused functions with single responsibilities
+- Well-structured code that reveals intent
+- Meaningful type definitions
+
+**Rules:**
+- Do NOT add inline comments (`//`)
+- Do NOT add block comments (`/* */`)
+- Do NOT add JSDoc comments (`/** */`)
+- Do NOT add TODO comments
+- Do NOT add commented-out code
+
+**Exceptions:**
+- Test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`) may contain comments for test documentation
+- Type definitions may include brief JSDoc for IDE intellisense when absolutely necessary for complex types
+
+**Why no comments?**
+- Comments become outdated and misleading
+- Good code is self-documenting
+- Comments often explain "what" instead of the code showing "how"
+- Forces developers to write clearer code
+- Reduces noise and improves readability
+
+**Instead of comments, use:**
+```typescript
+// BAD: Comment explaining what code does
+// Check if user is admin
+if (user.role === 'admin') { ... }
+
+// GOOD: Self-explanatory code
+const isAdmin = user.role === 'admin';
+if (isAdmin) { ... }
+
+// BAD: Comment explaining complex logic
+// Calculate days until token expires
+const days = Math.floor((expiry - now) / 86400000);
+
+// GOOD: Extract to well-named function
+const daysUntilExpiry = calculateDaysUntilExpiry(tokenExpiry);
+```
+
+---
+
 ## Code Quality Tools
 
 ### Prettier
@@ -666,22 +705,6 @@ ESLint is configured with:
 - `@typescript-eslint/no-explicit-any`: warn
 - `@typescript-eslint/consistent-type-imports`: prefer type imports
 - `no-console`: warn (except `console.warn` and `console.error`)
-
-### JSDoc Documentation
-Key hooks include JSDoc comments with:
-- `@fileoverview` describing the module's purpose
-- `@example` showing usage patterns
-- `@returns` documenting return values
-
-Example:
-```typescript
-/**
- * Hook for managing ambassadors with full CRUD operations.
- * @returns Object containing ambassadors, loading state, and CRUD functions
- * @example
- * const { ambassadors, createAmbassador } = useAmbassadors();
- */
-```
 
 ---
 
@@ -794,8 +817,8 @@ const { data: membership } = await supabase
 
 **Implementation**: `/supabase/functions/shared/crypto.ts`
 ```typescript
-encryptToken(token: string): Promise<string>   // Store this
-safeDecryptToken(encrypted: string): Promise<string>  // Use when calling Instagram API
+encryptToken(token: string): Promise<string>
+safeDecryptToken(encrypted: string): Promise<string>
 ```
 
 ### ADR-004: Cron Jobs via pg_cron
@@ -812,10 +835,8 @@ safeDecryptToken(encrypted: string): Promise<string>  // Use when calling Instag
 
 **Pattern**:
 ```typescript
-// Server state (data from API)
 const { data, isLoading } = useQuery({ queryKey: ['key'], queryFn: fetchData });
 
-// UI state (local only)
 const [isOpen, setIsOpen] = useState(false);
 ```
 
@@ -827,13 +848,13 @@ const [isOpen, setIsOpen] = useState(false);
 **Configuration**:
 ```toml
 [functions.meta-oauth]
-verify_jwt = true  # Requires user authentication
+verify_jwt = true
 
 [functions.instagram-webhook]
-verify_jwt = false  # Called by Instagram, uses verify_token instead
+verify_jwt = false
 
 [functions.refresh-instagram-tokens]
-verify_jwt = false  # Called by cron, uses CRON_SECRET
+verify_jwt = false
 ```
 
 ### ADR-007: React Query for Server State
@@ -933,7 +954,6 @@ const { data } = useQuery({
 
 ### Missing Token Data
 ```sql
--- Check token status for all organizations
 SELECT
   o.name,
   o.instagram_username,

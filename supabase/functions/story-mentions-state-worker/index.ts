@@ -32,17 +32,15 @@ Deno.serve(async (req) => {
     let verificationCount = 0;
 
     if (type === 'verification') {
-      // Handle story verification at different intervals (1h, 12h, 23h)
       const now = new Date();
       const currentMinutes = now.getMinutes();
 
-      // Define verification intervals in minutes since mention creation
-      const intervals = [60, 720, 1380]; // 1h, 12h, 23h
+      const intervals = [60, 720, 1380];
 
       for (const intervalMinutes of intervals) {
         const targetTime = new Date(now.getTime() - intervalMinutes * 60 * 1000);
-        const windowStart = new Date(targetTime.getTime() - 30 * 60 * 1000); // 30 min before
-        const windowEnd = new Date(targetTime.getTime() + 30 * 60 * 1000); // 30 min after
+        const windowStart = new Date(targetTime.getTime() - 30 * 60 * 1000);
+        const windowEnd = new Date(targetTime.getTime() + 30 * 60 * 1000);
 
         const { data: mentionsToVerify, error: verifyError } = await supabase
           .from('social_mentions')
@@ -69,7 +67,6 @@ Deno.serve(async (req) => {
 
         for (const mention of mentionsToVerify || []) {
           try {
-            // Get organization tokens
             const { data: tokenInfo } = await supabase
               .from('organization_instagram_tokens')
               .select('access_token, token_expiry')
@@ -82,7 +79,6 @@ Deno.serve(async (req) => {
               tokenInfo?.access_token &&
               (!tokenInfo.token_expiry || new Date(tokenInfo.token_expiry) > now)
             ) {
-              // Try to verify if story still exists
               if (mention.instagram_story_id) {
                 try {
                   const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
@@ -96,14 +92,12 @@ Deno.serve(async (req) => {
               }
             }
 
-            // Update checks count and last check time
             const newChecksCount = mention.checks_count + 1;
             const updateData: MentionUpdateData = {
               checks_count: newChecksCount,
               last_check_at: now.toISOString(),
             };
 
-            // Determine if story was deleted early (before 24h and not found)
             const mentionAge = now.getTime() - new Date(mention.mentioned_at).getTime();
             const is24Hours = mentionAge >= 24 * 60 * 60 * 1000;
 
@@ -124,7 +118,6 @@ Deno.serve(async (req) => {
               verificationCount++;
 
               if (updateData.state === 'flagged_early_delete') {
-                // Create notification for early deletion
                 await supabase.from('notifications').insert({
                   organization_id: mention.organization_id,
                   type: 'story_early_delete',
@@ -143,7 +136,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Find all story mentions that have expired (past 24h) and are still in 'new' state
     const { data: expiredMentions, error: expiredError } = await supabase
       .from('social_mentions')
       .select('id, organization_id, instagram_username, mentioned_at, expires_at')
@@ -156,13 +148,10 @@ Deno.serve(async (req) => {
     } else {
       console.log(`Found ${expiredMentions?.length || 0} expired story mentions to process`);
 
-      // Process each expired mention
       for (const mention of expiredMentions || []) {
         try {
-          // Try to collect final insights snapshot before marking as completed
           let finalSnapshotCreated = false;
 
-          // Get organization tokens for final insights collection
           const { data: tokenInfo } = await supabase
             .from('organization_instagram_tokens')
             .select('access_token, token_expiry')
@@ -173,27 +162,24 @@ Deno.serve(async (req) => {
             try {
               const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
 
-              // Try to fetch final insights (story might still be available for a short time after 24h)
               const insightsUrl = `${INSTAGRAM_API_BASE}/${mention.instagram_story_id}/insights?metric=${STORY_INSIGHTS_METRICS}&access_token=${decryptedToken}`;
               const insightsResponse = await fetch(insightsUrl);
 
               if (insightsResponse.ok) {
                 const insightsData = await insightsResponse.json();
 
-                // Parse insights
                 const insights: InsightsMap = {};
                 for (const metric of insightsData.data || []) {
                   insights[metric.name] = metric.values?.[0]?.value || 0;
                 }
 
-                // Create final snapshot
                 const finalSnapshot = {
                   social_mention_id: mention.id,
                   organization_id: mention.organization_id,
                   instagram_story_id: mention.instagram_story_id,
                   instagram_media_id: mention.instagram_story_id,
                   snapshot_at: new Date().toISOString(),
-                  story_age_hours: 24, // Final snapshot at 24h
+                  story_age_hours: 24,
                   impressions: insights.impressions || 0,
                   reach: insights.reach || 0,
                   replies: insights.replies || 0,
@@ -226,7 +212,6 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Update state to 'completed' (natural 24h expiration)
           const { error: updateError } = await supabase
             .from('social_mentions')
             .update({
@@ -243,7 +228,6 @@ Deno.serve(async (req) => {
 
           processedCount++;
 
-          // Create notification for completed story mention (low priority)
           const notificationMessage = finalSnapshotCreated
             ? `Historia de @${mention.instagram_username || 'usuario desconocido'} completó su ciclo de 24h (insights finales guardados)`
             : `Historia de @${mention.instagram_username || 'usuario desconocido'} completó su ciclo de 24h naturalmente`;

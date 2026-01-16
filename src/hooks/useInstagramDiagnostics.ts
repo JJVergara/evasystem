@@ -51,7 +51,6 @@ export function useInstagramDiagnostics() {
     setConnectionTests([...tests]);
 
     try {
-      // Test 1: Verify token validity
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
         'instagram-diagnostics',
         {
@@ -71,7 +70,6 @@ export function useInstagramDiagnostics() {
       setConnectionTests([...tests]);
 
       if (!tokenError) {
-        // Test 2: Instagram profile access
         const { data: profileData, error: profileError } = await supabase.functions.invoke(
           'instagram-diagnostics',
           {
@@ -92,7 +90,6 @@ export function useInstagramDiagnostics() {
         };
         setConnectionTests([...tests]);
 
-        // Test 3: Mentions permissions
         const { data: mentionsData, error: mentionsError } = await supabase.functions.invoke(
           'instagram-diagnostics',
           {
@@ -111,7 +108,6 @@ export function useInstagramDiagnostics() {
         };
         setConnectionTests([...tests]);
 
-        // Test 4: Stories permissions
         const { data: storiesData, error: storiesError } = await supabase.functions.invoke(
           'instagram-diagnostics',
           {
@@ -130,13 +126,11 @@ export function useInstagramDiagnostics() {
         };
         setConnectionTests([...tests]);
       } else {
-        // Mark other tests as skipped if token is invalid
         for (let i = 1; i < 4; i++) {
           tests[i] = { ...tests[i], status: 'error', message: 'Saltado por token inválido' };
         }
       }
 
-      // Test 5: Webhook status
       const { data: webhookData, error: webhookError } = await supabase.functions.invoke(
         'instagram-diagnostics',
         {

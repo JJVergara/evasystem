@@ -151,7 +151,6 @@ export function StoryMentionDetails({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Status and Info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {getStateBadge(mention.state)}
@@ -165,7 +164,6 @@ export function StoryMentionDetails({
             </span>
           </div>
 
-          {/* Time remaining */}
           {timeRemaining && isNew && (
             <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2 text-primary">
@@ -178,7 +176,6 @@ export function StoryMentionDetails({
             </div>
           )}
 
-          {/* User Info */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-muted-foreground" />
@@ -194,13 +191,11 @@ export function StoryMentionDetails({
             )}
           </div>
 
-          {/* Content */}
           <div>
             <h3 className="font-semibold mb-2">Contenido del mensaje:</h3>
             <p className="text-muted-foreground p-3 bg-muted/30 rounded-lg">{mention.content}</p>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleViewStory} className="flex items-center gap-2">
               <ExternalLink className="w-4 h-4" />
@@ -244,7 +239,6 @@ export function StoryMentionDetails({
 
           <Separator />
 
-          {/* Reply Section */}
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <MessageCircle className="w-4 h-4" />
@@ -269,7 +263,6 @@ export function StoryMentionDetails({
             </div>
           </div>
 
-          {/* Deep link info */}
           {mention.deep_link && !mention.deep_link.includes('instagram.com') && (
             <div className="p-3 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">
@@ -279,7 +272,6 @@ export function StoryMentionDetails({
             </div>
           )}
 
-          {/* Raw Data (for debugging) */}
           {mention.raw_data && (
             <details className="mt-4">
               <summary className="cursor-pointer text-sm text-muted-foreground">

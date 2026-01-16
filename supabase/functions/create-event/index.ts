@@ -1,8 +1,3 @@
-/**
- * Create Event Edge Function
- * Creates a new event for an organization
- */
-
 import {
   corsPreflightResponse,
   jsonResponse,
@@ -12,32 +7,27 @@ import {
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase } = authResult;
 
-    // Parse request body
     const { eventData } = await req.json();
     if (!eventData) {
       return badRequestResponse('Event data is required');
     }
 
-    // Get user's organization
     const organizationId = await getUserOrganization(supabase, user.id);
     if (!organizationId) {
       return errorResponse('User has no organization', 400);
     }
 
-    // Get user record for logs
     const { data: userData, error: userDataError } = await supabase
       .from('users')
       .select('id')
@@ -48,7 +38,6 @@ Deno.serve(async (req) => {
       return errorResponse('User record not found', 404);
     }
 
-    // Create event
     const { data: eventResult, error: eventError } = await supabase
       .from('events')
       .insert({
@@ -75,7 +64,6 @@ Deno.serve(async (req) => {
       return errorResponse(`Error creating event: ${eventError.message}`, 400);
     }
 
-    // Create success feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: eventResult.id,
@@ -83,7 +71,6 @@ Deno.serve(async (req) => {
       p_message: `Evento "${eventData.name}" creado exitosamente`,
     });
 
-    // Create event log
     await supabase.rpc('create_event_log', {
       p_user_id: userData.id,
       p_event_id: eventResult.id,

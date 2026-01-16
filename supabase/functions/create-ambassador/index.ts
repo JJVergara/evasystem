@@ -1,8 +1,3 @@
-/**
- * Create Ambassador Edge Function
- * Creates a new ambassador for an organization
- */
-
 import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
@@ -13,32 +8,27 @@ import {
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase } = authResult;
 
-    // Parse request body
     const { ambassadorData } = await req.json();
     if (!ambassadorData) {
       return badRequestResponse('Ambassador data is required');
     }
 
-    // Get user's organization
     const organizationId = await getUserOrganization(supabase, user.id);
     if (!organizationId) {
       return errorResponse('User has no organization', 400);
     }
 
-    // Get user record for created_by
     const { data: userData, error: userDataError } = await supabase
       .from('users')
       .select('id')
@@ -49,7 +39,6 @@ Deno.serve(async (req) => {
       return errorResponse('User record not found', 404);
     }
 
-    // Check for existing ambassador with same email or RUT
     const { data: existingAmbassador } = await supabase
       .from('embassadors')
       .select('id, email, rut')
@@ -61,7 +50,6 @@ Deno.serve(async (req) => {
       return badRequestResponse('Ya existe un embajador con ese email o RUT');
     }
 
-    // Create ambassador
     const { data: ambassadorResult, error: ambassadorError } = await supabase
       .from('embassadors')
       .insert({
@@ -91,7 +79,6 @@ Deno.serve(async (req) => {
       return errorResponse(`Error creating ambassador: ${ambassadorError.message}`, 400);
     }
 
-    // Create success feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: null,
@@ -99,7 +86,6 @@ Deno.serve(async (req) => {
       p_message: `Embajador "${ambassadorData.first_name} ${ambassadorData.last_name}" creado exitosamente. Estado: Pendiente de aprobación.`,
     });
 
-    // Create ambassador log
     await supabase.rpc('create_event_log', {
       p_user_id: userData.id,
       p_event_id: null,

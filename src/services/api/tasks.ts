@@ -1,10 +1,3 @@
-/**
- * Tasks API Service
- *
- * Abstracts Supabase operations for task management.
- * Used by useTasksManagement hook.
- */
-
 import { supabase } from '@/integrations/supabase/client';
 
 export type TaskType = 'story' | 'mention' | 'repost';
@@ -74,9 +67,6 @@ export interface UpdateTaskInput {
   points?: number;
 }
 
-/**
- * Fetch all tasks for an organization with relations
- */
 export async function getTasks(organizationId: string): Promise<TasksData> {
   const { data, error } = await supabase
     .from('tasks')
@@ -110,7 +100,6 @@ export async function getTasks(organizationId: string): Promise<TasksData> {
     completion_method: task.completion_method as '24h_validation' | 'manual',
   }));
 
-  // Calculate stats
   const completed = tasksData.filter((t) => t.status === 'completed').length;
   const pending = tasksData.filter((t) =>
     ['pending', 'uploaded', 'in_progress'].includes(t.status)
@@ -132,9 +121,6 @@ export async function getTasks(organizationId: string): Promise<TasksData> {
   };
 }
 
-/**
- * Create a new task
- */
 export async function createTask(input: CreateTaskInput): Promise<TaskWithRelations> {
   const { data, error } = await supabase
     .from('tasks')
@@ -150,9 +136,6 @@ export async function createTask(input: CreateTaskInput): Promise<TaskWithRelati
   return data as TaskWithRelations;
 }
 
-/**
- * Update task status and optionally points
- */
 export async function updateTask(input: UpdateTaskInput): Promise<boolean> {
   const updateData: {
     status: TaskStatusType;
@@ -173,9 +156,6 @@ export async function updateTask(input: UpdateTaskInput): Promise<boolean> {
   return true;
 }
 
-/**
- * Delete a task
- */
 export async function deleteTask(taskId: string): Promise<boolean> {
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
 

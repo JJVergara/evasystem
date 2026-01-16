@@ -57,7 +57,6 @@ export default function Onboarding() {
   const [ambassadorCount, setAmbassadorCount] = useState(0);
   const [checkingAmbassadors, setCheckingAmbassadors] = useState(true);
 
-  // Check for ambassadors
   useEffect(() => {
     const checkAmbassadors = async () => {
       if (!organization?.id) return;
@@ -83,7 +82,6 @@ export default function Onboarding() {
     checkAmbassadors();
   }, [organization?.id]);
 
-  // Set initial org values when organization loads
   useEffect(() => {
     if (organization) {
       setOrgName(organization.name || '');
@@ -91,7 +89,6 @@ export default function Onboarding() {
     }
   }, [organization]);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/');
@@ -172,8 +169,7 @@ export default function Onboarding() {
   const completedSteps = steps.filter((step) => step.completed).length;
   const progress = (completedSteps / steps.length) * 100;
 
-  // Verificar si se pueden completar los pasos requeridos para acceder al dashboard
-  const requiredSteps = steps.filter((step) => step.id === 'organization'); // Solo organización es requerida
+  const requiredSteps = steps.filter((step) => step.id === 'organization');
   const canAccessDashboard = requiredSteps.every((step) => step.completed);
 
   const handleFinishOnboarding = () => {
@@ -202,7 +198,6 @@ export default function Onboarding() {
         />
 
         <div className="space-y-8">
-          {/* Hero Section */}
           <GlassPanel size="lg" className="text-center">
             <div className="space-y-6">
               <div className="flex items-center justify-center">
@@ -233,7 +228,6 @@ export default function Onboarding() {
             </div>
           </GlassPanel>
 
-          {/* Organization Edit Modal */}
           {editingOrg && (
             <GlassPanel className="border-purple-200 bg-purple-50/50">
               <div className="space-y-4">
@@ -294,7 +288,6 @@ export default function Onboarding() {
             </GlassPanel>
           )}
 
-          {/* Steps Grid */}
           <div className="grid gap-6 md:grid-cols-2">
             {steps.map((step, index) => (
               <GlassPanel
@@ -363,7 +356,6 @@ export default function Onboarding() {
             ))}
           </div>
 
-          {/* Call to Action - Dashboard Access */}
           {canAccessDashboard && (
             <GlassPanel className="text-center border-green-200 bg-green-50/50">
               <div className="space-y-4">
@@ -390,7 +382,6 @@ export default function Onboarding() {
             </GlassPanel>
           )}
 
-          {/* Progress Message - Show when org is complete but other steps remain */}
           {canAccessDashboard && completedSteps < steps.length && (
             <GlassPanel className="text-center">
               <div className="space-y-4">

@@ -44,13 +44,11 @@ export function useInstagramConnection() {
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
   const queryClient = useQueryClient();
 
-  // Stable query key using centralized QUERY_KEYS
   const queryKey = useMemo(
     () => QUERY_KEYS.instagramTokenStatus(organization?.id || ''),
     [organization?.id]
   );
 
-  // Use React Query for token status
   const {
     data: tokenStatus = { isConnected: false, isTokenExpired: false },
     isLoading: isLoadingTokenStatus,
@@ -60,13 +58,12 @@ export function useInstagramConnection() {
     queryKey,
     queryFn: fetchTokenStatus,
     enabled: !!user && !!organization,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     placeholderData: keepPreviousData,
     retry: 1,
   });
 
-  // Handle OAuth callback params
   useEffect(() => {
     if (!user || !organization) return;
 
@@ -77,7 +74,6 @@ export function useInstagramConnection() {
     if (hasOAuthParams) {
       console.log('OAuth callback detected, refreshing token status...');
 
-      // Clean up URL parameters
       try {
         const cleanUrl = window.location.pathname + '?tab=instagram';
         setTimeout(() => {
@@ -91,10 +87,8 @@ export function useInstagramConnection() {
         console.warn('Could not clean URL parameters:', error);
       }
 
-      // Invalidate the query to refetch
       queryClient.invalidateQueries({ queryKey });
 
-      // Refresh again after a delay to ensure token is processed
       setTimeout(() => {
         console.log('Refreshing token status again after OAuth callback...');
         queryClient.invalidateQueries({ queryKey });
@@ -216,7 +210,6 @@ export function useInstagramConnection() {
         return;
       }
 
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey });
       await refreshOrganization();
       toast.success('Instagram desconectado exitosamente');
@@ -267,7 +260,6 @@ export function useInstagramConnection() {
         return false;
       }
 
-      // Invalidate query to get new expiry date
       queryClient.invalidateQueries({ queryKey });
       toast.success('Token renovado exitosamente', {
         description: 'Tu conexión con Instagram se ha extendido por 60 días más',

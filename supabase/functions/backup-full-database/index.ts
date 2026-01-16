@@ -1,8 +1,3 @@
-/**
- * Backup Full Database Edge Function
- * Creates a comprehensive backup of user's organization data
- */
-
 import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
@@ -12,7 +7,6 @@ import {
 } from '../shared/responses.ts';
 import { authenticateRequest } from '../shared/auth.ts';
 
-// Type definitions for backup data
 interface BackupData {
   timestamp: string;
   organizations: Record<string, unknown>[];
@@ -29,13 +23,11 @@ interface BackupData {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
@@ -44,7 +36,6 @@ Deno.serve(async (req) => {
 
     console.log('Starting full database backup for user:', user.id);
 
-    // Initialize backup data structure
     const backupData: BackupData = {
       timestamp: new Date().toISOString(),
       organizations: [],
@@ -60,7 +51,6 @@ Deno.serve(async (req) => {
       task_logs: [],
     };
 
-    // Fetch organizations (only user's own)
     const { data: organizations } = await supabaseClient
       .from('organizations')
       .select('*')
@@ -70,14 +60,12 @@ Deno.serve(async (req) => {
     if (organizations && organizations.length > 0) {
       const orgIds = organizations.map((org) => org.id);
 
-      // Fetch embassadors for user's organizations
       const { data: embassadors } = await supabaseClient
         .from('embassadors')
         .select('*')
         .in('organization_id', orgIds);
       backupData.embassadors = embassadors || [];
 
-      // Fetch fiestas for user's organizations
       const { data: fiestas } = await supabaseClient
         .from('fiestas')
         .select('*')
@@ -87,7 +75,6 @@ Deno.serve(async (req) => {
       if (fiestas && fiestas.length > 0) {
         const fiestaIds = fiestas.map((f) => f.id);
 
-        // Fetch events for user's fiestas
         const { data: events } = await supabaseClient
           .from('events')
           .select('*')
@@ -98,7 +85,6 @@ Deno.serve(async (req) => {
       if (embassadors && embassadors.length > 0) {
         const embassadorIds = embassadors.map((e) => e.id);
 
-        // Fetch tasks for user's embassadors
         const { data: tasks } = await supabaseClient
           .from('tasks')
           .select('*')
@@ -108,7 +94,6 @@ Deno.serve(async (req) => {
         if (tasks && tasks.length > 0) {
           const taskIds = tasks.map((t) => t.id);
 
-          // Fetch task logs
           const { data: taskLogs } = await supabaseClient
             .from('task_logs')
             .select('*')
@@ -120,7 +105,6 @@ Deno.serve(async (req) => {
       if (backupData.events.length > 0) {
         const eventIds = backupData.events.map((e) => (e as { id: string }).id);
 
-        // Fetch leaderboards for user's events
         const { data: leaderboards } = await supabaseClient
           .from('leaderboards')
           .select('*')
@@ -128,14 +112,12 @@ Deno.serve(async (req) => {
         backupData.leaderboards = leaderboards || [];
       }
 
-      // Fetch organization settings
       const { data: orgSettings } = await supabaseClient
         .from('organization_settings')
         .select('*')
         .in('organization_id', orgIds);
       backupData.organization_settings = orgSettings || [];
 
-      // Fetch notifications
       const { data: notifications } = await supabaseClient
         .from('notifications')
         .select('*')
@@ -143,21 +125,18 @@ Deno.serve(async (req) => {
       backupData.notifications = notifications || [];
     }
 
-    // Fetch user profile
     const { data: userProfile } = await supabaseClient
       .from('users')
       .select('*')
       .eq('auth_user_id', user.id);
     backupData.users = userProfile || [];
 
-    // Fetch import logs
     const { data: importLogs } = await supabaseClient
       .from('import_logs')
       .select('*')
       .eq('user_id', user.id);
     backupData.import_logs = importLogs || [];
 
-    // Sanitize sensitive fields before returning
     backupData.organizations = (backupData.organizations || []).map((o) => {
       const { meta_token, token_expiry, ...safe } = o as Record<string, unknown>;
       return safe;

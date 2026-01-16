@@ -1,16 +1,6 @@
-/**
- * Fiesta API Service
- *
- * Abstracts Supabase operations for fiesta management.
- * Used by useFiestas hook.
- */
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Fiesta, CreateFiestaInput, UpdateFiestaInput } from '@/types';
 
-/**
- * Fetch all fiestas for an organization
- */
 export async function getFiestas(organizationId: string): Promise<Fiesta[]> {
   const { data, error } = await supabase
     .from('fiestas')
@@ -28,9 +18,6 @@ export async function getFiestas(organizationId: string): Promise<Fiesta[]> {
   return (data || []) as Fiesta[];
 }
 
-/**
- * Create a new fiesta
- */
 export async function createFiesta(
   organizationId: string,
   input: CreateFiestaInput
@@ -54,9 +41,6 @@ export async function createFiesta(
   return data as Fiesta;
 }
 
-/**
- * Update a fiesta
- */
 export async function updateFiesta(input: UpdateFiestaInput): Promise<Fiesta> {
   const { id, ...updates } = input;
 

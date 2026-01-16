@@ -28,14 +28,11 @@ export default function AuthCallback() {
 
         setMessage('Procesando autorización de Instagram...');
 
-        // Here we would normally process the callback
-        // For now, we'll just show success and redirect
         setTimeout(() => {
           setStatus('success');
           setMessage('¡Instagram conectado exitosamente!');
           toast.success('Instagram conectado exitosamente');
 
-          // Redirect to ambassadors page after a short delay
           setTimeout(() => {
             navigate('/ambassadors');
           }, 2000);
@@ -46,7 +43,6 @@ export default function AuthCallback() {
         setMessage(error instanceof Error ? error.message : 'Error procesando autorización');
         toast.error('Error conectando Instagram');
 
-        // Redirect to ambassadors page after error
         setTimeout(() => {
           navigate('/ambassadors');
         }, 3000);

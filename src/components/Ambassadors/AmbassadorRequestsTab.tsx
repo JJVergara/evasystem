@@ -60,7 +60,6 @@ export function AmbassadorRequestsTab() {
       setSelectedRequest(null);
       setApprovalForm({ first_name: '', last_name: '', email: '', date_of_birth: '', rut: '' });
     } catch (error) {
-      // Error already handled in hook
     } finally {
       setActionLoading(false);
     }
@@ -72,7 +71,6 @@ export function AmbassadorRequestsTab() {
       await rejectRequest(requestId, rejectionReason);
       setRejectionReason('');
     } catch (error) {
-      // Error already handled in hook
     } finally {
       setActionLoading(false);
     }
@@ -117,7 +115,6 @@ export function AmbassadorRequestsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Pending Requests */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -309,7 +306,6 @@ export function AmbassadorRequestsTab() {
         </CardContent>
       </Card>
 
-      {/* Processed Requests */}
       {processedRequests.length > 0 && (
         <Card>
           <CardHeader>

@@ -1,8 +1,3 @@
-/**
- * Instagram API Utilities
- * Centralized Instagram Graph API interactions
- */
-
 import { INSTAGRAM_API_BASE, STORY_INSIGHTS_METRICS } from './constants.ts';
 import type { StoryInsights, MediaItem } from './types.ts';
 
@@ -17,9 +12,6 @@ export class InstagramApiError extends Error {
   }
 }
 
-/**
- * Build Instagram Graph API URL
- */
 export function buildInstagramApiUrl(endpoint: string, params?: Record<string, string>): string {
   const url = new URL(`${INSTAGRAM_API_BASE}/${endpoint}`);
   if (params) {
@@ -30,10 +22,6 @@ export function buildInstagramApiUrl(endpoint: string, params?: Record<string, s
   return url.toString();
 }
 
-/**
- * Fetch story insights from Instagram API
- * See: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
- */
 export async function fetchStoryInsights(
   storyId: string,
   accessToken: string
@@ -89,11 +77,9 @@ export async function fetchStoryInsights(
           insights.views = value || 0;
           break;
         case 'navigation':
-          // Navigation can be a number or have breakdown data
           if (typeof value === 'number') {
             insights.navigation = value;
           } else if (metric.total_value?.breakdowns?.[0]?.results) {
-            // Parse breakdown: tap_forward, tap_back, tap_exit, swipe_forward
             const breakdown: Record<string, number> = {};
             for (const result of metric.total_value.breakdowns[0].results) {
               const key = result.dimension_values?.[0];
@@ -102,13 +88,11 @@ export async function fetchStoryInsights(
               }
             }
             insights.navigation = breakdown;
-            // Populate legacy fields for backwards compatibility
             insights.exits = breakdown.tap_exit || 0;
             insights.taps_forward = (breakdown.tap_forward || 0) + (breakdown.swipe_forward || 0);
             insights.taps_back = breakdown.tap_back || 0;
           }
           break;
-        // Legacy metric (deprecated but might still be returned for old stories)
         case 'impressions':
           insights.impressions = value || 0;
           break;
@@ -123,9 +107,6 @@ export async function fetchStoryInsights(
   }
 }
 
-/**
- * Fetch media items from Instagram account
- */
 export async function fetchAccountMedia(
   accountId: string,
   accessToken: string,
@@ -157,9 +138,6 @@ export async function fetchAccountMedia(
   return data.data || [];
 }
 
-/**
- * Story item from Instagram API
- */
 export interface StoryItem {
   id: string;
   timestamp?: string;
@@ -168,10 +146,6 @@ export interface StoryItem {
   permalink?: string;
 }
 
-/**
- * Fetch active stories from Instagram account
- * Uses the dedicated /stories endpoint which returns only currently active stories (<24h old)
- */
 export async function fetchAccountStories(
   accountId: string,
   accessToken: string,
@@ -192,7 +166,6 @@ export async function fetchAccountStories(
 
   if (!response.ok) {
     const error = await response.json();
-    // Don't throw if no stories found or permission issue
     if (error.error?.code === 100 || error.error?.code === 190) {
       console.log(`No stories accessible for account ${accountId}: ${error.error?.message}`);
       return [];
@@ -209,9 +182,6 @@ export async function fetchAccountStories(
   return data.data || [];
 }
 
-/**
- * Check if story exists (is still accessible)
- */
 export async function checkStoryExists(storyId: string, accessToken: string): Promise<boolean> {
   try {
     const url = buildInstagramApiUrl(storyId, {
@@ -226,9 +196,6 @@ export async function checkStoryExists(storyId: string, accessToken: string): Pr
   }
 }
 
-/**
- * Fetch Instagram account info
- */
 export async function fetchAccountInfo(
   accountId: string,
   accessToken: string,
@@ -253,9 +220,6 @@ export async function fetchAccountInfo(
   return await response.json();
 }
 
-/**
- * Fetch Instagram media insights (for posts/reels)
- */
 export async function fetchMediaInsights(
   mediaId: string,
   accessToken: string,
@@ -270,7 +234,6 @@ export async function fetchMediaInsights(
 
   if (!response.ok) {
     const error = await response.json();
-    // Don't throw for insights that aren't available yet
     if (error.error?.code === 10 || error.error?.message?.includes('Insights')) {
       return null;
     }
@@ -284,9 +247,6 @@ export async function fetchMediaInsights(
   return await response.json();
 }
 
-/**
- * Fetch mentioned media (tags)
- */
 export async function fetchMentionedMedia(accountId: string, accessToken: string, limit = 50) {
   const url = buildInstagramApiUrl(`${accountId}/tags`, {
     fields: 'id,media_type,media_product_type,timestamp,username',
@@ -309,9 +269,6 @@ export async function fetchMentionedMedia(accountId: string, accessToken: string
   return data.data || [];
 }
 
-/**
- * Send Instagram direct message
- */
 export async function sendInstagramMessage(
   recipientId: string,
   messageText: string,
@@ -344,24 +301,12 @@ export async function sendInstagramMessage(
   return await response.json();
 }
 
-/**
- * Instagram Quick Reply button for messaging
- */
 interface QuickReply {
   content_type: 'text';
   title: string;
   payload: string;
 }
 
-/**
- * Send Instagram direct message with quick reply buttons
- * See: https://developers.facebook.com/docs/messenger-platform/send-messages/quick-replies
- *
- * @param recipientId - Instagram user ID to send to
- * @param messageText - The message text
- * @param quickReplies - Array of quick reply options (max 13 per Instagram limits)
- * @param accessToken - Instagram access token
- */
 export async function sendInstagramMessageWithQuickReplies(
   recipientId: string,
   messageText: string,
@@ -372,7 +317,6 @@ export async function sendInstagramMessageWithQuickReplies(
     access_token: accessToken,
   });
 
-  // Instagram limits quick replies to 13 buttons, titles to 20 chars
   const limitedReplies = quickReplies.slice(0, 13).map((reply) => ({
     content_type: reply.content_type,
     title: reply.title.substring(0, 20),

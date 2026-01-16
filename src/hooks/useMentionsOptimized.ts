@@ -98,7 +98,6 @@ export function useMentionsOptimized(
         .order('created_at', { ascending: false })
         .limit(MENTIONS_PER_PAGE);
 
-      // Apply filters
       if (debouncedSearchTerm) {
         query = query.or(
           `instagram_username.ilike.%${debouncedSearchTerm}%,content.ilike.%${debouncedSearchTerm}%`
@@ -122,7 +121,6 @@ export function useMentionsOptimized(
         throw new Error('Error al cargar menciones');
       }
 
-      // Transform data
       const mentions: SocialMention[] = (mentionsData || []).map((mention) => ({
         id: mention.id,
         instagram_username: mention.instagram_username || 'Usuario desconocido',
@@ -143,7 +141,6 @@ export function useMentionsOptimized(
         raw_data: mention.raw_data,
       }));
 
-      // Calculate statistics
       const totalReach = mentions.reduce((sum, m) => sum + m.reach_count, 0);
       const avgEngagement =
         mentions.length > 0
@@ -168,7 +165,7 @@ export function useMentionsOptimized(
     },
     enabled: !!organization?.id,
     placeholderData: (previousData) => previousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
@@ -187,7 +184,6 @@ export function useMentionsOptimized(
 
       toast.success('Mención asignada exitosamente');
 
-      // Invalidate queries to refresh data (use base key to invalidate all filtered queries)
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.socialMentions(organization?.id || ''),
       });
@@ -197,13 +193,11 @@ export function useMentionsOptimized(
     }
   };
 
-  // Memoized client-side filtering for search responsiveness
   const filteredMentions = useMemo(() => {
     if (!data?.mentions) return [];
 
     let filtered = data.mentions;
 
-    // Additional client-side filtering for immediate responsiveness
     if (searchTerm && searchTerm !== debouncedSearchTerm) {
       filtered = filtered.filter(
         (mention) =>

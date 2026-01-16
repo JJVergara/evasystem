@@ -23,7 +23,6 @@ async function getOrganizationWebhookToken(
   supabaseClient: SupabaseClient,
   instagramUserId: string
 ): Promise<string | undefined> {
-  // Try to find organization by Instagram user ID and get its webhook token using secure function
   const { data: creds, error: credsError } = await supabaseClient.rpc(
     'get_organization_credentials_by_instagram_user',
     {
@@ -35,12 +34,10 @@ async function getOrganizationWebhookToken(
     return creds[0].webhook_verify_token;
   }
 
-  // Fallback to global token
   return Deno.env.get('WEBHOOK_VERIFY_TOKEN');
 }
 
 async function getWebhookCredentials(supabaseClient: SupabaseClient, instagramUserId: string) {
-  // Try to find organization-specific credentials using secure function
   const { data: creds, error: credsError } = await supabaseClient.rpc(
     'get_organization_credentials_by_instagram_user',
     {
@@ -56,7 +53,6 @@ async function getWebhookCredentials(supabaseClient: SupabaseClient, instagramUs
     };
   }
 
-  // Fallback to global credentials
   return {
     APP_SECRET: Deno.env.get('INSTAGRAM_APP_SECRET'),
     WEBHOOK_VERIFY_TOKEN: Deno.env.get('WEBHOOK_VERIFY_TOKEN'),
@@ -72,7 +68,6 @@ async function verifyXHubSignature(
   const credentials = await getWebhookCredentials(supabaseClient, instagramUserId);
   const APP_SECRET = credentials.APP_SECRET;
 
-  // Debug: log first 8 chars of secret to verify it's correct (safe to log partial)
   console.log(
     'DEBUG: Using APP_SECRET starting with:',
     APP_SECRET ? APP_SECRET.substring(0, 8) + '...' : 'NOT SET'
@@ -109,7 +104,6 @@ function timingSafeEqual(a: string, b: string) {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
@@ -118,7 +112,6 @@ Deno.serve(async (req) => {
   const supabase = createSupabaseClient();
 
   try {
-    // Webhook verification (GET request from Meta)
     if (req.method === 'GET') {
       const mode = url.searchParams.get('hub.mode');
       const token = url.searchParams.get('hub.verify_token');
@@ -126,7 +119,6 @@ Deno.serve(async (req) => {
 
       console.log('Webhook verification request:', { mode, token, challenge });
 
-      // For verification, we can use global token as fallback since we don't know the Instagram user yet
       const WEBHOOK_VERIFY_TOKEN = Deno.env.get('WEBHOOK_VERIFY_TOKEN');
 
       if (!WEBHOOK_VERIFY_TOKEN) {
@@ -146,9 +138,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Handle webhook events (POST request from Instagram)
     if (req.method === 'POST') {
-      // Read raw body for signature verification
       const rawBody = await req.text();
       const signatureHeader =
         req.headers.get('x-hub-signature-256') || req.headers.get('X-Hub-Signature-256');
@@ -159,12 +149,10 @@ Deno.serve(async (req) => {
         entries: Array.isArray(body.entry) ? body.entry.length : 0,
       });
 
-      // Process webhook data
       if (body.object === 'instagram') {
         for (const entry of body.entry || []) {
           console.log('Processing entry ID:', entry.id);
 
-          // Verify signature using organization-specific credentials if possible
           try {
             await verifyXHubSignature(supabase, rawBody, signatureHeader, entry.id);
             console.log('Webhook signature verified successfully for entry:', entry.id);
@@ -172,7 +160,6 @@ Deno.serve(async (req) => {
             const errorMessage = e instanceof Error ? e.message : String(e);
             console.error('Invalid webhook signature for entry:', entry.id, errorMessage);
 
-            // Try to log which credentials were attempted
             try {
               const credentials = await getWebhookCredentials(supabase, entry.id);
               console.error('Signature validation failed using:', {
@@ -188,8 +175,6 @@ Deno.serve(async (req) => {
               console.error('Could not log credential info:', credError);
             }
 
-            // Return 200 to prevent Instagram from retrying indefinitely
-            // The error is logged above for debugging
             console.warn('Returning 200 to prevent retry flood despite signature mismatch');
             return new Response(
               JSON.stringify({ received: true, warning: 'signature_mismatch_logged' }),
@@ -200,7 +185,6 @@ Deno.serve(async (req) => {
             );
           }
 
-          // Handle different types of changes
           if (entry.changes) {
             for (const change of entry.changes) {
               switch (change.field) {
@@ -211,7 +195,6 @@ Deno.serve(async (req) => {
                   await handleComments(supabase, change.value, entry.id);
                   break;
                 case 'messages':
-                  // Route messages through the same logic as entry.messaging
                   const msgData = change.value;
                   console.log('DEBUG: Message from changes:', {
                     hasReferral: !!msgData.referral,
@@ -221,7 +204,6 @@ Deno.serve(async (req) => {
                     messageKeys: Object.keys(msgData),
                   });
 
-                  // Check if this is a quick reply response
                   if (msgData.message?.quick_reply?.payload) {
                     console.log(
                       'DEBUG: Quick reply detected:',
@@ -233,7 +215,6 @@ Deno.serve(async (req) => {
                       entry.id
                     );
                   }
-                  // Check if it's a story mention referral
                   else if (
                     msgData.referral &&
                     msgData.referral.source === 'SHORTLINK' &&
@@ -255,10 +236,8 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Handle messaging events
           if (entry.messaging) {
             for (const message of entry.messaging) {
-              // Debug: log message structure for routing
               console.log('DEBUG: Message routing check:', {
                 hasReferral: !!message.referral,
                 referralSource: message.referral?.source,
@@ -267,17 +246,14 @@ Deno.serve(async (req) => {
                 messageKeys: Object.keys(message),
               });
 
-              // Check if this is a quick reply response (from our party selection buttons)
               if (message.message?.quick_reply?.payload) {
                 console.log('DEBUG: Quick reply detected:', message.message.quick_reply.payload);
-                // Route quick replies through handleMessages which will detect the payload
                 await handleMessages(
                   supabase,
                   { ...message, quick_reply: message.message.quick_reply },
                   entry.id
                 );
               }
-              // Check if it's a story mention referral
               else if (
                 message.referral &&
                 message.referral.source === 'SHORTLINK' &&
@@ -314,7 +290,6 @@ async function handleMediaChange(
   try {
     console.log('Handling media change:', { mediaId: mediaData?.id, instagramUserId });
 
-    // First try to find organization by Instagram user ID
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username')
@@ -326,7 +301,6 @@ async function handleMediaChange(
       return;
     }
 
-    // Try to find ambassador by Instagram user ID first
     let ambassador: Ambassador | null = null;
 
     const { data: ambassadorById, error: ambassadorByIdError } = await supabase
@@ -339,7 +313,6 @@ async function handleMediaChange(
     if (!ambassadorByIdError && ambassadorById) {
       ambassador = ambassadorById;
     } else {
-      // Fallback: try to find by normalized username if we have media info with username
       if (mediaData.username) {
         const normalizedUsername = mediaData.username.toLowerCase().replace('@', '');
         const { data: ambassadorByUsername, error: ambassadorByUsernameError } = await supabase
@@ -355,7 +328,6 @@ async function handleMediaChange(
       }
     }
 
-    // Create entry in social_mentions table
     const mentionData = {
       organization_id: organization.id,
       instagram_user_id: instagramUserId,
@@ -363,7 +335,7 @@ async function handleMediaChange(
       content: `Historia de Instagram subida`,
       mention_type: 'story',
       instagram_media_id: mediaData.id,
-      story_url: null, // This will be updated later if available
+      story_url: null,
       platform: 'instagram',
       raw_data: mediaData,
       matched_ambassador_id: ambassador?.id || null,
@@ -381,7 +353,6 @@ async function handleMediaChange(
     }
 
     if (ambassador) {
-      // Create notification for matched ambassador
       await supabase.from('notifications').insert({
         organization_id: ambassador.organization_id,
         type: 'story_uploaded',
@@ -390,7 +361,6 @@ async function handleMediaChange(
         target_id: ambassador.id,
       });
     } else {
-      // Create notification for unassigned story
       await supabase.from('notifications').insert({
         organization_id: organization.id,
         type: 'story_unassigned',
@@ -420,7 +390,6 @@ async function handleComments(
   try {
     console.log('Handling comment:', { instagramUserId, commentId: commentData?.id });
 
-    // Find organization by Instagram user ID
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username')
@@ -432,7 +401,6 @@ async function handleComments(
       return;
     }
 
-    // Try to find ambassador by username if available
     let ambassador: Ambassador | null = null;
     if (commentData.from?.username) {
       const { data: ambassadorByUsername, error: ambassadorError } = await supabase
@@ -447,7 +415,6 @@ async function handleComments(
       }
     }
 
-    // Create entry in social_mentions table
     const mentionData = {
       organization_id: organization.id,
       instagram_user_id: commentData.from?.id || null,
@@ -473,7 +440,6 @@ async function handleComments(
     }
 
     if (ambassador) {
-      // Create notification for assigned comment
       await supabase.from('notifications').insert({
         organization_id: organization.id,
         type: 'mention',
@@ -483,7 +449,6 @@ async function handleComments(
         priority: 'normal',
       });
     } else {
-      // Create notification for unassigned comment
       await supabase.from('notifications').insert({
         organization_id: organization.id,
         type: 'mention_unassigned',
@@ -500,15 +465,11 @@ async function handleComments(
   }
 }
 
-/**
- * Get active fiestas (parties) for an organization
- * Active = event_date is today or in the future
- */
 async function getActiveFiestas(
   supabase: SupabaseClient,
   organizationId: string
 ): Promise<Fiesta[]> {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from('fiestas')
@@ -517,7 +478,7 @@ async function getActiveFiestas(
     .gte('event_date', today)
     .eq('status', 'active')
     .order('event_date', { ascending: true })
-    .limit(13); // Instagram quick reply limit
+    .limit(13);
 
   if (error) {
     console.error('Error fetching active fiestas:', error);
@@ -527,18 +488,13 @@ async function getActiveFiestas(
   return data || [];
 }
 
-/**
- * Handle fiesta selection quick reply from user
- * Returns true if this was a fiesta selection reply, false otherwise
- */
 async function handleFiestaSelectionReply(
   supabase: SupabaseClient,
   messageData: MessageData,
   instagramBusinessAccountId: string
 ): Promise<boolean> {
-  // Check if this is a fiesta selection reply
   if (!messageData.quick_reply?.payload?.startsWith('FIESTA_SELECT:')) {
-    return false; // Not a fiesta selection reply
+    return false;
   }
 
   const fiestaId = messageData.quick_reply.payload.replace('FIESTA_SELECT:', '');
@@ -546,12 +502,11 @@ async function handleFiestaSelectionReply(
 
   if (!senderId || !fiestaId) {
     console.error('Invalid fiesta selection reply: missing sender or fiesta ID');
-    return true; // Handled (as error)
+    return true;
   }
 
   console.log('Processing fiesta selection reply:', { senderId, fiestaId });
 
-  // Find organization by Instagram business account ID
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
     .select('id, name')
@@ -559,7 +514,6 @@ async function handleFiestaSelectionReply(
     .maybeSingle();
 
   if (orgError || !organization) {
-    // Try with instagram_user_id as fallback
     const { data: orgFallback } = await supabase
       .from('organizations')
       .select('id, name')
@@ -578,7 +532,6 @@ async function handleFiestaSelectionReply(
     return true;
   }
 
-  // Find the pending mention for this user
   const { data: pendingMention, error: mentionError } = await supabase
     .from('social_mentions')
     .select('id, instagram_username')
@@ -594,7 +547,6 @@ async function handleFiestaSelectionReply(
     return true;
   }
 
-  // Verify the fiesta exists and belongs to this organization
   const { data: fiesta, error: fiestaError } = await supabase
     .from('fiestas')
     .select('id, name')
@@ -607,7 +559,6 @@ async function handleFiestaSelectionReply(
     return true;
   }
 
-  // Update the social mention with the selected fiesta
   const { error: updateError } = await supabase
     .from('social_mentions')
     .update({
@@ -622,7 +573,6 @@ async function handleFiestaSelectionReply(
     return true;
   }
 
-  // Send confirmation message
   try {
     const { data: tokenData } = await supabase
       .from('organization_instagram_tokens')
@@ -646,7 +596,6 @@ async function handleFiestaSelectionReply(
     console.error('Failed to send confirmation (non-fatal):', confirmError);
   }
 
-  // Create notification for staff
   await supabase.from('notifications').insert({
     organization_id: organization.id,
     type: 'fiesta_mention_linked',
@@ -656,7 +605,7 @@ async function handleFiestaSelectionReply(
     priority: 'normal',
   });
 
-  return true; // Handled
+  return true;
 }
 
 async function handleMessages(
@@ -667,7 +616,6 @@ async function handleMessages(
   try {
     console.log('Handling message:', { instagramUserId, messageId: messageData?.id });
 
-    // Check if this is a fiesta selection quick reply
     if (messageData.quick_reply?.payload) {
       const handled = await handleFiestaSelectionReply(supabase, messageData, instagramUserId);
       if (handled) {
@@ -676,7 +624,6 @@ async function handleMessages(
       }
     }
 
-    // Find organization by Instagram user ID
     console.log(
       'DEBUG: Querying organizations with instagram_user_id =',
       instagramUserId,
@@ -697,7 +644,6 @@ async function handleMessages(
       return;
     }
 
-    // Try to find ambassador by user ID if available
     let ambassador: Ambassador | null = null;
     if (messageData.sender?.id) {
       const { data: ambassadorById, error: ambassadorError } = await supabase
@@ -712,7 +658,6 @@ async function handleMessages(
       }
     }
 
-    // Fetch username from Instagram API if not provided in webhook
     let senderUsername = messageData.sender?.username || null;
     if (!senderUsername && messageData.sender?.id) {
       try {
@@ -737,7 +682,6 @@ async function handleMessages(
       }
     }
 
-    // Create entry in social_mentions table
     const mentionData = {
       organization_id: organization.id,
       instagram_user_id: messageData.sender?.id || null,
@@ -762,7 +706,6 @@ async function handleMessages(
     }
 
     if (ambassador) {
-      // Create notification for assigned message
       await supabase.from('notifications').insert({
         organization_id: organization.id,
         type: 'message',
@@ -772,7 +715,6 @@ async function handleMessages(
         priority: 'normal',
       });
     } else {
-      // Create notification for unassigned message
       await supabase.from('notifications').insert({
         organization_id: organization.id,
         type: 'message_unassigned',
@@ -785,7 +727,6 @@ async function handleMessages(
 
     console.log('Message notification created for organization:', organization.id);
 
-    // Send party selection or thank you message
     if (messageData.sender?.id) {
       try {
         const { data: tokenData, error: tokenError } = await supabase
@@ -803,7 +744,6 @@ async function handleMessages(
           const activeFiestas = await getActiveFiestas(supabase, organization.id);
 
           if (activeFiestas.length === 0) {
-            // No active parties - send simple thank you
             await sendInstagramMessage(
               messageData.sender.id,
               '¡Gracias por publicarnos! Nos vemos en el evento 🎉',
@@ -811,7 +751,6 @@ async function handleMessages(
             );
             console.log('Simple thank you sent (no active fiestas)');
           } else {
-            // Send quick reply with party options
             const quickReplies = activeFiestas.map((fiesta) => ({
               content_type: 'text' as const,
               title: fiesta.name.substring(0, 20),
@@ -825,7 +764,6 @@ async function handleMessages(
               decryptedToken
             );
 
-            // Mark as awaiting selection
             await supabase
               .from('social_mentions')
               .update({
@@ -862,7 +800,6 @@ async function handleStoryMentionReferral(
       hasRefererUri: !!messageData.referral?.referer_uri,
     });
 
-    // Find organization by Instagram business account ID
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username, facebook_page_id')
@@ -877,21 +814,17 @@ async function handleStoryMentionReferral(
       return;
     }
 
-    // Extract mention time from message timestamp or use current time
     const mentionedAt = messageData.timestamp
       ? new Date(messageData.timestamp * 1000).toISOString()
       : new Date().toISOString();
 
-    // Ensure sender exists
     if (!messageData.sender?.id) {
       console.log('No sender ID in story mention referral');
       return;
     }
 
-    // Create unique external event ID for idempotency
     const externalEventId = `story_referral_${messageData.mid || messageData.id}_${messageData.sender.id}`;
 
-    // Check if we already processed this event using the new unique index
     const { data: existingMention, error: checkError } = await supabase
       .from('social_mentions')
       .select('id')
@@ -916,7 +849,6 @@ async function handleStoryMentionReferral(
       return;
     }
 
-    // Try to find ambassador by Instagram user ID
     let ambassador: Ambassador | null = null;
     if (messageData.sender?.id) {
       const { data: ambassadorById, error: ambassadorError } = await supabase
@@ -931,35 +863,27 @@ async function handleStoryMentionReferral(
       }
     }
 
-    // Extract story URL and try to build deep link
     const storyUrl = messageData.referral?.referer_uri || null;
     let deepLink: string | null = null;
 
-    // Try to extract story ID from referral for deep link
     if (messageData.referral?.ref) {
       const storyId = messageData.referral.ref;
-      // Try to build Instagram deep link (may not always work)
       deepLink = `instagram://story-camera/?ref=${storyId}`;
     } else if (storyUrl && storyUrl.includes('instagram.com')) {
       deepLink = storyUrl;
     }
 
-    // If no deep link possible, create profile link
     if (!deepLink && messageData.sender?.username) {
       deepLink = `https://instagram.com/${messageData.sender.username}`;
     }
 
-    // Extract conversation ID and build inbox link
     const conversationId = messageData.mid || messageData.id || null;
     let inboxLink: string | null = null;
 
-    // Build Instagram inbox link if we have conversation ID and page info
     if (conversationId && organization.facebook_page_id) {
-      // Meta Business Inbox link format for Instagram conversations
       inboxLink = `https://business.facebook.com/latest/inbox/instagram/${organization.facebook_page_id}/?conversation_id=${conversationId}`;
     }
 
-    // Create entry in social_mentions table
     const mentionData = {
       organization_id: organization.id,
       external_event_id: externalEventId,
@@ -973,9 +897,9 @@ async function handleStoryMentionReferral(
       instagram_story_id: messageData.referral?.ref || null,
       raw_data: messageData,
       matched_ambassador_id: ambassador?.id || null,
-      processed: false, // Always start as unprocessed for story mentions
+      processed: false,
       reach_count: 0,
-      engagement_score: 1.0, // Story mentions have high engagement value
+      engagement_score: 1.0,
       mentioned_at: mentionedAt,
       state: 'new',
       deep_link: deepLink,
@@ -994,7 +918,6 @@ async function handleStoryMentionReferral(
       return;
     }
 
-    // Always create a notification for story mentions (high priority)
     const notificationMessage = ambassador
       ? `${ambassador.first_name} ${ambassador.last_name} mencionó tu historia y envió un mensaje`
       : `Nueva mención de historia de @${messageData.sender?.username || 'usuario desconocido'} - Requiere atención`;
@@ -1005,12 +928,10 @@ async function handleStoryMentionReferral(
       message: notificationMessage,
       target_type: 'story_mention',
       target_id: socialMention.id,
-      priority: 'high', // Story mentions are always high priority
+      priority: 'high',
     });
 
-    // Send party selection message or simple thank you
     try {
-      // Get organization's Instagram access token
       const { data: tokenData, error: tokenError } = await supabase
         .from('organization_instagram_tokens')
         .select('access_token, token_expiry')
@@ -1024,11 +945,9 @@ async function handleStoryMentionReferral(
       } else {
         const decryptedToken = await safeDecryptToken(tokenData.access_token);
 
-        // Fetch active parties for this organization
         const activeFiestas = await getActiveFiestas(supabase, organization.id);
 
         if (activeFiestas.length === 0) {
-          // No active parties - send simple thank you
           const simpleMessage = '¡Gracias por publicarnos! Nos vemos en el evento 🎉';
 
           const sendResult = await sendInstagramMessage(
@@ -1043,7 +962,6 @@ async function handleStoryMentionReferral(
             messageId: sendResult.message_id,
           });
 
-          // Mark as processed since no party selection needed
           await supabase
             .from('social_mentions')
             .update({
@@ -1058,10 +976,9 @@ async function handleStoryMentionReferral(
             })
             .eq('id', socialMention.id);
         } else {
-          // Active parties exist - send quick reply selection
           const quickReplies = activeFiestas.map((fiesta) => ({
             content_type: 'text' as const,
-            title: fiesta.name.substring(0, 20), // Instagram limit for button text
+            title: fiesta.name.substring(0, 20),
             payload: `FIESTA_SELECT:${fiesta.id}`,
           }));
 
@@ -1074,7 +991,6 @@ async function handleStoryMentionReferral(
             decryptedToken
           );
 
-          // Mark mention as awaiting fiesta selection with 24h timeout
           const selectionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
           await supabase
@@ -1101,7 +1017,6 @@ async function handleStoryMentionReferral(
         }
       }
     } catch (autoResponseError) {
-      // Don't fail the webhook if auto-response fails
       console.error('Failed to send auto-response (non-fatal):', autoResponseError);
     }
 
@@ -1123,7 +1038,6 @@ async function handleStoryInsights(
       hasMetrics: !!insightsData?.metric_values,
     });
 
-    // Find organization by Instagram business account ID
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name')
@@ -1145,7 +1059,6 @@ async function handleStoryInsights(
       return;
     }
 
-    // Try to find the story in our social_mentions table
     const { data: storyMention, error: mentionError } = await supabase
       .from('social_mentions')
       .select('id, instagram_story_id, instagram_media_id, mentioned_at')
@@ -1158,7 +1071,6 @@ async function handleStoryInsights(
       return;
     }
 
-    // Parse insights metrics from webhook data
     interface MetricsMap {
       impressions?: number;
       reach?: number;
@@ -1176,7 +1088,6 @@ async function handleStoryInsights(
       raw: insightsData,
     };
 
-    // The webhook data structure varies, but typically contains metric_values
     if (insightsData.metric_values) {
       for (const metric of insightsData.metric_values) {
         if (metric.name && metric.value !== undefined) {
@@ -1185,9 +1096,7 @@ async function handleStoryInsights(
       }
     }
 
-    // If we found the story mention, create a snapshot
     if (storyMention) {
-      // Calculate story age
       const storyAge = storyMention.mentioned_at
         ? (new Date().getTime() - new Date(storyMention.mentioned_at).getTime()) / (1000 * 60 * 60)
         : null;
@@ -1220,12 +1129,7 @@ async function handleStoryInsights(
         console.log(`Created story insights snapshot from webhook for story ${mediaId}`);
       }
     } else {
-      // Story not found in our database yet - this might be a story we don't track
-      // or it might arrive before the story_mention webhook
       console.log(`Story insights received for media ${mediaId} but story mention not found yet`);
-
-      // We could optionally queue this for later processing or create a placeholder
-      // For now, we'll just log it
     }
   } catch (error) {
     console.error('Error handling story insights:', error);

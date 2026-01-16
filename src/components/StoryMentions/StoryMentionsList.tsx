@@ -35,13 +35,11 @@ export function StoryMentionsList({
   onCreateLead,
 }: StoryMentionsListProps) {
   const handleViewStory = (mention: StoryMention) => {
-    // Priority order: story_url > deep_link > profile fallback
     if (mention.story_url) {
       window.open(mention.story_url, '_blank', 'noopener,noreferrer');
     } else if (mention.deep_link) {
       window.open(mention.deep_link, '_blank', 'noopener,noreferrer');
     } else {
-      // Fallback to Instagram profile
       window.open(
         `https://instagram.com/${mention.instagram_username}`,
         '_blank',

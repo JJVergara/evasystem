@@ -107,7 +107,6 @@ export default function BackupCenter() {
 
       setProgress(80);
 
-      // Download the backup file
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -157,7 +156,6 @@ export default function BackupCenter() {
 
       setProgress(80);
 
-      // The response should be the file content directly
       const blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data, null, 2)], {
         type: format === 'csv' ? 'text/csv' : 'application/json',
       });
@@ -192,7 +190,6 @@ export default function BackupCenter() {
       setIsProcessing(true);
       setProgress(10);
 
-      // Read the backup file
       const fileContent = await selectedFile.text();
       const backupData = JSON.parse(fileContent);
 

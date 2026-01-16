@@ -45,7 +45,6 @@ export default function UserProfile() {
     try {
       if (!user) return;
 
-      // First, get user data without nested organization query
       const { data: userRecord, error } = await supabase
         .from('users')
         .select(
@@ -63,7 +62,6 @@ export default function UserProfile() {
       if (error) throw error;
 
       if (userRecord) {
-        // Fetch organization info separately if user has organization_id
         let organizationData = null;
         if (userRecord.organization_id) {
           const { data: orgInfo } = await supabase.rpc('get_organization_safe_info', {

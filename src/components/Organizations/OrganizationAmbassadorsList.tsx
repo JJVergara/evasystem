@@ -57,12 +57,10 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    {/* Ranking Badge */}
                     <div className="flex items-center justify-center w-8 h-8 text-lg">
                       {getRankIcon(index)}
                     </div>
 
-                    {/* Avatar and Info */}
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarFallback>
@@ -82,7 +80,6 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {/* Points */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Award className="w-3 h-3" />
@@ -91,7 +88,6 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                       <p className="text-xs text-muted-foreground">puntos</p>
                     </div>
 
-                    {/* Tasks Completed */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Target className="w-3 h-3" />
@@ -100,7 +96,6 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                       <p className="text-xs text-muted-foreground">tareas</p>
                     </div>
 
-                    {/* Performance Status */}
                     <Badge variant={performanceBadge.variant} className="text-xs">
                       {performanceBadge.label}
                     </Badge>

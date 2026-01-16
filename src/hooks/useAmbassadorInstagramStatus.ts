@@ -12,7 +12,6 @@ interface AmbassadorInstagramStatus {
 async function fetchAmbassadorInstagramStatus(
   ambassadorId: string
 ): Promise<AmbassadorInstagramStatus> {
-  // Check ambassador_tokens
   const { data: tokenRow, error: tokenError } = await supabase
     .from('ambassador_tokens')
     .select('token_expiry')
@@ -28,7 +27,6 @@ async function fetchAmbassadorInstagramStatus(
     };
   }
 
-  // Read public info from embassadors
   const { data: ambassador } = await supabase
     .from('embassadors')
     .select('instagram_user, follower_count, last_instagram_sync')
@@ -48,8 +46,8 @@ export function useAmbassadorInstagramStatus(ambassadorId: string | null) {
     queryKey: QUERY_KEYS.ambassadorInstagramStatus(ambassadorId || ''),
     queryFn: () => fetchAmbassadorInstagramStatus(ambassadorId!),
     enabled: !!ambassadorId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   return {

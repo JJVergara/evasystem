@@ -8,7 +8,7 @@ interface OnboardingStep {
   title: string;
   description: string;
   completed: boolean;
-  required: boolean; // true = obligatorio, false = recomendado
+  required: boolean;
 }
 
 interface OnboardingData {
@@ -63,18 +63,14 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     };
   }
 
-  // Verificar el estado de cada paso
   const orgCompleted = organization.name !== 'Mi Organización';
 
-  // Verificar Instagram - check multiple indicators
   let instagramCompleted = false;
   try {
-    // Method 1: Check if organization has Instagram business account linked
     if (organization.instagram_business_account_id) {
       instagramCompleted = true;
     }
 
-    // Method 2: If not found via org data, check token status directly
     if (!instagramCompleted) {
       const { data: tokenStatus } = await supabase.functions.invoke('instagram-token-status');
       if (tokenStatus?.success && tokenStatus?.data?.isConnected) {
@@ -82,7 +78,6 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
       }
     }
 
-    // Method 3: Check if there's a valid token in the tokens table
     if (!instagramCompleted) {
       const { data: tokenData } = await supabase
         .from('organization_instagram_tokens')
@@ -99,7 +94,6 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     console.error('Error checking Instagram status:', error);
   }
 
-  // Verificar fiestas
   let fiestaCompleted = false;
   try {
     const { data: fiestas, error } = await supabase
@@ -113,7 +107,6 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     console.error('Error checking fiestas:', error);
   }
 
-  // Verificar embajadores
   let ambassadorsCompleted = false;
   try {
     const { data: ambassadors, error } = await supabase
@@ -158,11 +151,9 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     },
   ];
 
-  // Calcular progreso
   const completedSteps = steps.filter((step) => step.completed).length;
   const overallProgress = (completedSteps / steps.length) * 100;
 
-  // Puede acceder al dashboard si completó los pasos obligatorios
   const canAccessDashboard = steps.filter((step) => step.required).every((step) => step.completed);
 
   return {
@@ -182,8 +173,8 @@ export function useOnboardingStatus() {
     queryKey,
     queryFn: () => fetchOnboardingData(organization),
     enabled: !orgLoading,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const refreshOnboardingStatus = useCallback(() => {

@@ -1,18 +1,9 @@
-/**
- * Error Handling Utilities
- * Standardized error handling for all edge functions
- */
-
 import { errorResponse } from './responses.ts';
 import { InstagramApiError } from './instagram-api.ts';
 
-/**
- * Handle and format errors consistently
- */
 export function handleError(error: unknown): Response {
   console.error('Function error:', error);
 
-  // Instagram API errors
   if (error instanceof InstagramApiError) {
     console.error('Instagram API error:', {
       message: error.message,
@@ -22,11 +13,9 @@ export function handleError(error: unknown): Response {
     return errorResponse(error.message, error.statusCode || 500);
   }
 
-  // Standard Error objects
   if (error instanceof Error) {
     const message = error.message;
 
-    // Common error patterns
     if (message.includes('Unauthorized') || message.includes('Invalid authentication')) {
       return errorResponse(message, 401);
     }
@@ -43,13 +32,9 @@ export function handleError(error: unknown): Response {
     return errorResponse(message, 500);
   }
 
-  // Unknown error type
   return errorResponse('An unexpected error occurred', 500);
 }
 
-/**
- * Wrap async function with error handling
- */
 export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>
 ): (...args: T) => Promise<R | Response> {
@@ -62,9 +47,6 @@ export function withErrorHandling<T extends unknown[], R>(
   };
 }
 
-/**
- * Assert condition or throw error
- */
 export function assert(condition: unknown, message: string, statusCode = 400): asserts condition {
   if (!condition) {
     const error = new Error(message);
@@ -73,9 +55,6 @@ export function assert(condition: unknown, message: string, statusCode = 400): a
   }
 }
 
-/**
- * Validate required fields in request body
- */
 export function validateRequired<T extends Record<string, unknown>>(
   data: T,
   fields: (keyof T)[]

@@ -71,10 +71,8 @@ export const MembersManagement = () => {
 
       if (error) throw error;
 
-      // Get user details from auth.users for each member
       const membersWithUsers = await Promise.all(
         (data || []).map(async (member) => {
-          // Use the service to get user info
           const { data: authUser } = await supabase.auth.admin.getUserById(member.user_id);
 
           return {
@@ -100,7 +98,6 @@ export const MembersManagement = () => {
     if (!currentOrganization?.organization_id || !inviteEmail.trim()) return;
 
     try {
-      // Check if user exists
       const { data: userQuery, error: userError } = await supabase
         .from('users')
         .select('auth_user_id')
@@ -114,7 +111,6 @@ export const MembersManagement = () => {
 
       const existingUserId = userQuery.auth_user_id;
 
-      // Check if already a member
       const { data: existingMember } = await supabase
         .from('organization_members')
         .select('id')
@@ -127,7 +123,6 @@ export const MembersManagement = () => {
         return;
       }
 
-      // Add member
       const { error: memberError } = await supabase.from('organization_members').insert({
         organization_id: currentOrganization.organization_id,
         user_id: existingUserId,

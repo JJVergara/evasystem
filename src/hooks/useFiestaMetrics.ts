@@ -1,8 +1,3 @@
-/**
- * useFiestaMetrics hook
- * Manages fiesta metrics data fetching
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +36,6 @@ interface FiestaMetricsData {
   recent_tasks: RecentTask[];
 }
 
-/** Task with joined ambassador and event data from Supabase query */
 interface TaskWithRelations {
   id: string;
   task_type: string;
@@ -165,7 +159,6 @@ async function fetchGlobalMetrics(): Promise<FiestaMetricsData> {
 }
 
 async function fetchFiestaSpecificMetrics(fiestaId: string): Promise<FiestaMetricsData> {
-  // Get events for the fiesta
   const { data: events } = await supabase.from('events').select('id').eq('fiesta_id', fiestaId);
 
   const eventIds = events?.map((e) => e.id) || [];

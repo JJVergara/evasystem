@@ -138,7 +138,6 @@ export default function MentionsOptimized() {
       </PageHeader>
 
       <div className="space-y-6">
-        {/* Metrics */}
         <GlassPanel>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
@@ -195,7 +194,6 @@ export default function MentionsOptimized() {
           </div>
         </GlassPanel>
 
-        {/* Search and Filters */}
         <GlassPanel>
           <div className="flex items-center space-x-4">
             <div className="flex-1 relative">
@@ -233,7 +231,6 @@ export default function MentionsOptimized() {
           </div>
         </GlassPanel>
 
-        {/* Mentions List - Optimized with height constraint */}
         <GlassPanel>
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Menciones Recientes</h3>

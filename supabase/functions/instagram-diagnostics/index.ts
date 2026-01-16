@@ -12,13 +12,11 @@ import { authenticateRequest, createSupabaseClient } from '../shared/auth.ts';
 import { handleError } from '../shared/error-handler.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // SECURITY: Authenticate user first
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -31,7 +29,6 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user authentication
     const {
       data: { user },
       error: authError,
@@ -53,7 +50,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // SECURITY: Verify user is a member of this organization
     const { data: isMember } = await supabase.rpc('is_organization_member', {
       user_auth_id: user.id,
       org_id: organization_id,
@@ -66,7 +62,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get organization data
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id, instagram_business_account_id, instagram_username')
@@ -80,14 +75,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get token from secure table
     const { data: tokenData } = await supabase
       .from('organization_instagram_tokens')
       .select('access_token, token_expiry')
       .eq('organization_id', organization_id)
       .single();
 
-    // Merge token into org object for backwards compatibility with test functions
     const orgWithToken = {
       ...org,
       meta_token: tokenData?.access_token || null,
@@ -131,7 +124,6 @@ Deno.serve(async (req) => {
 });
 
 async function testTokenValidity(org: Organization) {
-  // Get credentials from secure table
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -241,7 +233,6 @@ async function testMentionsPermissions(org: Organization) {
   }
 
   try {
-    // Test access to mentioned media
     const response = await fetch(
       `${INSTAGRAM_API_BASE}/${org.instagram_business_account_id}/tags?limit=1&access_token=${org.meta_token}`
     );
@@ -267,7 +258,6 @@ async function testStoriesPermissions(org: Organization) {
   }
 
   try {
-    // Test access to stories
     const response = await fetch(
       `${INSTAGRAM_API_BASE}/${org.instagram_business_account_id}/stories?limit=1&access_token=${org.meta_token}`
     );
@@ -279,7 +269,6 @@ async function testStoriesPermissions(org: Organization) {
         stories_available: data.data ? data.data.length >= 0 : true,
       };
     } else {
-      // Stories might not be available or might require different permissions
       return {
         accessible: false,
         error: data.error?.message || 'Stories access not available',
@@ -296,7 +285,6 @@ async function testStoriesPermissions(org: Organization) {
 }
 
 async function testWebhookStatus(supabase: SupabaseClient, org: Organization) {
-  // Get credentials to verify webhook setup
   const { data: creds, error: credsError } = await supabase.rpc(
     'get_organization_credentials_secure',
     {
@@ -307,7 +295,6 @@ async function testWebhookStatus(supabase: SupabaseClient, org: Organization) {
   const hasCredentials = !credsError && creds && creds.length > 0;
   const orgCreds = hasCredentials ? creds[0] : null;
 
-  // Check for recent webhook notifications in the last 24 hours
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -345,7 +332,6 @@ async function testWebhookStatus(supabase: SupabaseClient, org: Organization) {
 }
 
 async function testWebhookDelivery(org: Organization) {
-  // Send a test webhook payload to verify signature validation
   if (!org.instagram_business_account_id) {
     return {
       test_sent: false,
@@ -354,7 +340,6 @@ async function testWebhookDelivery(org: Organization) {
   }
 
   try {
-    // Get organization credentials for signing
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -375,7 +360,6 @@ async function testWebhookDelivery(org: Organization) {
 
     const appSecret = creds[0].meta_app_secret;
 
-    // Create test payload
     const testPayload = {
       object: 'instagram',
       entry: [
@@ -402,7 +386,6 @@ async function testWebhookDelivery(org: Organization) {
 
     const payloadString = JSON.stringify(testPayload);
 
-    // Generate signature
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       'raw',
@@ -416,7 +399,6 @@ async function testWebhookDelivery(org: Organization) {
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Send test webhook to our own endpoint
     const webhookResponse = await fetch(
       'https://awpfslcepylnipaolmvv.supabase.co/functions/v1/instagram-webhook',
       {

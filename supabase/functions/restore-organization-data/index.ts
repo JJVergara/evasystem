@@ -1,8 +1,3 @@
-/**
- * Restore Organization Data Edge Function
- * Restores organization data from a backup file
- */
-
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { authenticateRequest } from '../shared/auth.ts';
 import { SupabaseClient } from '../shared/types.ts';
@@ -15,20 +10,17 @@ interface RestoreResults {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase: supabaseClient } = authResult;
 
-    // Parse request body
     const { backupData, options } = await req.json();
     const { overwriteExisting = false, selectiveTables = [] } = options || {};
 
@@ -42,7 +34,6 @@ Deno.serve(async (req) => {
       summary: '',
     };
 
-    // Helper function to restore table data with org-boundary enforcement and sanitization
     const restoreTable = async (
       tableName: string,
       data: Record<string, unknown>[],
@@ -51,7 +42,6 @@ Deno.serve(async (req) => {
       if (!data || data.length === 0) return 0;
 
       try {
-        // Map foreign keys if needed
         let processedData = data;
         if (foreignKeyMap) {
           processedData = data.map((item) => {
@@ -66,14 +56,12 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Fetch user's organizations for boundary enforcement
         const { data: userOrgs } = await supabaseClient
           .from('organizations')
           .select('id')
           .eq('created_by', user.id);
         const allowedOrgIds = new Set((userOrgs || []).map((o: { id: string }) => o.id));
 
-        // Table-specific sanitization and scoping
         if (tableName === 'organizations') {
           processedData = processedData.map((org) => {
             const { meta_token, token_expiry, created_by, ...rest } = org;
@@ -85,12 +73,10 @@ Deno.serve(async (req) => {
             return { ...rest, auth_user_id: user.id };
           });
         } else {
-          // If the table has organization_id, enforce org boundary
           if (processedData[0] && 'organization_id' in processedData[0]) {
             processedData = processedData
               .filter((row) => allowedOrgIds.has(row.organization_id as string))
               .map((row) => {
-                // Remove secrets possibly present in child tables
                 const sanitized = { ...row };
                 if ('instagram_access_token' in sanitized) delete sanitized.instagram_access_token;
                 if ('token_expires_at' in sanitized) delete sanitized.token_expires_at;
@@ -102,7 +88,6 @@ Deno.serve(async (req) => {
         if (processedData.length === 0) return 0;
 
         if (overwriteExisting) {
-          // For organizations, delete only caller-owned records in payload
           if (tableName === 'organizations') {
             const orgIds = processedData.map((org) => org.id as string);
             await supabaseClient
@@ -137,7 +122,6 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Restore data in proper order (respecting foreign key dependencies)
     const restoreOrder = [
       'organizations',
       'users',
@@ -165,7 +149,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create restore log
     await supabaseClient.from('import_logs').insert({
       user_id: user.id,
       organization_id: backupData.organizations?.[0]?.id || null,

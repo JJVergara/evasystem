@@ -4,7 +4,6 @@ import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 export default function Index() {
   const { loading: orgLoading } = useCurrentOrganization();
 
-  // Mostrar loading mientras se cargan las organizaciones
   if (orgLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">

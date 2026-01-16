@@ -119,7 +119,6 @@ export function SimpleCreateEventModal({
     });
   };
 
-  // Cargar organizaciones cuando se abre el modal
   useEffect(() => {
     if (isOpen && user) {
       loadOrganizations();

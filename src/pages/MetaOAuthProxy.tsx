@@ -15,10 +15,7 @@ const MetaOAuthProxy = () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
 
-      // Check if this is an OAuth callback (has code and state, even without explicit action)
       if (action === 'callback' || action === 'refresh' || (code && state)) {
-        // code and state already extracted above
-
         const error = searchParams.get('error');
         const errorCode = searchParams.get('error_code');
         const errorMessage = searchParams.get('error_message');
@@ -34,7 +31,6 @@ const MetaOAuthProxy = () => {
           fullUrl: window.location.href,
         });
 
-        // Handle Meta errors first
         if (error) {
           console.error('Meta OAuth error:', { error, errorCode, errorMessage });
           const errorMsg = errorMessage || `Meta OAuth error: ${error}`;
@@ -42,7 +38,6 @@ const MetaOAuthProxy = () => {
           setErrorDetails(errorMsg);
           toast.error(errorMsg);
 
-          // Try to determine connection type from state parameter to redirect properly
           const isAmbassadorConnection = state?.includes('_ambassador_');
           const errorRedirectPath = isAmbassadorConnection
             ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
@@ -51,7 +46,6 @@ const MetaOAuthProxy = () => {
           return;
         }
 
-        // Validate required parameters
         if (!code || !state) {
           const missingMsg =
             `Missing required parameters: ${!code ? 'code' : ''} ${!state ? 'state' : ''}`.trim();
@@ -60,7 +54,6 @@ const MetaOAuthProxy = () => {
           setErrorDetails(missingMsg);
           toast.error(missingMsg);
 
-          // Try to determine connection type from state parameter to redirect properly
           const isAmbassadorConnection = state?.includes('_ambassador_');
           const errorRedirectPath = isAmbassadorConnection
             ? '/ambassadors?status=error&error=' + encodeURIComponent(missingMsg)
@@ -72,7 +65,6 @@ const MetaOAuthProxy = () => {
         try {
           console.log('Invoking edge function with callback data...');
 
-          // Use supabase.functions.invoke to call the edge function
           const { data, error: functionError } = await supabase.functions.invoke(
             'meta-oauth?action=callback',
             {
@@ -96,7 +88,6 @@ const MetaOAuthProxy = () => {
             setErrorDetails(errorMsg);
             toast.error('Error al conectar Instagram: ' + errorMsg);
 
-            // Try to determine connection type from state parameter to redirect properly
             const isAmbassadorConnection = state?.includes('_ambassador_');
             const errorRedirectPath = isAmbassadorConnection
               ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
@@ -105,7 +96,6 @@ const MetaOAuthProxy = () => {
           } else if (data?.success === false || data?.error) {
             console.error('Callback processing error:', data);
 
-            // Show specific error messages based on error type
             let userFriendlyMsg = 'Error procesando la autorización';
             if (data?.error === 'meta_api_error') {
               userFriendlyMsg =
@@ -125,7 +115,6 @@ const MetaOAuthProxy = () => {
             );
             toast.error(`Error al conectar Instagram: ${userFriendlyMsg}`);
 
-            // Use type from response if available, otherwise check state parameter
             const isAmbassadorConnection =
               data?.type === 'ambassador' || state?.includes('_ambassador_');
             const errorRedirectPath = isAmbassadorConnection
@@ -137,21 +126,18 @@ const MetaOAuthProxy = () => {
             setStatus('success');
             toast.success('Instagram conectado exitosamente');
 
-            // Determine redirect based on connection type
             const redirectPath =
               data?.type === 'ambassador'
                 ? '/ambassadors?status=success'
                 : '/settings?tab=instagram&status=success';
             setTimeout(() => navigate(redirectPath), 1000);
           } else {
-            // Fallback for unexpected response format
             console.warn('Unexpected response format:', data);
             const errorMsg = 'Respuesta inesperada del servidor';
             setStatus('error');
             setErrorDetails(errorMsg);
             toast.error('Error al conectar Instagram: ' + errorMsg);
 
-            // Try to determine connection type from state parameter to redirect properly
             const isAmbassadorConnection = state?.includes('_ambassador_');
             const errorRedirectPath = isAmbassadorConnection
               ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)
@@ -167,7 +153,6 @@ const MetaOAuthProxy = () => {
           setErrorDetails(errorMsg);
           toast.error('Error en la conexión: ' + errorMsg);
 
-          // Try to determine connection type from state parameter to redirect properly
           const isAmbassadorConnection = state?.includes('_ambassador_');
           const errorRedirectPath = isAmbassadorConnection
             ? '/ambassadors?status=error&error=' + encodeURIComponent(errorMsg)

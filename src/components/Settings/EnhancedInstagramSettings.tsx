@@ -45,12 +45,10 @@ export function EnhancedInstagramSettings() {
     connectInstagram,
     disconnectInstagram,
     refreshTokenStatus,
-    // Token expiry fields
     tokenExpiryDate,
     daysUntilExpiry,
     needsRefresh,
     showWarning,
-    // Token refresh functionality
     refreshToken: refreshInstagramToken,
     isRefreshingToken,
   } = useInstagramConnection();
@@ -60,7 +58,6 @@ export function EnhancedInstagramSettings() {
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
-  // Show loading skeleton while data is being fetched
   if (isLoadingTokenStatus) {
     return (
       <div className="space-y-6">
@@ -132,7 +129,6 @@ export function EnhancedInstagramSettings() {
     toast.success('Estado actualizado');
   };
 
-  // Safe data access with null checks
   const instagramUsername = organization?.instagram_username || null;
   const lastSync = organization?.last_instagram_sync || null;
   const businessAccountId = organization?.instagram_business_account_id || null;
@@ -168,7 +164,6 @@ export function EnhancedInstagramSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Main Connection Card */}
       <Card className="border-pink-200 bg-gradient-to-br from-pink-50/30 to-purple-50/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -181,7 +176,6 @@ export function EnhancedInstagramSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Status Badge */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -198,7 +192,6 @@ export function EnhancedInstagramSettings() {
               <p className="text-sm text-muted-foreground">{statusInfo.description}</p>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {isConnected ? (
                 <>
@@ -252,7 +245,6 @@ export function EnhancedInstagramSettings() {
             </div>
           </div>
 
-          {/* Help text for not connected */}
           {!isConnected && (
             <div className="flex items-start gap-3 text-sm bg-blue-50 text-blue-700 p-4 rounded-lg">
               <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -277,7 +269,6 @@ export function EnhancedInstagramSettings() {
             </div>
           )}
 
-          {/* Post-OAuth hint */}
           {!isConnected && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
               <RefreshCw className="h-4 w-4" />
@@ -293,7 +284,6 @@ export function EnhancedInstagramSettings() {
             </div>
           )}
 
-          {/* Last sync info */}
           {isConnected && lastSync && (
             <div className="text-sm text-muted-foreground">
               Última sincronización: {new Date(lastSync).toLocaleString('es-ES')}
@@ -302,7 +292,6 @@ export function EnhancedInstagramSettings() {
         </CardContent>
       </Card>
 
-      {/* Token Expiry Warning */}
       {isConnected && !isTokenExpired && (
         <TokenExpiryWarning
           daysUntilExpiry={daysUntilExpiry}
@@ -313,7 +302,6 @@ export function EnhancedInstagramSettings() {
         />
       )}
 
-      {/* Account Details Card - Only when connected */}
       {isConnected && (
         <Card>
           <CardHeader>
@@ -382,7 +370,6 @@ export function EnhancedInstagramSettings() {
               </div>
             </div>
 
-            {/* Token Expiry Details */}
             {tokenExpiryDate && !isTokenExpired && (
               <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                 <div className="text-sm">
@@ -409,7 +396,6 @@ export function EnhancedInstagramSettings() {
               </div>
             )}
 
-            {/* Warning and diagnostic option if data seems incomplete */}
             {!businessAccountId && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg">
@@ -449,7 +435,6 @@ export function EnhancedInstagramSettings() {
                   </div>
                 </div>
 
-                {/* Diagnostic Panel */}
                 {showDiagnostics && (
                   <div className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center justify-between">
@@ -528,7 +513,6 @@ export function EnhancedInstagramSettings() {
         </Card>
       )}
 
-      {/* Privacy & Security Info */}
       <Card className="border-green-200 bg-green-50/30">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">

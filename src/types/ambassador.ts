@@ -1,10 +1,3 @@
-/**
- * Ambassador type definitions
- *
- * These types represent the core ambassador data structures used throughout the application.
- * They align with the database schema but provide TypeScript-friendly interfaces.
- */
-
 import type {
   AmbassadorCategory,
   PerformanceStatus,
@@ -12,10 +5,6 @@ import type {
   RequestStatus,
 } from '@/constants';
 
-/**
- * Core ambassador data
- * Represents a brand ambassador in the system
- */
 export interface Ambassador {
   id: string;
   first_name: string;
@@ -32,22 +21,16 @@ export interface Ambassador {
   follower_count: number;
   created_at: string;
 
-  // Optional fields (may require permissions to access)
   email?: string;
   rut?: string;
   date_of_birth?: string | null;
   profile_picture_url?: string | null;
 
-  // Instagram-specific fields
   instagram_user_id?: string;
   last_instagram_sync?: string | null;
   profile_public?: boolean;
 }
 
-/**
- * Sensitive ambassador data
- * Requires manage_ambassadors permission to access
- */
 export interface AmbassadorSensitiveData {
   email?: string;
   date_of_birth?: string | null;
@@ -55,9 +38,6 @@ export interface AmbassadorSensitiveData {
   profile_picture_url?: string | null;
 }
 
-/**
- * Data for creating a new ambassador
- */
 export interface CreateAmbassadorInput {
   first_name: string;
   last_name: string;
@@ -67,9 +47,6 @@ export interface CreateAmbassadorInput {
   rut?: string;
 }
 
-/**
- * Data for updating an ambassador
- */
 export interface UpdateAmbassadorInput {
   id: string;
   first_name?: string;
@@ -85,9 +62,6 @@ export interface UpdateAmbassadorInput {
   follower_count?: number;
 }
 
-/**
- * Ambassador metrics for dashboard/analytics
- */
 export interface AmbassadorMetrics {
   totalTasks: number;
   completedTasks: number;
@@ -100,9 +74,6 @@ export interface AmbassadorMetrics {
   status: AmbassadorStatus | string;
 }
 
-/**
- * Ambassador ranking data
- */
 export interface AmbassadorRanking {
   id: string;
   first_name: string;
@@ -114,9 +85,6 @@ export interface AmbassadorRanking {
   profile_picture_url?: string | null;
 }
 
-/**
- * Ambassador request (application to become ambassador)
- */
 export interface AmbassadorRequest {
   id: string;
   organization_id: string;
@@ -137,9 +105,6 @@ export interface AmbassadorRequest {
   updated_at?: string;
 }
 
-/**
- * Data for approving an ambassador request
- */
 export interface ApproveRequestInput {
   first_name: string;
   last_name: string;
@@ -148,18 +113,12 @@ export interface ApproveRequestInput {
   rut?: string;
 }
 
-/**
- * Full name helper
- */
 export function getAmbassadorFullName(
   ambassador: Pick<Ambassador, 'first_name' | 'last_name'>
 ): string {
   return `${ambassador.first_name} ${ambassador.last_name}`.trim();
 }
 
-/**
- * Get ambassador initials for avatar fallback
- */
 export function getAmbassadorInitials(
   ambassador: Pick<Ambassador, 'first_name' | 'last_name'>
 ): string {

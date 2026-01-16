@@ -24,7 +24,6 @@ export const OrganizationSwitcher = () => {
     try {
       await switchOrganization(organizationId);
       toast.success('Organización cambiada exitosamente');
-      // Force page reload to refresh all data
       window.location.reload();
     } catch (error) {
       console.error('Error switching organization:', error);
@@ -87,7 +86,6 @@ export const OrganizationSwitcher = () => {
 
         <DropdownMenuItem
           onClick={() => {
-            // Navigate to create organization or settings
             window.location.href = '/profile';
           }}
           className="flex items-center gap-2 cursor-pointer"

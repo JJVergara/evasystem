@@ -8,9 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface InstagramConnectProps {
   type: 'ambassador' | 'organization';
-  /** For ambassadors: ambassador.id. For org: organization.id */
   entityId: string;
-  /** Optional explicit org id; if not provided, we’ll fall back to entityId for org flow */
   organizationId?: string;
   currentStatus?: {
     isConnected: boolean;
@@ -40,14 +38,12 @@ export function InstagramConnect({
         return;
       }
 
-      // Determine which organization we’re acting on
       const orgId = organizationId ?? (type === 'organization' ? entityId : undefined);
       if (!orgId) {
         toast.error('No se encontró la organización asociada');
         return;
       }
 
-      // Build body according to the new edge function contract
       const body: {
         type: 'organization' | 'ambassador';
         organization_id: string;

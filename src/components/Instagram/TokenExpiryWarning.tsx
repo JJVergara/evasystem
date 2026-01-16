@@ -17,12 +17,10 @@ export function TokenExpiryWarning({
   isRefreshingToken,
   onRefresh,
 }: TokenExpiryWarningProps) {
-  // Don't show if no warning needed
   if (!showWarning || daysUntilExpiry === null || daysUntilExpiry === undefined) {
     return null;
   }
 
-  // Critical: 7 days or less (auto-refresh threshold)
   const isCritical = needsRefresh;
 
   return (

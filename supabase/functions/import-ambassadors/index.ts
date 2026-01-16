@@ -1,8 +1,3 @@
-/**
- * Import Ambassadors Edge Function
- * Handles bulk import of ambassadors for an organization
- */
-
 import {
   corsPreflightResponse,
   jsonResponse,
@@ -12,37 +7,31 @@ import {
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase } = authResult;
 
-    // Parse request body
     const { ambassadors, organizationId } = await req.json();
     if (!ambassadors || !Array.isArray(ambassadors)) {
       return badRequestResponse('Ambassadors array is required');
     }
 
-    // Get user's organization
     const userOrgId = await getUserOrganization(supabase, user.id);
     if (!userOrgId) {
       return errorResponse('User has no organization', 400);
     }
 
-    // Validate organization access
     if (userOrgId !== organizationId) {
       return errorResponse('No tienes permiso para importar embajadores a esta organización', 403);
     }
 
-    // Get user record for created_by
     const { data: userData, error: userDataError } = await supabase
       .from('users')
       .select('id')
@@ -53,7 +42,6 @@ Deno.serve(async (req) => {
       return errorResponse('User record not found', 404);
     }
 
-    // Get existing ambassadors to check for duplicates
     const { data: existingAmbassadors } = await supabase
       .from('embassadors')
       .select('email, rut')
@@ -77,7 +65,6 @@ Deno.serve(async (req) => {
     const validAmbassadors = [];
 
     for (const ambassador of ambassadors) {
-      // Check for duplicates
       if (existingEmails.has(ambassador.email) || existingRuts.has(ambassador.rut)) {
         results.duplicates++;
         results.errors.push(
@@ -86,7 +73,6 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Validate required fields
       if (!ambassador.first_name || !ambassador.last_name || !ambassador.email || !ambassador.rut) {
         results.failed++;
         results.errors.push(
@@ -115,12 +101,10 @@ Deno.serve(async (req) => {
         failed_tasks: 0,
       });
 
-      // Add to existing sets to prevent duplicates within the same import
       existingEmails.add(ambassador.email);
       existingRuts.add(ambassador.rut);
     }
 
-    // Bulk insert valid ambassadors
     if (validAmbassadors.length > 0) {
       const { data: insertResult, error: insertError } = await supabase
         .from('embassadors')
@@ -134,7 +118,6 @@ Deno.serve(async (req) => {
       results.successful = insertResult.length;
     }
 
-    // Create import log
     await supabase.from('import_logs').insert({
       user_id: userData.id,
       organization_id: organizationId,
@@ -145,7 +128,6 @@ Deno.serve(async (req) => {
       result_json: results,
     });
 
-    // Create feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: null,
@@ -153,7 +135,6 @@ Deno.serve(async (req) => {
       p_message: `Importación completada: ${results.successful} exitosos, ${results.failed} fallidos, ${results.duplicates} duplicados`,
     });
 
-    // Create event log
     await supabase.rpc('create_event_log', {
       p_user_id: userData.id,
       p_event_id: null,

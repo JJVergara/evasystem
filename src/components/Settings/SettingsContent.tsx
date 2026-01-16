@@ -57,10 +57,9 @@ export default function SettingsContent() {
       refreshOrganization?.();
     }
   };
-  // Refresh organization after returning from OAuth and on mount
   useEffect(() => {
     let isMounted = true;
-    let hasRefreshed = false; // Flag to ensure we only refresh once
+    let hasRefreshed = false;
 
     const refresh = () => {
       if (isMounted && refreshOrganization && !hasRefreshed) {
@@ -74,24 +73,20 @@ export default function SettingsContent() {
     const hasOAuthParams = params.has('status') || params.has('ig') || params.has('instagram');
 
     if (hasOAuthParams) {
-      // Clean up URL params immediately to prevent re-processing
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
       url.searchParams.delete('ig');
       url.searchParams.delete('instagram');
       window.history.replaceState({}, '', url.toString());
 
-      // Refresh after OAuth callback
       refresh();
     }
-    // Note: Removed the else branch that was refreshing on every mount
-    // The useInstagramConnection hook now handles organization-based refreshes
 
     return () => {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
   if (settingsLoading) {
     return (
@@ -431,10 +426,8 @@ export default function SettingsContent() {
 
         <TabsContent value="integrations">
           <div className="space-y-6">
-            {/* N8N Configuration Section */}
             <N8nConfigurationSection />
 
-            {/* Other Integrations */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

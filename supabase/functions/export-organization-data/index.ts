@@ -1,8 +1,3 @@
-/**
- * Export Organization Data Edge Function
- * Exports organization data in JSON or CSV format
- */
-
 import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
@@ -13,31 +8,26 @@ import {
 import { authenticateRequest, verifyOrganizationAccess } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase: supabaseClient } = authResult;
 
-    // Parse request body
     const { organizationId, format = 'json', tables = 'all' } = await req.json();
 
     console.log('Starting organization export:', { organizationId, format, tables });
 
-    // Verify user owns this organization
     const hasAccess = await verifyOrganizationAccess(supabaseClient, user.id, organizationId);
     if (!hasAccess) {
       return notFoundResponse('Organization not found or access denied');
     }
 
-    // Get organization data
     const { data: org, error: orgError } = await supabaseClient
       .from('organizations')
       .select('*')
@@ -58,7 +48,6 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Define what tables to export
     const availableTables = [
       'embassadors',
       'fiestas',
@@ -71,10 +60,8 @@ Deno.serve(async (req) => {
     const tablesToExport =
       tables === 'all' ? availableTables : Array.isArray(tables) ? tables : [tables];
 
-    // Export organization data
     exportData.organization = org;
 
-    // Export embassadors
     if (tablesToExport.includes('embassadors')) {
       const { data: embassadors } = await supabaseClient
         .from('embassadors')
@@ -83,7 +70,6 @@ Deno.serve(async (req) => {
       exportData.embassadors = embassadors || [];
     }
 
-    // Export fiestas
     if (tablesToExport.includes('fiestas')) {
       const { data: fiestas } = await supabaseClient
         .from('fiestas')
@@ -91,7 +77,6 @@ Deno.serve(async (req) => {
         .eq('organization_id', organizationId);
       exportData.fiestas = fiestas || [];
 
-      // Export events for these fiestas
       const fiestaList = exportData.fiestas as Array<{ id: string }>;
       if (tablesToExport.includes('events') && fiestaList.length > 0) {
         const fiestaIds = fiestaList.map((f) => f.id);
@@ -103,7 +88,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Export tasks
     const embassadorList = exportData.embassadors as Array<{ id: string }> | undefined;
     if (tablesToExport.includes('tasks') && embassadorList?.length) {
       const embassadorIds = embassadorList.map((e) => e.id);
@@ -114,7 +98,6 @@ Deno.serve(async (req) => {
       exportData.tasks = tasks || [];
     }
 
-    // Export leaderboards
     const eventList = exportData.events as Array<{ id: string }> | undefined;
     if (tablesToExport.includes('leaderboards') && eventList?.length) {
       const eventIds = eventList.map((e) => e.id);
@@ -125,7 +108,6 @@ Deno.serve(async (req) => {
       exportData.leaderboards = leaderboards || [];
     }
 
-    // Export organization settings
     if (tablesToExport.includes('organization_settings')) {
       const { data: settings } = await supabaseClient
         .from('organization_settings')
@@ -134,7 +116,6 @@ Deno.serve(async (req) => {
       exportData.organization_settings = settings || [];
     }
 
-    // Export notifications
     if (tablesToExport.includes('notifications')) {
       const { data: notifications } = await supabaseClient
         .from('notifications')
@@ -143,7 +124,6 @@ Deno.serve(async (req) => {
       exportData.notifications = notifications || [];
     }
 
-    // Sanitize sensitive fields before packaging
     if (exportData.organization) {
       const { meta_token, token_expiry, ...safeOrg } = exportData.organization as Record<
         string,
@@ -158,7 +138,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Log the export operation
     await supabaseClient.from('import_logs').insert({
       user_id: user.id,
       organization_id: organizationId,
@@ -186,7 +165,6 @@ Deno.serve(async (req) => {
     let fileName: string;
 
     if (format === 'csv') {
-      // Convert to CSV format (simplified, only embassadors table)
       const csvData = (exportData.embassadors || []) as Record<string, unknown>[];
       if (csvData.length > 0) {
         const headers = Object.keys(csvData[0]).join(',');
@@ -202,7 +180,6 @@ Deno.serve(async (req) => {
       contentType = 'text/csv';
       fileName = `eva-export-${org.name}-${new Date().toISOString().split('T')[0]}.csv`;
     } else {
-      // JSON format
       responseContent = JSON.stringify(exportData, null, 2);
       contentType = 'application/json';
       fileName = `eva-export-${org.name}-${new Date().toISOString().split('T')[0]}.json`;

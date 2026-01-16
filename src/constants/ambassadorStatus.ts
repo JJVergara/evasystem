@@ -1,10 +1,3 @@
-/**
- * Ambassador Status Constants
- *
- * Defines status values and their TypeScript types.
- * Used by @/types/ambassador.ts
- */
-
 export const PERFORMANCE_STATUS = {
   CUMPLE: 'cumple',
   ADVERTENCIA: 'advertencia',

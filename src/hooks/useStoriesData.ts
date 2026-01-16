@@ -18,7 +18,6 @@ interface Event {
 }
 
 async function fetchAmbassadorsForFiesta(fiestaId: string): Promise<Ambassador[]> {
-  // Get organization from fiesta first
   const { data: fiestaData, error: fiestaError } = await supabase
     .from('fiestas')
     .select('organization_id')
@@ -42,7 +41,6 @@ async function fetchEventsForFiesta(fiestaId: string): Promise<Event[]> {
 
   if (error) throw error;
 
-  // Since events no longer have name, we'll use fiesta data
   const { data: fiestaData, error: fiestaError } = await supabase
     .from('fiestas')
     .select('name, main_hashtag')
@@ -74,8 +72,8 @@ export function useStoriesData() {
     queryKey: ambassadorsQueryKey,
     queryFn: () => fetchAmbassadorsForFiesta(selectedFiestaId!),
     enabled: !!selectedFiestaId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 
@@ -83,8 +81,8 @@ export function useStoriesData() {
     queryKey: eventsQueryKey,
     queryFn: () => fetchEventsForFiesta(selectedFiestaId!),
     enabled: !!selectedFiestaId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 

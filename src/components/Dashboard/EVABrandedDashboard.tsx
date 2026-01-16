@@ -12,12 +12,10 @@ export function EVABrandedDashboard() {
   const { steps, overallProgress } = useOnboardingStatus();
   const { organization } = useCurrentOrganization();
 
-  // Filtrar pasos recomendados que no están completados
   const pendingRecommendedSteps = steps.filter((step) => !step.required && !step.completed);
 
   return (
     <div className="space-y-6">
-      {/* Banner de onboarding para pasos recomendados pendientes */}
       {pendingRecommendedSteps.length > 0 && (
         <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
           <CardHeader className="pb-3">
@@ -94,7 +92,6 @@ export function EVABrandedDashboard() {
         </Card>
       )}
 
-      {/* Indicador de progreso general */}
       {overallProgress < 100 && (
         <Card>
           <CardHeader className="pb-3">
@@ -117,7 +114,6 @@ export function EVABrandedDashboard() {
         </Card>
       )}
 
-      {/* Confirmación cuando todo esté completo */}
       {overallProgress === 100 && (
         <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
           <CardContent className="p-4">
@@ -136,7 +132,6 @@ export function EVABrandedDashboard() {
         </Card>
       )}
 
-      {/* Dashboard principal */}
       <SimpleDashboardContent />
     </div>
   );

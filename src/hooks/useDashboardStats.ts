@@ -1,8 +1,3 @@
-/**
- * useDashboardStats hook
- * Manages dashboard statistics fetching
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,7 +31,6 @@ async function fetchDashboardStats(userId: string): Promise<DashboardStats> {
     return { ...DEFAULT_STATS, totalOrganizations: 0 };
   }
 
-  // Fetch counts in parallel
   const [fiestasResult, ambassadorsResult] = await Promise.all([
     supabase.from('fiestas').select('id').in('organization_id', organizationIds),
     supabase.from('embassadors').select('id').in('organization_id', organizationIds),

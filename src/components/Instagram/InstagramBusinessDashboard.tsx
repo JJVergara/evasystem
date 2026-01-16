@@ -52,19 +52,16 @@ export function InstagramBusinessDashboard() {
     try {
       setLoading(true);
 
-      // Cargar perfil
       const profileData = await getInstagramProfile();
       if (profileData?.success && profileData.profile) {
         setProfile(profileData.profile);
       }
 
-      // Cargar media
       const mediaData = await getInstagramMedia();
       if (mediaData?.success && mediaData.media) {
         setMedia(mediaData.media);
       }
 
-      // Cargar tags/menciones
       const tagsData = await getInstagramTags();
       if (tagsData?.success && tagsData.tags) {
         setTags(tagsData.tags);
@@ -96,7 +93,6 @@ export function InstagramBusinessDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header con perfil */}
       {profile && (
         <Card>
           <CardHeader>
@@ -142,7 +138,6 @@ export function InstagramBusinessDashboard() {
         </Card>
       )}
 
-      {/* Tabs para contenido */}
       <Tabs defaultValue="media" className="space-y-4">
         <TabsList>
           <TabsTrigger value="media" className="flex items-center gap-2">

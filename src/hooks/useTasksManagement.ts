@@ -1,26 +1,3 @@
-/**
- * @fileoverview Hook for managing task data with React Query.
- *
- * This hook provides:
- * - CRUD operations for tasks using the service layer
- * - Automatic organization scoping
- * - Task statistics calculation
- *
- * @example
- * ```tsx
- * function TaskManager() {
- *   const { tasks, stats, createTask, updateTaskStatus } = useTasksManagement();
- *
- *   return (
- *     <div>
- *       <TaskStats stats={stats} />
- *       <TaskList tasks={tasks} />
- *     </div>
- *   );
- * }
- * ```
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -39,21 +16,8 @@ import {
   type CreateTaskInput,
 } from '@/services/api';
 
-// Re-export types for backwards compatibility
 export type { TaskType, TaskStatusType, TaskWithRelations, TaskStats };
 
-/**
- * Hook for managing tasks with full CRUD operations.
- *
- * @returns Object containing:
- * - `tasks` - Array of TaskWithRelations objects
- * - `stats` - Task statistics (total, completed, pending, etc.)
- * - `loading` - Whether data is being fetched
- * - `createTask(data)` - Create a new task
- * - `updateTaskStatus(id, status, points?)` - Update task status
- * - `deleteTask(id)` - Delete a task
- * - `refreshTasks()` - Manually refresh task list
- */
 export function useTasksManagement() {
   const { organization, loading: orgLoading } = useCurrentOrganization();
   const queryClient = useQueryClient();

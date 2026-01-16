@@ -53,7 +53,6 @@ export default function EditOrganizationModal({
     setIsLoading(true);
 
     try {
-      // Validación básica
       if (!formData.name.trim()) {
         toast.error('El nombre de la organización es obligatorio');
         return;
@@ -61,7 +60,6 @@ export default function EditOrganizationModal({
 
       console.log('Updating organization:', organization.id);
 
-      // Actualizar la organización
       const { error: updateError } = await supabase
         .from('organizations')
         .update({
@@ -114,7 +112,6 @@ export default function EditOrganizationModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nombre */}
           <div>
             <Label htmlFor="name">Nombre de la Organización/Productora *</Label>
             <Input
@@ -127,7 +124,6 @@ export default function EditOrganizationModal({
             />
           </div>
 
-          {/* Descripción */}
           <div>
             <Label htmlFor="description">Descripción</Label>
             <Textarea
@@ -140,7 +136,6 @@ export default function EditOrganizationModal({
             />
           </div>
 
-          {/* Instagram Business Connection */}
           <div>
             <Label>Conexión Instagram Business</Label>
             <p className="text-sm text-muted-foreground mb-2">
@@ -150,12 +145,11 @@ export default function EditOrganizationModal({
               type="organization"
               entityId={organization.id}
               organizationId={organization.id}
-              currentStatus={{ isConnected: false }} // TODO: Get actual status from organization data
+              currentStatus={{ isConnected: false }}
               onConnectionChange={onOrganizationUpdated}
             />
           </div>
 
-          {/* Botones */}
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancelar

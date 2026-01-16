@@ -1,31 +1,9 @@
-/**
- * @fileoverview Hook for managing the current organization context.
- *
- * This is a core hook used throughout the app to:
- * - Get the current user's active organization
- * - Switch between organizations (multi-tenant support)
- * - Update organization settings
- *
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { organization, loading, updateOrganization } = useCurrentOrganization();
- *
- *   if (loading) return <Loading />;
- *   if (!organization) return <NoOrganization />;
- *
- *   return <div>{organization.name}</div>;
- * }
- * ```
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
-/** Organization membership with full organization details */
 interface OrganizationMembership {
   organization_id: string;
   role: string;
@@ -51,7 +29,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
   currentOrganization: OrganizationMembership | null;
   userOrganizations: OrganizationMembership[];
 }> {
-  // Get user's accessible organizations
   const { data: userOrgs, error: orgsError } = await supabase.rpc('get_user_organizations', {
     user_auth_id: userId,
   });
@@ -60,13 +37,10 @@ async function fetchOrganizationsData(userId: string): Promise<{
     throw orgsError;
   }
 
-  // If user has NO organizations at all, create one automatically
   if (!userOrgs || userOrgs.length === 0) {
-    // Use localStorage as a global lock to prevent concurrent creation across tabs/instances
     const lockKey = `creating_org_${userId}`;
     const existingLock = localStorage.getItem(lockKey);
 
-    // If there's a recent lock (within last 10 seconds), skip
     if (existingLock) {
       const lockTime = parseInt(existingLock);
       const now = Date.now();
@@ -76,23 +50,19 @@ async function fetchOrganizationsData(userId: string): Promise<{
       }
     }
 
-    // Set the lock
     localStorage.setItem(lockKey, Date.now().toString());
     console.log('User has no organizations, creating default organization...');
 
     try {
-      // Get user profile for name
       const { data: userProfile } = await supabase
         .from('users')
         .select('id, name, email, organization_id')
         .eq('auth_user_id', userId)
         .single();
 
-      // Double-check: maybe another tab just created an org
       if (userProfile?.organization_id) {
         console.log('✅ Organization already exists, refreshing...');
         localStorage.removeItem(lockKey);
-        // Retry fetching organizations
         const { data: retryOrgs } = await supabase.rpc('get_user_organizations', {
           user_auth_id: userId,
         });
@@ -112,7 +82,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
 
       const userName = userProfile?.name || userProfile?.email || 'Usuario';
 
-      // Create organization
       const { data: newOrg, error: createError } = await supabase
         .from('organizations')
         .insert({
@@ -133,7 +102,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
 
       console.log('✅ Organization created:', newOrg.id);
 
-      // Refresh to get the new organization
       const { data: refreshedOrgs } = await supabase.rpc('get_user_organizations', {
         user_auth_id: userId,
       });
@@ -160,7 +128,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
     }
   }
 
-  // Get organizations with their details
   const orgsWithDetails = await Promise.all(
     (userOrgs || []).map(async (orgMembership) => {
       const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
@@ -176,14 +143,12 @@ async function fetchOrganizationsData(userId: string): Promise<{
 
   const validOrgs = orgsWithDetails.filter((org) => org.organization) as OrganizationMembership[];
 
-  // Get user's current organization preference
   const { data: userData } = await supabase
     .from('users')
     .select('organization_id')
     .eq('auth_user_id', userId)
     .single();
 
-  // Set current organization (prefer user's selected one, or first available)
   const preferredOrgId = userData?.organization_id;
   const currentOrg =
     validOrgs.find((org) => org.organization_id === preferredOrgId) || validOrgs[0] || null;
@@ -194,17 +159,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
   };
 }
 
-/**
- * Hook for managing the current organization context.
- *
- * @returns Object containing:
- * - `organization` - Current organization data (null if none selected)
- * - `userOrganizations` - All organizations the user has access to
- * - `loading` - Whether data is being fetched
- * - `switchOrganization(id)` - Switch to a different organization
- * - `updateOrganization(updates)` - Update current organization settings
- * - `refreshOrganization()` - Manually refresh organization data
- */
 export const useCurrentOrganization = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -215,8 +169,8 @@ export const useCurrentOrganization = () => {
     queryKey,
     queryFn: () => fetchOrganizationsData(user!.id),
     enabled: !!user?.id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const currentOrganization = data?.currentOrganization || null;
@@ -227,13 +181,11 @@ export const useCurrentOrganization = () => {
       if (!user?.id) return;
 
       try {
-        // Update user's current organization preference
         await supabase
           .from('users')
           .update({ organization_id: organizationId })
           .eq('auth_user_id', user.id);
 
-        // Invalidate and refetch
         await queryClient.invalidateQueries({ queryKey });
       } catch (error) {
         console.error('Error switching organization:', error);
@@ -243,7 +195,6 @@ export const useCurrentOrganization = () => {
     [user?.id, queryClient, queryKey]
   );
 
-  // Provide legacy compatibility
   const organization = currentOrganization?.organization || null;
 
   const updateOrganization = useCallback(
@@ -262,7 +213,6 @@ export const useCurrentOrganization = () => {
           return false;
         }
 
-        // Invalidate and refetch
         await queryClient.invalidateQueries({ queryKey });
         toast.success('Organización actualizada');
         return true;
@@ -280,14 +230,12 @@ export const useCurrentOrganization = () => {
   }, [refetch]);
 
   return {
-    // New multi-organization interface
     currentOrganization,
     userOrganizations,
     loading: isLoading,
     error: error as Error | null,
     fetchOrganizations,
     switchOrganization,
-    // Legacy compatibility
     organization,
     updateOrganization,
     refreshOrganization: fetchOrganizations,

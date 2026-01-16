@@ -35,7 +35,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {/* Eventos */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Eventos</CardTitle>
@@ -52,7 +51,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardContent>
       </Card>
 
-      {/* Embajadores */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Embajadores</CardTitle>
@@ -69,7 +67,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardContent>
       </Card>
 
-      {/* Tareas */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tareas</CardTitle>
@@ -97,7 +94,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardContent>
       </Card>
 
-      {/* Alcance Total */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Alcance Total</CardTitle>
@@ -109,7 +105,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardContent>
       </Card>
 
-      {/* Engagement Promedio */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Engagement Promedio</CardTitle>
@@ -121,7 +116,6 @@ export function OrganizationMetricsCards({ metrics }: OrganizationMetricsCardsPr
         </CardContent>
       </Card>
 
-      {/* Información General */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Organización</CardTitle>

@@ -23,12 +23,10 @@ export function InstagramSyncStatus() {
   useEffect(() => {
     if (!organization?.id) return;
 
-    // Load last sync time
     if (organization.last_instagram_sync) {
       setLastSync(organization.last_instagram_sync);
     }
 
-    // Load today's stats
     loadSyncStats();
   }, [organization]);
 
@@ -42,14 +40,12 @@ export function InstagramSyncStatus() {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
-      // Get today's mentions and tags
       const { data: todayData } = await supabase
         .from('social_mentions')
         .select('mention_type')
         .eq('organization_id', organization.id)
         .gte('created_at', today.toISOString());
 
-      // Get weekly mentions
       const { data: weeklyData } = await supabase
         .from('social_mentions')
         .select('id')
@@ -105,7 +101,6 @@ export function InstagramSyncStatus() {
     return 'warning';
   };
 
-  // Show loading skeleton while data is being fetched
   if (orgLoading || isLoadingStats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

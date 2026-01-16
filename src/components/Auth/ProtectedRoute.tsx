@@ -18,7 +18,6 @@ export function ProtectedRoute({ children, redirectTo = '/auth' }: ProtectedRout
     }
   }, [user, loading, navigate, redirectTo]);
 
-  // Show loading while checking auth
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -32,7 +31,6 @@ export function ProtectedRoute({ children, redirectTo = '/auth' }: ProtectedRout
     );
   }
 
-  // Don't render children if no user
   if (!user) {
     return null;
   }

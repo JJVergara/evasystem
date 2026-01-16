@@ -1,8 +1,3 @@
-/**
- * Secure Webhook Proxy Edge Function
- * Proxies webhook requests to whitelisted external services with security validations
- */
-
 import { corsHeaders } from '../shared/constants.ts';
 import {
   corsPreflightResponse,
@@ -13,45 +8,39 @@ import {
 } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
-// Whitelist of allowed webhook domains
 const ALLOWED_DOMAINS = [
   'hooks.zapier.com',
   'webhook.site',
   'n8n.cloud',
   'pipedream.com',
-  'rquevedos.app.n8n.cloud', // Specific n8n instance
+  'rquevedos.app.n8n.cloud',
 ];
 
-const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // 2MB
-const WEBHOOK_TIMEOUT_MS = 10000; // 10 seconds
+const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024;
+const WEBHOOK_TIMEOUT_MS = 10000;
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Authenticate request
     const authResult = await authenticateRequest(req, { requireAuth: true });
     if (authResult instanceof Response) {
       return authResult;
     }
     const { user, supabase } = authResult;
 
-    // Get user's organization
     const organizationId = await getUserOrganization(supabase, user.id);
     if (!organizationId) {
       return errorResponse('User has no organization', 400);
     }
 
-    // Check payload size
     const contentLength = req.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
       return badRequestResponse('Payload too large');
     }
 
-    // Parse request body
     const body = await req.json();
     const { webhookUrl, data } = body;
 
@@ -59,7 +48,6 @@ Deno.serve(async (req) => {
       return badRequestResponse('Missing webhookUrl or data');
     }
 
-    // Validate URL format
     let url: URL;
     try {
       url = new URL(webhookUrl);
@@ -67,22 +55,18 @@ Deno.serve(async (req) => {
       return badRequestResponse('Invalid webhook URL format');
     }
 
-    // Security checks
     if (url.protocol !== 'https:') {
       return badRequestResponse('Only HTTPS URLs are allowed');
     }
 
-    // Reject IP addresses
     if (/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
       return badRequestResponse('IP addresses are not allowed');
     }
 
-    // Reject non-standard ports
     if (url.port && !['80', '443', ''].includes(url.port)) {
       return badRequestResponse('Non-standard ports are not allowed');
     }
 
-    // Check if domain is in allowlist
     const isAllowed = ALLOWED_DOMAINS.some(
       (domain) => url.hostname === domain || url.hostname.endsWith('.' + domain)
     );
@@ -91,10 +75,8 @@ Deno.serve(async (req) => {
       return badRequestResponse(`Domain ${url.hostname} is not in the allowed list`);
     }
 
-    // Generate request ID for observability
     const requestId = crypto.randomUUID();
 
-    // Prepare payload with organization and user context
     const payload = {
       ...data,
       organization_id: organizationId,
@@ -105,7 +87,6 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Proxying request to:`, webhookUrl);
 
-    // Make the webhook request with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 

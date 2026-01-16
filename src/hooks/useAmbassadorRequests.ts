@@ -1,8 +1,3 @@
-/**
- * useAmbassadorRequests hook
- * Manages ambassador request data fetching and mutations
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +8,6 @@ import { useRealtimeSocialMentions } from './useRealtimeSocialMentions';
 import { QUERY_KEYS } from '@/constants';
 import type { AmbassadorRequest, ApproveRequestInput } from '@/types';
 
-// Re-export for backwards compatibility
 export type { AmbassadorRequest };
 
 async function fetchRequests(organizationId: string): Promise<AmbassadorRequest[]> {
@@ -50,10 +44,8 @@ export function useAmbassadorRequests() {
     gcTime: 15 * 60 * 1000,
   });
 
-  // Setup realtime subscriptions for live updates
   useRealtimeSocialMentions({
     onNewAmbassadorRequest: () => {
-      // Refresh requests when new one arrives
       queryClient.invalidateQueries({ queryKey });
     },
   });
@@ -87,7 +79,6 @@ export function useAmbassadorRequests() {
 
       if (ambassadorError) throw ambassadorError;
 
-      // Link social mentions to new ambassador
       if (request.source_mention_ids?.length) {
         const { error: updateMentionsError } = await supabase
           .from('social_mentions')

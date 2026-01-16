@@ -73,7 +73,6 @@ export function OrganizationEventsList({ events }: OrganizationEventsListProps) 
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {/* Tareas */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Target className="w-3 h-3" />
@@ -92,7 +91,6 @@ export function OrganizationEventsList({ events }: OrganizationEventsListProps) 
                       </Badge>
                     </div>
 
-                    {/* Alcance */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <TrendingUp className="w-3 h-3" />

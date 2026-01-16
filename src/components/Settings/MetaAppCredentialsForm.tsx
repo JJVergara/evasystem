@@ -33,7 +33,6 @@ export function MetaAppCredentialsForm({
     webhookVerifyToken: '',
   });
 
-  // URLs que el usuario necesita para configurar su app
   const redirectUri = `${window.location.origin}/api/meta-oauth?action=callback`;
   const webhookUrl = `https://awpfslcepylnipaolmvv.supabase.co/functions/v1/instagram-webhook`;
 
@@ -69,7 +68,6 @@ export function MetaAppCredentialsForm({
     e.preventDefault();
     if (!organization) return;
 
-    // Validación básica
     if (
       !formData.metaAppId.trim() ||
       !formData.metaAppSecret.trim() ||
@@ -138,7 +136,6 @@ export function MetaAppCredentialsForm({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Estado de credenciales */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -175,7 +172,6 @@ export function MetaAppCredentialsForm({
             </CardContent>
           </Card>
 
-          {/* URLs de configuración */}
           <Card>
             <CardHeader>
               <CardTitle>URLs para tu Meta App</CardTitle>
@@ -224,7 +220,6 @@ export function MetaAppCredentialsForm({
             </CardContent>
           </Card>
 
-          {/* Formulario de credenciales */}
           <Card>
             <CardHeader>
               <CardTitle>Credenciales de tu Meta App</CardTitle>

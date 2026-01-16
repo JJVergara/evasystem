@@ -1,10 +1,3 @@
-/**
- * Entity Status Constants
- *
- * Defines status values and their TypeScript types.
- * Used by @/types/event.ts and @/types/organization.ts
- */
-
 export const FIESTA_STATUS = {
   ACTIVE: 'active',
   INACTIVE: 'inactive',

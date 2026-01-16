@@ -48,7 +48,6 @@ export function N8nConfigurationSection() {
 
     setIsTestingConnection(true);
     try {
-      // Test with a simple ping
       const testPayload = {
         test: true,
         message: 'Health check from EVA System',

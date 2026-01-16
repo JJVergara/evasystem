@@ -1,12 +1,3 @@
-/**
- * Automated Instagram Token Refresh Function
- *
- * This function runs on a schedule (cron) to automatically refresh
- * Instagram long-lived tokens before they expire.
- *
- * Tokens are refreshed 7 days before expiry to ensure continuous service.
- */
-
 import {
   corsHeaders,
   INSTAGRAM_TOKEN_REFRESH,
@@ -16,7 +7,6 @@ import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
 
-// Refresh tokens that expire within this many days
 const TOKEN_REFRESH_THRESHOLD_DAYS = 7;
 
 interface RefreshResult {
@@ -28,7 +18,6 @@ interface RefreshResult {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
@@ -37,11 +26,9 @@ Deno.serve(async (req) => {
   console.log('Timestamp:', new Date().toISOString());
 
   try {
-    // Verify cron secret for security (prevent unauthorized calls)
     const cronSecret = Deno.env.get('CRON_SECRET');
     const authHeader = req.headers.get('Authorization');
 
-    // Allow both Bearer token and x-cron-secret header
     const providedSecret = authHeader?.replace('Bearer ', '') || req.headers.get('x-cron-secret');
 
     if (cronSecret && providedSecret !== cronSecret) {
@@ -58,13 +45,11 @@ Deno.serve(async (req) => {
     const supabase = createSupabaseClient();
     const results: RefreshResult[] = [];
 
-    // Calculate threshold date (tokens expiring within 7 days)
     const thresholdDate = new Date(Date.now() + TOKEN_REFRESH_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
     const now = new Date();
 
     console.log('Checking for tokens expiring before:', thresholdDate.toISOString());
 
-    // ===== REFRESH ORGANIZATION TOKENS =====
     const { data: expiringOrgTokens, error: orgQueryError } = await supabase
       .from('organization_instagram_tokens')
       .select('organization_id, access_token, token_expiry')
@@ -84,7 +69,6 @@ Deno.serve(async (req) => {
       console.log('No organization tokens need refreshing');
     }
 
-    // ===== REFRESH AMBASSADOR TOKENS =====
     const { data: expiringAmbassadorTokens, error: ambassadorQueryError } = await supabase
       .from('ambassador_tokens')
       .select('embassador_id, access_token, token_expiry')
@@ -104,14 +88,12 @@ Deno.serve(async (req) => {
       console.log('No ambassador tokens need refreshing');
     }
 
-    // ===== CREATE NOTIFICATIONS FOR FAILURES =====
     const failures = results.filter((r) => !r.success);
     if (failures.length > 0) {
       console.log(`${failures.length} token refresh failures - creating notifications`);
       await createFailureNotifications(supabase, failures);
     }
 
-    // ===== SUMMARY =====
     const summary = {
       timestamp: new Date().toISOString(),
       totalProcessed: results.length,
@@ -148,9 +130,6 @@ Deno.serve(async (req) => {
   }
 });
 
-/**
- * Refresh a single organization token
- */
 async function refreshOrganizationToken(
   supabase: ReturnType<typeof createSupabaseClient>,
   tokenRecord: { organization_id: string; access_token: string; token_expiry: string }
@@ -161,21 +140,16 @@ async function refreshOrganizationToken(
   console.log(`Current expiry: ${token_expiry}`);
 
   try {
-    // Decrypt the current token
     const decryptedToken = await safeDecryptToken(access_token);
 
-    // Call Instagram's refresh endpoint
     const newTokenData = await refreshInstagramToken(decryptedToken);
 
-    // Encrypt the new token
     const encryptedNewToken = await encryptToken(newTokenData.access_token);
 
-    // Calculate new expiry (use expires_in from response, default to 60 days)
     const newExpiryDate = new Date(
       Date.now() + (newTokenData.expires_in ?? DEFAULT_TOKEN_EXPIRY_MS / 1000) * 1000
     );
 
-    // Update the token in database
     const { error: updateError } = await supabase
       .from('organization_instagram_tokens')
       .update({
@@ -211,9 +185,6 @@ async function refreshOrganizationToken(
   }
 }
 
-/**
- * Refresh a single ambassador token
- */
 async function refreshAmbassadorToken(
   supabase: ReturnType<typeof createSupabaseClient>,
   tokenRecord: { embassador_id: string; access_token: string; token_expiry: string }
@@ -224,21 +195,16 @@ async function refreshAmbassadorToken(
   console.log(`Current expiry: ${token_expiry}`);
 
   try {
-    // Decrypt the current token
     const decryptedToken = await safeDecryptToken(access_token);
 
-    // Call Instagram's refresh endpoint
     const newTokenData = await refreshInstagramToken(decryptedToken);
 
-    // Encrypt the new token
     const encryptedNewToken = await encryptToken(newTokenData.access_token);
 
-    // Calculate new expiry
     const newExpiryDate = new Date(
       Date.now() + (newTokenData.expires_in ?? DEFAULT_TOKEN_EXPIRY_MS / 1000) * 1000
     );
 
-    // Update the token in database
     const { error: updateError } = await supabase
       .from('ambassador_tokens')
       .update({
@@ -274,9 +240,6 @@ async function refreshAmbassadorToken(
   }
 }
 
-/**
- * Call Instagram's token refresh API
- */
 async function refreshInstagramToken(accessToken: string): Promise<{
   access_token: string;
   token_type: string;
@@ -301,9 +264,6 @@ async function refreshInstagramToken(accessToken: string): Promise<{
   return data;
 }
 
-/**
- * Create notifications for failed token refreshes
- */
 async function createFailureNotifications(
   supabase: ReturnType<typeof createSupabaseClient>,
   failures: RefreshResult[]
@@ -315,7 +275,6 @@ async function createFailureNotifications(
       if (failure.type === 'organization') {
         organizationId = failure.id;
       } else {
-        // Get organization_id from ambassador
         const { data: ambassador } = await supabase
           .from('embassadors')
           .select('organization_id')

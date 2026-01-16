@@ -38,14 +38,12 @@ export function useRealNotifications() {
     queryKey,
     queryFn: () => fetchNotificationsData(organization!.id),
     enabled: !!organization?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes - notifications should be fresher
-    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
-  // Calculate unread count from notifications
   const unreadCount = notifications.filter((n) => !n.read_status).length;
 
-  // Setup realtime subscription
   useEffect(() => {
     if (!organization?.id) return;
 
@@ -60,7 +58,6 @@ export function useRealNotifications() {
           filter: `organization_id=eq.${organization.id}`,
         },
         () => {
-          // Invalidate and refetch on any change
           queryClient.invalidateQueries({ queryKey });
         }
       )
@@ -81,7 +78,6 @@ export function useRealNotifications() {
 
         if (error) throw error;
 
-        // Optimistically update the cache
         queryClient.setQueryData<Notification[]>(queryKey, (old) =>
           old?.map((n) => (n.id === notificationId ? { ...n, read_status: true } : n))
         );
@@ -104,7 +100,6 @@ export function useRealNotifications() {
 
       if (error) throw error;
 
-      // Optimistically update the cache
       queryClient.setQueryData<Notification[]>(queryKey, (old) =>
         old?.map((n) => ({ ...n, read_status: true }))
       );
@@ -117,7 +112,6 @@ export function useRealNotifications() {
     return queryClient.invalidateQueries({ queryKey });
   }, [queryClient, queryKey]);
 
-  // Loading is true if org is loading OR notifications are loading (when org exists)
   const loading = orgLoading || (!!organization?.id && notificationsLoading);
 
   return {

@@ -1,11 +1,3 @@
-/**
- * Shared type definitions for EvaSystem
- *
- * Usage:
- * import type { Ambassador, Organization, Fiesta } from '@/types';
- */
-
-// Ambassador types
 export type {
   Ambassador,
   AmbassadorSensitiveData,
@@ -19,7 +11,6 @@ export type {
 
 export { getAmbassadorFullName, getAmbassadorInitials } from './ambassador';
 
-// Organization types
 export type {
   Organization,
   OrganizationWithStats,
@@ -34,7 +25,6 @@ export type {
 
 export { DEFAULT_PERMISSIONS, ROLE_LABELS, hasPermission } from './organization';
 
-// Event/Fiesta types
 export type {
   Fiesta,
   FiestaWithMetrics,
@@ -51,5 +41,4 @@ export type {
 
 export { TASK_STATUS_LABELS } from './event';
 
-// Story mention types (existing)
 export type { StoryMention } from './storyMentions';

@@ -1,10 +1,3 @@
-/**
- * Ambassador API Service
- *
- * Abstracts Supabase operations for ambassador management.
- * Used by useAmbassadors and useAmbassadorRanking hooks.
- */
-
 import { supabase } from '@/integrations/supabase/client';
 import type {
   Ambassador,
@@ -13,9 +6,6 @@ import type {
   UpdateAmbassadorInput,
 } from '@/types';
 
-/**
- * Fetch all ambassadors for an organization
- */
 export async function getAmbassadors(organizationId: string): Promise<Ambassador[]> {
   const { data, error } = await supabase
     .from('embassadors')
@@ -33,7 +23,6 @@ export async function getAmbassadors(organizationId: string): Promise<Ambassador
 
   if (error) throw error;
 
-  // Fetch sensitive data for each ambassador (requires permission)
   const withSensitiveData = await Promise.all(
     (data || []).map(async (ambassador) => {
       try {
@@ -63,9 +52,6 @@ export async function getAmbassadors(organizationId: string): Promise<Ambassador
   return withSensitiveData as Ambassador[];
 }
 
-/**
- * Create a new ambassador
- */
 export async function createAmbassador(
   organizationId: string,
   input: CreateAmbassadorInput
@@ -98,9 +84,6 @@ export async function createAmbassador(
   return data as Ambassador;
 }
 
-/**
- * Update an ambassador
- */
 export async function updateAmbassador(input: UpdateAmbassadorInput): Promise<Ambassador> {
   const { id, ...updates } = input;
 
@@ -119,9 +102,6 @@ export async function updateAmbassador(input: UpdateAmbassadorInput): Promise<Am
   return data as Ambassador;
 }
 
-/**
- * Soft delete an ambassador
- */
 export async function deleteAmbassador(ambassadorId: string): Promise<void> {
   const { error } = await supabase
     .from('embassadors')

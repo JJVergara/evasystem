@@ -13,7 +13,6 @@ import { handleError } from '../shared/error-handler.ts';
 import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
@@ -21,19 +20,15 @@ Deno.serve(async (req) => {
   try {
     const supabaseClient = createSupabaseClient();
 
-    // Security check: Verify request authenticity
     const authHeader = req.headers.get('Authorization');
     const cronSecretHeader = req.headers.get('x-cron-secret');
     const expectedCronSecret = Deno.env.get('CRON_SECRET');
 
-    // Check if this is a cron job or user request
     const isCronJob = !authHeader;
     let targetOrgId: string | null = null;
     let userId: string | null = null;
 
-    // Security validation
     if (isCronJob) {
-      // For cron jobs, require CRON_SECRET header
       if (!cronSecretHeader || !expectedCronSecret || cronSecretHeader !== expectedCronSecret) {
         console.error('Unauthorized cron request: Invalid or missing CRON_SECRET');
         return new Response(JSON.stringify({ error: 'Unauthorized: Invalid cron secret' }), {
@@ -43,25 +38,19 @@ Deno.serve(async (req) => {
       }
       console.log('Starting Instagram sync process... (CRON JOB)');
 
-      // For cron jobs, parse any body parameters
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
       } catch (_) {
-        // No body provided, continue
       }
     } else {
       console.log('Starting Instagram sync process... (USER REQUEST)');
 
-      // Parse request body for user requests
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
       } catch (_) {
-        // No body provided, continue
       }
-      // For user requests, authentication is handled by Supabase JWT verification
-      // But we still need to get the user context
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
         throw new Error('No authorization header');
@@ -78,7 +67,6 @@ Deno.serve(async (req) => {
 
       userId = user.id;
 
-      // Verify user belongs to organization they're trying to sync
       const { data: userData, error: userError } = await supabaseClient
         .from('users')
         .select('organization_id')
@@ -89,26 +77,21 @@ Deno.serve(async (req) => {
         throw new Error('User not found');
       }
 
-      // Ensure user can only sync their own organization
       if (targetOrgId && targetOrgId !== userData.organization_id) {
         throw new Error('Cannot sync organization that does not belong to you');
       }
 
-      // If no target specified, use user's organization
       if (!targetOrgId) {
         targetOrgId = userData.organization_id;
       }
     }
 
-    // Fetch organizations that have Instagram connections
-    // Note: With Instagram Login, instagram_user_id is the key identifier
     let organizationsQuery = supabaseClient
       .from('organizations')
       .select('id, name, instagram_user_id, instagram_username')
       .not('instagram_user_id', 'is', null)
       .order('last_instagram_sync', { ascending: true, nullsFirst: true });
 
-    // If specific organization requested, filter by it
     if (targetOrgId) {
       organizationsQuery = organizationsQuery.eq('id', targetOrgId);
     }
@@ -135,7 +118,6 @@ Deno.serve(async (req) => {
       try {
         console.log(`Syncing data for organization: ${org.name} (${org.id})`);
 
-        // Get Instagram token for this organization
         const { data: tokenData, error: tokenError } = await supabaseClient
           .from('organization_instagram_tokens')
           .select('access_token, token_expiry')
@@ -147,11 +129,9 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Check if token is expired
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
           console.log(`Token expired for organization ${org.name}, creating notification`);
 
-          // Create notification about expired token
           await supabaseClient.from('notifications').insert({
             organization_id: org.id,
             type: 'token_expired',
@@ -160,7 +140,7 @@ Deno.serve(async (req) => {
             priority: 'high',
           });
 
-          continue; // Skip this organization
+          continue;
         }
 
         if (!org.instagram_user_id) {
@@ -168,7 +148,6 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Sync Instagram data using decrypted token
         const decryptedToken = await safeDecryptToken(tokenData.access_token);
         const syncResult = await syncOrganizationInstagramData(
           supabaseClient,
@@ -177,7 +156,6 @@ Deno.serve(async (req) => {
           decryptedToken
         );
 
-        // Update last sync timestamp
         await supabaseClient
           .from('organizations')
           .update({ last_instagram_sync: new Date().toISOString() })
@@ -206,7 +184,6 @@ Deno.serve(async (req) => {
 
     console.log(`Instagram sync completed: ${totalProcessed} organizations processed`);
 
-    // Create a summary notification for cron jobs
     if (isCronJob && totalProcessed > 0) {
       const successCount = results.filter((r) => r.success).length;
       const failureCount = results.filter((r) => !r.success).length;
@@ -244,7 +221,6 @@ async function syncOrganizationInstagramData(
       newTags: 0,
     };
 
-    // 1. Get account metrics directly using the user ID
     const metricsUrl = `${INSTAGRAM_API_BASE}/${igUserId}?fields=followers_count,media_count&access_token=${accessToken}`;
     const metricsResponse = await fetch(metricsUrl);
     const metricsData = await metricsResponse.json();
@@ -256,7 +232,6 @@ async function syncOrganizationInstagramData(
       console.warn(`Failed to fetch metrics for user ${igUserId}:`, metricsData);
     }
 
-    // 2. Get recent media insights (last 50 items to cover active stories)
     const mediaUrl = `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=id,media_type,media_product_type,timestamp,username&limit=50&access_token=${accessToken}`;
     const mediaResponse = await fetch(mediaUrl);
     const mediaData = await mediaResponse.json();
@@ -264,24 +239,21 @@ async function syncOrganizationInstagramData(
     if (mediaResponse.ok && mediaData.data) {
       for (const media of mediaData.data) {
         try {
-          // Check if this is a Story and if it's still active (<24h)
           const isStory = media.media_product_type === 'STORY';
           const mediaTime = new Date(media.timestamp).getTime();
           const now = new Date().getTime();
           const ageHours = (now - mediaTime) / (1000 * 60 * 60);
           const isActive = ageHours < 24;
 
-          // Use appropriate metrics based on media type
           const metrics = isStory
             ? 'impressions,reach,replies,exits,taps_forward,taps_back,shares'
-            : 'reach,impressions'; // impressions is deprecated but still available for some media
+            : 'reach,impressions';
 
           const insightsUrl = `${INSTAGRAM_API_BASE}/${media.id}/insights?metric=${metrics}&access_token=${accessToken}`;
           const insightsResponse = await fetch(insightsUrl);
           const insightsData = await insightsResponse.json();
 
           if (insightsResponse.ok && insightsData.data) {
-            // Accumulate metrics for organization totals
             for (const insight of insightsData.data) {
               if (insight.name === 'reach') {
                 instagramMetrics.totalReach += insight.values[0]?.value || 0;
@@ -290,9 +262,7 @@ async function syncOrganizationInstagramData(
               }
             }
 
-            // If this is an active Story, create a snapshot
             if (isStory && isActive) {
-              // Try to find matching social_mention
               const { data: storyMention } = await supabaseClient
                 .from('social_mentions')
                 .select('id')
@@ -301,13 +271,11 @@ async function syncOrganizationInstagramData(
                 .maybeSingle();
 
               if (storyMention) {
-                // Parse insights for snapshot
                 const insights: InsightsMap = {};
                 for (const insight of insightsData.data) {
                   insights[insight.name] = insight.values?.[0]?.value || 0;
                 }
 
-                // Create snapshot
                 const snapshot = {
                   social_mention_id: storyMention.id,
                   organization_id: organizationId,
@@ -340,7 +308,6 @@ async function syncOrganizationInstagramData(
       console.warn(`Failed to fetch media for user ${igUserId}:`, mediaData);
     }
 
-    // 3. Sync media where the account was mentioned and tagged media
     const mentionResults = await processInstagramMentionsAndTags(
       supabaseClient,
       organizationId,
@@ -350,7 +317,6 @@ async function syncOrganizationInstagramData(
     instagramMetrics.newMentions += mentionResults.newMentions;
     instagramMetrics.newTags += mentionResults.newTags;
 
-    // Create notification about successful sync only if there's new activity
     if (instagramMetrics.newMentions > 0 || instagramMetrics.newTags > 0) {
       await supabaseClient.from('notifications').insert({
         organization_id: organizationId,
@@ -374,7 +340,6 @@ async function processInstagramMentionsAndTags(
   igUserId: string,
   accessToken: string
 ) {
-  // Get ambassadors for this organization with normalized usernames
   const { data: ambassadors, error: ambassadorsError } = await supabaseClient
     .from('embassadors')
     .select('id, instagram_user, first_name, last_name')
@@ -386,17 +351,14 @@ async function processInstagramMentionsAndTags(
     return { newMentions: 0, newTags: 0 };
   }
 
-  // Create a normalized map of usernames to ambassador IDs
   const ambassadorMap = new Map();
   for (const ambassador of ambassadors || []) {
     if (ambassador.instagram_user) {
-      // Normalize: lowercase, remove @
       const normalizedUsername = ambassador.instagram_user.toLowerCase().replace('@', '');
       ambassadorMap.set(normalizedUsername, ambassador);
     }
   }
 
-  // Resolve active event for this organization
   const { data: fiestas, error: fiestasError } = await supabaseClient
     .from('fiestas')
     .select('id')
@@ -426,7 +388,6 @@ async function processInstagramMentionsAndTags(
   let newMentions = 0;
   let newTags = 0;
 
-  // Process mentioned media (when the account is mentioned)
   try {
     const mentionsUrl = `${INSTAGRAM_API_BASE}/${igUserId}/mentioned_media?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`;
     const mentionsRes = await fetch(mentionsUrl);
@@ -455,7 +416,6 @@ async function processInstagramMentionsAndTags(
     console.warn('Error fetching mentioned_media:', err);
   }
 
-  // Process tagged media (when the account is tagged in posts)
   try {
     const tagsUrl = `${INSTAGRAM_API_BASE}/${igUserId}/tags?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`;
     const tagsRes = await fetch(tagsUrl);
@@ -494,7 +454,6 @@ async function processMentionOrTag(
   type: 'mention' | 'tag'
 ): Promise<boolean> {
   try {
-    // Check if already exists in social_mentions
     const { data: existingSocial, error: existSocialError } = await supabaseClient
       .from('social_mentions')
       .select('id')
@@ -502,10 +461,9 @@ async function processMentionOrTag(
       .maybeSingle();
 
     if (existingSocial && !existSocialError) {
-      return false; // Already processed
+      return false;
     }
 
-    // Check if already exists in tasks (legacy)
     const { data: existingTask, error: existTaskError } = await supabaseClient
       .from('tasks')
       .select('id')
@@ -513,23 +471,21 @@ async function processMentionOrTag(
       .maybeSingle();
 
     if (existingTask && !existTaskError) {
-      return false; // Already processed
+      return false;
     }
 
-    // Normalize username for matching
     const normalizedUsername = mediaItem.username
       ? mediaItem.username.toLowerCase().replace('@', '')
       : null;
     const ambassador = normalizedUsername ? ambassadorMap.get(normalizedUsername) : null;
 
-    // Create social_mentions entry
     const { data: socialMention, error: socialMentionError } = await supabaseClient
       .from('social_mentions')
       .insert({
         organization_id: organizationId,
         instagram_media_id: mediaItem.id,
         instagram_username: mediaItem.username,
-        instagram_user_id: null, // We don't have this from the API
+        instagram_user_id: null,
         mention_type: type,
         story_url: mediaItem.permalink || mediaItem.media_url,
         content: mediaItem.caption || null,
@@ -545,7 +501,6 @@ async function processMentionOrTag(
     }
 
     if (ambassador && activeEventId) {
-      // Create task for matched ambassador
       await supabaseClient.from('tasks').insert({
         embassador_id: ambassador.id,
         event_id: activeEventId,
@@ -562,7 +517,7 @@ async function processMentionOrTag(
       console.log(`Created ${type} task for ambassador ${ambassador.id} (${mediaItem.username})`);
     }
 
-    return true; // New item processed
+    return true;
   } catch (err) {
     console.warn(`Error processing ${type} media:`, err);
     return false;

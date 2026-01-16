@@ -65,7 +65,6 @@ export default function ImportExportReal({}: ImportExportRealProps) {
     try {
       setIsProcessing(true);
 
-      // Simulamos el proceso de importación
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: user } = await supabase.auth.getUser();
@@ -96,11 +95,9 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuario no autenticado');
 
-      // Simulamos exportación sin consultas complejas de Supabase por ahora
       const data: Record<string, unknown>[] = [];
 
       if (exportConfig.entity === 'ambassadors') {
-        // Datos simulados para evitar tipos complejos de Supabase
         data.push({
           id: '1',
           first_name: 'Juan',
@@ -122,7 +119,6 @@ export default function ImportExportReal({}: ImportExportRealProps) {
         throw new Error('Tipo de entidad no soportado');
       }
 
-      // Simular descarga del archivo
       const jsonData = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -151,7 +147,6 @@ export default function ImportExportReal({}: ImportExportRealProps) {
   };
 
   const downloadTemplate = () => {
-    // Crear plantilla de ejemplo para embajadores
     const template = [
       {
         first_name: 'María',

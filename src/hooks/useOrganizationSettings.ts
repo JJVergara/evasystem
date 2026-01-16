@@ -132,7 +132,6 @@ async function fetchOrganizationSettingsData(
     };
   }
 
-  // Create default settings if none exist
   const { error: insertError } = await supabase.from('organization_settings').insert({
     organization_id: organizationId,
     general_settings: defaultSettings.general_settings,
@@ -165,8 +164,8 @@ export function useOrganizationSettings() {
     queryKey,
     queryFn: () => fetchOrganizationSettingsData(organization!.id),
     enabled: !!organization?.id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const updateSettingsMutation = useMutation({
@@ -192,7 +191,6 @@ export function useOrganizationSettings() {
       setSaving(true);
     },
     onSuccess: ({ section, updatedSectionSettings }) => {
-      // Optimistically update the cache
       queryClient.setQueryData<OrganizationSettings>(queryKey, (old) => {
         if (!old) return defaultSettings;
         return {

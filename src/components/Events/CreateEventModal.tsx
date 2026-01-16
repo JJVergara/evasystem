@@ -69,13 +69,11 @@ export default function CreateEventModal({
     setLoading(true);
 
     try {
-      // Validaciones básicas
       if (!formData.name.trim() || !formData.event_date) {
         toast.error('El nombre del evento y la fecha son obligatorios');
         return;
       }
 
-      // Obtener el usuario actual y su organización
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
         toast.error('Usuario no autenticado');
@@ -94,7 +92,6 @@ export default function CreateEventModal({
         return;
       }
 
-      // Preparar datos del evento - solo los campos que existen en la tabla
       const eventData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -106,7 +103,6 @@ export default function CreateEventModal({
 
       console.log('Creando evento con datos:', eventData);
 
-      // Crear el evento en Supabase
       const { data: newEvent, error: eventError } = await supabase
         .from('events')
         .insert(eventData)
@@ -164,7 +160,6 @@ export default function CreateEventModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Información Básica */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Información Básica</h3>
 
@@ -191,7 +186,6 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* Fecha y Ubicación */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Fecha y Ubicación</h3>
 
@@ -226,7 +220,6 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* Configuración Avanzada */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Configuración</h3>
 

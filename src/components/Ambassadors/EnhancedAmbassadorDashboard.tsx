@@ -30,7 +30,7 @@ interface Ambassador {
   id: string;
   first_name: string;
   last_name: string;
-  email?: string; // Optional - only available with manage_ambassadors permission
+  email?: string;
   instagram_user: string;
   organization_id: string;
   status: string;
@@ -42,9 +42,9 @@ interface Ambassador {
   follower_count: number;
   instagram_access_token?: string;
   last_instagram_sync?: string;
-  rut?: string; // Optional - only available with manage_ambassadors permission
-  date_of_birth?: string | null; // Optional - only available with manage_ambassadors permission
-  profile_picture_url?: string | null; // Optional - only available with manage_ambassadors permission
+  rut?: string;
+  date_of_birth?: string | null;
+  profile_picture_url?: string | null;
 }
 
 interface EnhancedAmbassadorDashboardProps {
@@ -97,7 +97,6 @@ export function EnhancedAmbassadorDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Dashboard de Embajadores</h1>
         <div className="flex gap-2">
@@ -116,7 +115,6 @@ export function EnhancedAmbassadorDashboard({
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="list" className="space-y-6">
         <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="list">Embajadores</TabsTrigger>
@@ -132,7 +130,6 @@ export function EnhancedAmbassadorDashboard({
         </TabsList>
 
         <TabsContent value="list" className="space-y-6">
-          {/* Search Bar */}
           <div className="flex gap-4 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -145,7 +142,6 @@ export function EnhancedAmbassadorDashboard({
             </div>
           </div>
 
-          {/* Ambassadors Table */}
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -249,7 +245,6 @@ export function EnhancedAmbassadorDashboard({
         </TabsContent>
       </Tabs>
 
-      {/* Ambassador Detail Modal */}
       <Dialog
         open={!!selectedAmbassadorId}
         onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}
@@ -275,14 +270,12 @@ export function EnhancedAmbassadorDashboard({
         </DialogContent>
       </Dialog>
 
-      {/* Add Ambassador Modal */}
       <AddAmbassadorModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAmbassadorAdded={onRefresh}
       />
 
-      {/* Edit Ambassador Modal */}
       <EditAmbassadorModal
         isOpen={!!editingAmbassador}
         onClose={() => setEditingAmbassador(null)}
@@ -290,7 +283,6 @@ export function EnhancedAmbassadorDashboard({
         onAmbassadorUpdated={onRefresh}
       />
 
-      {/* Delete Ambassador Modal */}
       <DeleteAmbassadorModal
         isOpen={!!deletingAmbassador}
         onClose={() => setDeletingAmbassador(null)}

@@ -1,13 +1,7 @@
-/**
- * Handle User Registration Edge Function
- * Handles new user registration and organization creation
- */
-
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
@@ -23,15 +17,12 @@ Deno.serve(async (req) => {
       authUserId,
     } = await req.json();
 
-    // Initialize Supabase client with service role
     const supabase = createSupabaseClient();
 
     let userData;
     let authData;
 
-    // Si viene authUserId, es un usuario existente creando una organización
     if (authUserId) {
-      // Verificar si el usuario ya existe en la tabla users
       const { data: existingUser, error: existingUserError } = await supabase
         .from('users')
         .select('*')
@@ -48,7 +39,6 @@ Deno.serve(async (req) => {
         userData = existingUser;
       }
     } else {
-      // Crear nuevo usuario en auth
       const { data: newAuthData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
@@ -62,7 +52,6 @@ Deno.serve(async (req) => {
       authData = newAuthData;
     }
 
-    // Crear organización
     const { data: orgData, error: orgError } = await supabase
       .from('organizations')
       .insert({
@@ -77,7 +66,6 @@ Deno.serve(async (req) => {
       throw new Error(`Error creating organization: ${orgError.message}`);
     }
 
-    // Si no hay userData, crear el registro del usuario
     if (!userData) {
       const { data: newUserData, error: userError } = await supabase
         .from('users')
@@ -97,8 +85,6 @@ Deno.serve(async (req) => {
 
       userData = newUserData;
     } else {
-      // For existing users creating a new organization, add them as member
-      // Don't update their primary organization_id, just add membership
       const { error: memberError } = await supabase.from('organization_members').insert({
         organization_id: orgData.id,
         user_id: authData.user.id,
@@ -115,10 +101,8 @@ Deno.serve(async (req) => {
 
       if (memberError) {
         console.log('Membership may already exist:', memberError.message);
-        // Don't throw error if membership already exists
       }
 
-      // Update user's current organization to the new one
       const { data: updatedUserData, error: updateError } = await supabase
         .from('users')
         .update({
@@ -135,7 +119,6 @@ Deno.serve(async (req) => {
       userData = updatedUserData;
     }
 
-    // Create welcome feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: null,
@@ -143,7 +126,6 @@ Deno.serve(async (req) => {
       p_message: `¡Bienvenido a EVA System, ${name}! Tu organización ${organizationName} ha sido creada exitosamente.`,
     });
 
-    // Create registration log
     await supabase.rpc('create_event_log', {
       p_user_id: userData.id,
       p_event_id: null,

@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(req);
     if (authResult instanceof Response) return authResult;
 
@@ -24,12 +23,11 @@ Deno.serve(async (req) => {
     const { organization_id, endpoint } = await req.json();
     validateRequired({ organization_id }, ['organization_id']);
 
-    // SECURITY: Verify user owns this organization
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id, instagram_user_id, instagram_username')
       .eq('id', organization_id)
-      .eq('created_by', user.id) // CRITICAL: Only allow access to owned organizations
+      .eq('created_by', user.id)
       .single();
 
     if (orgError || !org) {
@@ -39,7 +37,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get organization token
     const { data: tokenData, error: tokenError } = await supabase.rpc(
       'get_organization_token_info',
       { org_id: organization_id }
@@ -60,7 +57,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Decrypt token
     const accessToken = await safeDecryptToken(orgToken.access_token);
 
     let result = {};
@@ -90,7 +86,6 @@ Deno.serve(async (req) => {
   }
 });
 
-// Obtener perfil básico usando las especificaciones del usuario
 async function getInstagramProfile(igUserId: string, accessToken: string) {
   const fields =
     'user_id,username,name,account_type,profile_picture_url,followers_count,follows_count,media_count';
@@ -111,7 +106,6 @@ async function getInstagramProfile(igUserId: string, accessToken: string) {
   };
 }
 
-// Obtener feed del usuario usando las especificaciones del usuario
 async function getInstagramMedia(igUserId: string, accessToken: string) {
   const fields =
     'id,caption,comments_count,like_count,media_type,media_url,owner,permalink,username';
@@ -132,7 +126,6 @@ async function getInstagramMedia(igUserId: string, accessToken: string) {
   };
 }
 
-// Obtener menciones (tags en publicaciones) usando las especificaciones del usuario
 async function getInstagramTags(igUserId: string, accessToken: string) {
   const fields = 'id,caption,comments_count,like_count,media_type,media_url,permalink,username';
 

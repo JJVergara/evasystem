@@ -11,7 +11,6 @@ import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 import { encryptToken, safeDecryptToken } from '../shared/crypto.ts';
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
@@ -22,7 +21,6 @@ Deno.serve(async (req) => {
     const supabaseClient = createSupabaseClient();
     const url = new URL(req.url);
     let action = url.searchParams.get('action');
-    // Fallback: try to read action from JSON body when missing (proxy calls)
     if (!action) {
       try {
         const body = await req.clone().json();
@@ -30,7 +28,6 @@ Deno.serve(async (req) => {
           action = body.action;
         }
       } catch (_err) {
-        // ignore JSON parse errors
       }
     }
     console.log('Action parameter:', action);
@@ -86,7 +83,6 @@ Deno.serve(async (req) => {
   }
 });
 async function getOrganizationCredentials(supabaseClient, organizationId) {
-  // Try to get organization-specific credentials using secure function
   const { data: orgCreds, error: orgError } = await supabaseClient.rpc(
     'get_organization_credentials_secure',
     {
@@ -162,11 +158,10 @@ async function handleAuthorize(req, supabaseClient) {
         }
       );
     }
-    // ----- NEW: organization_members-based membership check -----
     const { data: membership, error: membershipError } = await supabaseClient
       .from('organization_members')
       .select('id, organization_id, status, permissions')
-      .eq('user_id', authUser.id) // auth.users.id
+      .eq('user_id', authUser.id)
       .eq('organization_id', organization_id)
       .eq('status', 'active')
       .single();
@@ -181,7 +176,6 @@ async function handleAuthorize(req, supabaseClient) {
         }
       );
     }
-    // Optional: enforce permissions
     const perms = membership.permissions || {};
     const canManageAmbassadors =
       perms.manage_ambassadors === true || perms.manage_instagram === true;
@@ -197,13 +191,11 @@ async function handleAuthorize(req, supabaseClient) {
         }
       );
     }
-    // Still get the internal app user row, but only for storing oauth_states.user_id
     const { data: appUser } = await supabaseClient
       .from('users')
       .select('id')
       .eq('auth_user_id', authUser.id)
       .single();
-    // Use global Instagram App credentials for all users
     const appId = Deno.env.get('INSTAGRAM_APP_ID');
     const appSecret = Deno.env.get('INSTAGRAM_APP_SECRET');
     const REDIRECT_URI = `https://evasystem-psi.vercel.app/meta-oauth`;
@@ -220,7 +212,6 @@ async function handleAuthorize(req, supabaseClient) {
         }
       );
     }
-    // Build state payload
     const statePayload =
       type === 'ambassador'
         ? {
@@ -286,7 +277,6 @@ async function handleAuthorize(req, supabaseClient) {
   }
 }
 async function handleCallback(req, supabaseClient) {
-  // Try to get data from body (proxy call from frontend)
   let code;
   let state;
   let metaError;
@@ -300,7 +290,6 @@ async function handleCallback(req, supabaseClient) {
       isProxyCall = true;
     }
   } catch {
-    // We no longer support direct Meta -> Edge callbacks
     isProxyCall = false;
   }
   if (!isProxyCall) {
@@ -344,7 +333,6 @@ async function handleCallback(req, supabaseClient) {
     );
   }
   try {
-    // Require that caller is authenticated (the admin or user who initiated the flow)
     const authHeader = req.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;
     if (!token) {
@@ -374,7 +362,6 @@ async function handleCallback(req, supabaseClient) {
         }
       );
     }
-    // Look up state in DB
     const { data: stateData, error: stateError } = await supabaseClient
       .from('oauth_states')
       .select('*')
@@ -446,9 +433,7 @@ async function handleCallback(req, supabaseClient) {
           }
         );
       }
-      // Link the Instagram token & profile to the ambassador
       await updateAmbassadorInstagramData(supabaseClient, ambassadorId, tokenData);
-      // Clean up state
       await supabaseClient.from('oauth_states').delete().eq('state', state);
       return jsonResponse(
         {
@@ -476,7 +461,6 @@ async function handleCallback(req, supabaseClient) {
           }
         );
       }
-      // Verify organization membership (same RPC you used before)
       const { data: isMember, error: memberError } = await supabaseClient.rpc(
         'is_organization_member',
         {
@@ -496,9 +480,7 @@ async function handleCallback(req, supabaseClient) {
           }
         );
       }
-      // Link the Instagram Business account to the organization
       await updateOrganizationInstagramData(supabaseClient, organizationId, tokenData);
-      // Clean up state
       await supabaseClient.from('oauth_states').delete().eq('state', state);
       return jsonResponse(
         {
@@ -512,7 +494,6 @@ async function handleCallback(req, supabaseClient) {
         }
       );
     }
-    // Should not happen because of CHECK(type) in DB
     return jsonResponse(
       {
         success: false,
@@ -531,7 +512,6 @@ async function handleCallback(req, supabaseClient) {
       message: err?.message,
       stack: err?.stack,
     });
-    // Similar error shape as your old code
     let errorType = 'token_exchange_failed';
     let errorMsg = 'Failed to process Instagram authorization';
     let debugInfo = err?.message ?? String(error);
@@ -567,7 +547,6 @@ async function exchangeCodeForToken(code) {
   const appId = Deno.env.get('INSTAGRAM_APP_ID');
   const appSecret = Deno.env.get('INSTAGRAM_APP_SECRET');
   const REDIRECT_URI = 'https://evasystem-psi.vercel.app/meta-oauth';
-  // Step 1: code -> short-lived user access token
   const shortRes = await fetch(INSTAGRAM_OAUTH_TOKEN, {
     method: 'POST',
     body: new URLSearchParams({
@@ -584,7 +563,6 @@ async function exchangeCodeForToken(code) {
       `Short-lived token exchange failed: ${shortData.error?.message || shortData.error_description || 'Unknown error'}`
     );
   }
-  // Step 2: short-lived -> long-lived token
   const longUrl =
     `${INSTAGRAM_TOKEN_EXCHANGE}` +
     `?grant_type=ig_exchange_token` +
@@ -597,7 +575,6 @@ async function exchangeCodeForToken(code) {
       `Long-lived token exchange failed: ${longData.error?.message || longData.error_description || 'Unknown error'}`
     );
   }
-  // Compute expiry
   const expiresAt = new Date();
   expiresAt.setSeconds(expiresAt.getSeconds() + (longData.expires_in ?? 60 * 24 * 60 * 60));
   return {
@@ -607,15 +584,12 @@ async function exchangeCodeForToken(code) {
     expires_at: expiresAt.toISOString(),
   };
 }
-// Update ambassador data in Supabase using secure token storage
 async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, tokenData) {
   try {
     console.log('Updating ambassador Instagram data for ambassador:', ambassadorId);
     if (!tokenData.access_token) {
       throw new Error('No access token provided');
     }
-    // 1) Get "user" info from Instagram
-    // Includes fields to populate our database
     const userResponse = await fetch(
       `${INSTAGRAM_API_BASE}/me?fields=user_id,username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(tokenData.access_token)}`
     );
@@ -630,11 +604,9 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
       follower_count: userData.followers_count || 0,
       profile_picture_url: userData.profile_picture_url,
     };
-    // 3) Compute expiry date (Meta sometimes omits expires_in)
     const expiryDate = tokenData.expires_in
       ? new Date(Date.now() + tokenData.expires_in * 1000)
-      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // default ~60 days
-    // 4) Encrypt and store token in ambassador_tokens
+      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
     const encryptedToken = await encryptToken(tokenData.access_token);
     const { error: tokenError } = await supabaseClient.from('ambassador_tokens').upsert(
       {
@@ -651,7 +623,6 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
       console.error('Failed to store ambassador token:', tokenError);
       throw new Error('Failed to store ambassador token');
     }
-    // 5) Update embassadors row with public IG info only
     const { error: updateError } = await supabaseClient
       .from('embassadors')
       .update({
@@ -672,19 +643,16 @@ async function updateAmbassadorInstagramData(supabaseClient, ambassadorId, token
     throw error;
   }
 }
-// Update organization data in Supabase using secure token storage
 async function updateOrganizationInstagramData(supabaseClient, organizationId, tokenData) {
   try {
     console.log('Updating organization Instagram data for:', organizationId);
     if (!tokenData.access_token) {
       throw new Error('No access token provided');
     }
-    // 1) Get Instagram user info directly
     const userResponse = await fetch(
       `${INSTAGRAM_API_BASE}/me?fields=id,user_id,username,name,profile_picture_url,followers_count&access_token=${encodeURIComponent(tokenData.access_token)}`
     );
     const userData = await userResponse.json();
-    // DEBUG: Log all IDs returned by Instagram API to diagnose webhook mismatch
     console.log('DEBUG: Instagram /me API response:', {
       id: userData.id,
       user_id: userData.user_id,
@@ -695,10 +663,6 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       console.error('Error fetching /me:', userData.error || userData);
       throw new Error(userData.error?.message || 'Failed to fetch Instagram user profile data');
     }
-    // NOTE: Instagram API returns different IDs:
-    // - userData.id = App-scoped User ID (varies per app, NOT for webhook matching)
-    // - userData.user_id = Instagram User ID (this is what webhooks send in entry.id!)
-    // We MUST use userData.user_id for webhook matching
     console.log('DEBUG: Instagram /me API response:', {
       id: userData.id,
       user_id: userData.user_id,
@@ -713,11 +677,9 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
     console.log(
       `Instagram Business Account connected: @${instagramData.instagram_username} (${instagramData.instagram_user_id})`
     );
-    // 4) Compute expiry date
     const expiryDate = tokenData.expires_in
       ? new Date(Date.now() + tokenData.expires_in * 1000)
-      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // default ~60 days
-    // 5) Encrypt and store token
+      : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
     const encryptedToken = await encryptToken(tokenData.access_token);
     const { error: tokenError } = await supabaseClient.from('organization_instagram_tokens').upsert(
       {
@@ -734,7 +696,6 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       console.error('Failed to store organization token:', tokenError);
       throw new Error('Failed to store organization token');
     }
-    // 6) Update organizations row with public IG info
     const { error: updateError } = await supabaseClient
       .from('organizations')
       .update({
@@ -749,8 +710,6 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       console.error('Failed to update organization:', updateError);
       throw new Error('Failed to update organization data');
     }
-    // 7) Subscribe to webhooks (using User Access Token)
-    // Note: With Instagram Login, we use the User Access Token directly
     try {
       if (instagramData.instagram_business_account_id) {
         console.log('Subscribing Instagram Business Account to webhooks...');
@@ -776,7 +735,6 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
       }
     } catch (webhookError) {
       console.warn('Webhook subscription failed:', webhookError);
-      // not fatal – token stored and org updated
     }
     console.log('Organization Instagram data updated successfully');
   } catch (error) {
@@ -784,7 +742,6 @@ async function updateOrganizationInstagramData(supabaseClient, organizationId, t
     throw error;
   }
 }
-// Handle token refresh using secure token storage
 async function handleTokenRefresh(req, supabaseClient) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -799,9 +756,7 @@ async function handleTokenRefresh(req, supabaseClient) {
       throw new Error('Unauthorized');
     }
     const { organization_id, ambassador_id } = await req.json();
-    // --- ORGANIZATION TOKEN REFRESH ---
     if (organization_id) {
-      // Verify logged-in user belongs to this organization using organization_members
       const { data: membership, error: memberError } = await supabaseClient
         .from('organization_members')
         .select('id')
@@ -812,7 +767,6 @@ async function handleTokenRefresh(req, supabaseClient) {
       if (memberError || !membership) {
         throw new Error('Unauthorized to refresh this organization token');
       }
-      // Get current token
       const { data: tokenData, error: tokenError } = await supabaseClient
         .from('organization_instagram_tokens')
         .select('access_token')
@@ -822,9 +776,7 @@ async function handleTokenRefresh(req, supabaseClient) {
         throw new Error('No token found for organization');
       }
       const decryptedToken = await safeDecryptToken(tokenData.access_token);
-      // Refresh IG long-lived token
       const newTokenData = await exchangeTokenForLongLived(decryptedToken);
-      // Update token
       const encryptedNewToken = await encryptToken(newTokenData.access_token);
       const expiresAt = new Date(
         Date.now() + (newTokenData.expires_in ?? 60 * 24 * 60 * 60) * 1000
@@ -854,9 +806,7 @@ async function handleTokenRefresh(req, supabaseClient) {
         }
       );
     }
-    // --- AMBASSADOR TOKEN REFRESH ---
     if (ambassador_id) {
-      // Find ambassador org
       const { data: ambassadorData, error: ambassadorError } = await supabaseClient
         .from('embassadors')
         .select('organization_id')
@@ -865,7 +815,6 @@ async function handleTokenRefresh(req, supabaseClient) {
       if (ambassadorError || !ambassadorData) {
         throw new Error('Ambassador not found');
       }
-      // Verify logged-in user belongs to same org using organization_members
       const { data: membership, error: memberError } = await supabaseClient
         .from('organization_members')
         .select('id')
@@ -876,7 +825,6 @@ async function handleTokenRefresh(req, supabaseClient) {
       if (memberError || !membership) {
         throw new Error('Unauthorized to refresh this ambassador token');
       }
-      // Get current token
       const { data: tokenData, error: tokenError } = await supabaseClient
         .from('ambassador_tokens')
         .select('access_token')
@@ -886,9 +834,7 @@ async function handleTokenRefresh(req, supabaseClient) {
         throw new Error('No token found for ambassador');
       }
       const decryptedToken = await safeDecryptToken(tokenData.access_token);
-      // Refresh IG long-lived token
       const newTokenData = await exchangeTokenForLongLived(decryptedToken);
-      // Update token
       const encryptedNewToken = await encryptToken(newTokenData.access_token);
       const expiresAt = new Date(
         Date.now() + (newTokenData.expires_in ?? 60 * 24 * 60 * 60) * 1000
@@ -937,8 +883,6 @@ async function handleTokenRefresh(req, supabaseClient) {
     );
   }
 }
-// Helper function to exchange a token for a long-lived token
-// Refresh an Instagram long-lived access token
 async function exchangeTokenForLongLived(accessToken) {
   const url =
     `${INSTAGRAM_TOKEN_REFRESH}?` +
@@ -955,12 +899,8 @@ async function exchangeTokenForLongLived(accessToken) {
   return data;
 }
 async function subscribeToPageWebhooks(pageId, accessToken) {
-  // This function is less relevant now with Instagram Login which uses the User ID
-  // But kept for compatibility if needed, though Instagram Login doesn't use Page tokens.
-  // This was mainly for Facebook Page subscription.
   console.log('Skipping Page Webhook subscription (not applicable for Instagram Login flow)');
 }
-// Diagnose endpoint - lists all Facebook Pages and their Instagram accounts
 async function handleDiagnose(req, supabaseClient) {
   try {
     const authHeader = req.headers.get('Authorization') || '';
@@ -992,7 +932,6 @@ async function handleDiagnose(req, supabaseClient) {
         }
       );
     }
-    // Get user's organization
     const { data: userOrgs } = await supabaseClient.rpc('get_user_organizations', {
       user_auth_id: authUser.id,
     });
@@ -1004,7 +943,6 @@ async function handleDiagnose(req, supabaseClient) {
       });
     }
     const organizationId = userOrgs[0].organization_id;
-    // Get the stored token with updated_at timestamp
     const { data: tokenData, error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
       .select('access_token, updated_at')
@@ -1018,10 +956,8 @@ async function handleDiagnose(req, supabaseClient) {
       });
     }
     console.log('Token last updated at:', tokenData.updated_at);
-    // Decrypt the token
     const accessToken = await safeDecryptToken(tokenData.access_token);
     console.log('Token decrypted, length:', accessToken?.length || 0);
-    // New diagnostic: Check /me endpoint directly
     const meResponse = await fetch(
       `${INSTAGRAM_API_BASE}/me?fields=id,username,account_type&access_token=${encodeURIComponent(accessToken)}`
     );

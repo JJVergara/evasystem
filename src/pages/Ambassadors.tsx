@@ -3,7 +3,6 @@ import AmbassadorManagement from '@/components/Ambassadors/AmbassadorManagement'
 import { toast } from 'sonner';
 
 const Ambassadors = () => {
-  // Handle Instagram connection callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
@@ -14,7 +13,6 @@ const Ambassadors = () => {
         description: 'La cuenta de Instagram del embajador ha sido vinculada correctamente',
       });
 
-      // Clean up URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
       window.history.replaceState({}, '', url.toString());
@@ -23,7 +21,6 @@ const Ambassadors = () => {
         description: decodeURIComponent(error),
       });
 
-      // Clean up URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete('status');
       url.searchParams.delete('error');

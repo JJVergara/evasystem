@@ -4,7 +4,6 @@ import { useCurrentOrganization } from './useCurrentOrganization';
 import { toast } from 'sonner';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-/** Social mention record from database */
 interface SocialMentionRecord {
   id: string;
   organization_id: string;
@@ -15,7 +14,6 @@ interface SocialMentionRecord {
   [key: string]: unknown;
 }
 
-/** Ambassador request record from database */
 interface AmbassadorRequestRecord {
   id: string;
   organization_id: string;
@@ -40,7 +38,6 @@ export function useRealtimeSocialMentions({
   useEffect(() => {
     if (!organization) return;
 
-    // Subscribe to social mentions changes
     const socialMentionsChannel = supabase
       .channel(`social_mentions_${organization.id}`)
       .on(
@@ -55,7 +52,6 @@ export function useRealtimeSocialMentions({
           const newRecord = payload.new as SocialMentionRecord;
           console.log('New social mention:', payload);
 
-          // Show notification based on mention type
           const mentionType = newRecord.mention_type;
           const username = newRecord.instagram_username;
 
@@ -103,7 +99,6 @@ export function useRealtimeSocialMentions({
           const oldRecord = payload.old as SocialMentionRecord;
           console.log('Social mention updated:', payload);
 
-          // Show notification when mention is processed/assigned
           if (newRecord.processed && !oldRecord.processed) {
             toast.success('Mención procesada', {
               description: 'Asignada a embajador',
@@ -115,7 +110,6 @@ export function useRealtimeSocialMentions({
       )
       .subscribe();
 
-    // Subscribe to ambassador requests changes
     const ambassadorRequestsChannel = supabase
       .channel(`ambassador_requests_${organization.id}`)
       .on(
@@ -156,7 +150,6 @@ export function useRealtimeSocialMentions({
           const oldRecord = payload.old as AmbassadorRequestRecord;
           console.log('Ambassador request updated:', payload);
 
-          // Show notification when request is approved/rejected
           if (newRecord.status !== oldRecord.status) {
             if (newRecord.status === 'approved') {
               toast.success('Embajador aprobado', {
@@ -172,12 +165,11 @@ export function useRealtimeSocialMentions({
       )
       .subscribe();
 
-    // Cleanup subscriptions
     return () => {
       supabase.removeChannel(socialMentionsChannel);
       supabase.removeChannel(ambassadorRequestsChannel);
     };
   }, [organization, onNewMention, onMentionUpdated, onNewAmbassadorRequest]);
 
-  return null; // This hook doesn't return any value, just manages subscriptions
+  return null;
 }

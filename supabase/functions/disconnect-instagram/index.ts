@@ -9,17 +9,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(req);
     if (authResult instanceof Response) return authResult;
 
     const { user, supabase: supabaseClient } = authResult;
 
-    // Get user's organization
     const organizationId = await getUserOrganization(supabaseClient, user.id);
     assert(organizationId, 'Organization not found', 404);
 
-    // Delete tokens from secure table
     const { error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
       .delete()
@@ -30,7 +27,6 @@ Deno.serve(async (req) => {
       throw new Error('Failed to disconnect Instagram tokens');
     }
 
-    // Verify user has access to this organization
     const { data: hasAccess } = await supabaseClient.rpc('is_organization_member', {
       user_auth_id: user.id,
       org_id: organizationId,
@@ -40,7 +36,6 @@ Deno.serve(async (req) => {
       throw new Error('No access to this organization');
     }
 
-    // Clear Instagram-related fields from organizations table
     const { error: updateError } = await supabaseClient
       .from('organizations')
       .update({

@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
 
     const { organizationId, mentionId } = await req.json();
 
-    // Validate required parameters
     if (!mentionId) {
       console.error('Missing mentionId parameter');
       return jsonResponse(
@@ -41,7 +40,6 @@ Deno.serve(async (req) => {
 
     console.log(`Resolving story mention ${mentionId} for organization ${organizationId}`);
 
-    // Get the mention record
     const { data: mention, error: mentionError } = await supabase
       .from('social_mentions')
       .select('*')
@@ -60,7 +58,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get organization Instagram tokens
     const { data: tokenInfo } = await supabase
       .from('organization_instagram_tokens')
       .select('access_token, token_expiry')
@@ -70,7 +67,6 @@ Deno.serve(async (req) => {
     if (!tokenInfo || !tokenInfo.access_token) {
       console.error('No Instagram token found for organization');
 
-      // Mark as unverifiable
       await supabase
         .from('social_mentions')
         .update({
@@ -89,7 +85,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if token is expired
     if (tokenInfo.token_expiry && new Date(tokenInfo.token_expiry) < new Date()) {
       console.error('Instagram token expired');
 
@@ -111,10 +106,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Decrypt token for API calls
     const decryptedToken = await safeDecryptToken(tokenInfo.access_token);
 
-    // Try to resolve mentioned_media from Instagram API
     if (mention.instagram_user_id) {
       try {
         const response = await fetch(
@@ -125,9 +118,8 @@ Deno.serve(async (req) => {
           const data = await response.json();
 
           if (data.mentioned_media && data.mentioned_media.data) {
-            // Find story media close to the mention timestamp
             const mentionTime = new Date(mention.mentioned_at).getTime();
-            const timeWindow = 5 * 60 * 1000; // 5 minutes window
+            const timeWindow = 5 * 60 * 1000;
 
             const storyMedia = data.mentioned_media.data.find((media: MediaItem) => {
               const mediaTime = new Date(media.timestamp).getTime();
@@ -138,7 +130,6 @@ Deno.serve(async (req) => {
             });
 
             if (storyMedia) {
-              // Update mention with resolved data
               const { error: updateError } = await supabase
                 .from('social_mentions')
                 .update({
@@ -168,7 +159,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If we couldn't resolve, create fallback deep link
     const fallbackLink = mention.instagram_username
       ? `https://www.instagram.com/stories/${mention.instagram_username}/`
       : `https://www.instagram.com/${mention.instagram_username || 'unknown'}/`;

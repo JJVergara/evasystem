@@ -60,7 +60,6 @@ export function useInstagramSync() {
     }
   };
 
-  // Nuevas funciones según especificaciones del usuario
   const getInstagramProfile = async () => {
     if (!organization?.id) {
       toast.error('No se encontró organización');

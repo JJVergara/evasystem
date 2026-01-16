@@ -27,7 +27,6 @@ async function fetchSystemChecks(
   const checks: SystemCheck[] = [];
 
   try {
-    // Check 1: Organization setup
     checks.push({
       name: 'Organización configurada',
       status: organization ? 'success' : 'error',
@@ -36,7 +35,6 @@ async function fetchSystemChecks(
         : 'No se encontró organización activa',
     });
 
-    // Check 2: Instagram connection
     checks.push({
       name: 'Conexión de Instagram',
       status: isConnected ? 'success' : 'error',
@@ -46,7 +44,6 @@ async function fetchSystemChecks(
       action: !isConnected ? 'Conectar Instagram' : undefined,
     });
 
-    // Check 3: Token status
     if (isConnected) {
       checks.push({
         name: 'Estado del token',
@@ -58,7 +55,6 @@ async function fetchSystemChecks(
       });
     }
 
-    // Check 4: Database tables
     const { data: socialMentions, error: mentionsError } = await supabase
       .from('social_mentions')
       .select('id, created_at')
@@ -76,7 +72,6 @@ async function fetchSystemChecks(
           : 'Base de datos operativa - sin actividad reciente',
     });
 
-    // Check 5: Credentials
     const { data: credsStatus } = await supabase.rpc('get_org_meta_credentials_status', {
       p_organization_id: organization.id,
     });
@@ -92,7 +87,6 @@ async function fetchSystemChecks(
       action: !hasCredentials ? 'Configurar credenciales' : undefined,
     });
 
-    // Check 6: Recent sync
     const lastSync = organization.last_instagram_sync;
     const syncStatus = lastSync
       ? new Date(Date.now() - new Date(lastSync).getTime()).getTime() < 24 * 60 * 60 * 1000
@@ -123,13 +117,11 @@ export function useSystemChecks() {
   const { isConnected, isTokenExpired } = useInstagramConnection();
   const queryClient = useQueryClient();
 
-  // Use refs to store the latest connection values without causing queryKey changes
   const connectionRef = useRef({ isConnected, isTokenExpired });
   useEffect(() => {
     connectionRef.current = { isConnected, isTokenExpired };
   }, [isConnected, isTokenExpired]);
 
-  // Stable queryKey using centralized QUERY_KEYS - only changes when organization changes
   const queryKey = useMemo(
     () => QUERY_KEYS.systemChecks(organization?.id || ''),
     [organization?.id]
@@ -157,9 +149,9 @@ export function useSystemChecks() {
         connectionRef.current.isTokenExpired
       ),
     enabled: !!organization,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    placeholderData: keepPreviousData, // Keep showing old data while fetching new
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const refreshSystemChecks = async () => {
@@ -172,7 +164,7 @@ export function useSystemChecks() {
 
   return {
     systemChecks,
-    isLoading: isLoading && systemChecks.length === 0, // Only show loading on first fetch
+    isLoading: isLoading && systemChecks.length === 0,
     isFetching,
     error,
     refreshSystemChecks,

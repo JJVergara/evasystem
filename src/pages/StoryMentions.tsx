@@ -36,7 +36,6 @@ export default function StoryMentions() {
     try {
       await markAsProcessed(mentionId);
     } catch (error) {
-      // Error handling is done in the hook
     }
   };
 
@@ -44,27 +43,22 @@ export default function StoryMentions() {
     try {
       await flagAsEarlyDelete(mentionId);
     } catch (error) {
-      // Error handling is done in the hook
     }
   };
 
   const handleReply = async (mention: StoryMention, message?: string) => {
     if (message) {
-      // Reply from details modal
       try {
         await sendReply(mention, message);
       } catch (error) {
-        // Error handling is done in the hook
       }
     } else {
-      // Show details modal to compose reply
       setSelectedMention(mention);
       setDetailsOpen(true);
     }
   };
 
   const handleCreateLead = (mention: StoryMention) => {
-    // Placeholder for CRM integration
     toast({
       title: 'Función en desarrollo',
       description: 'La integración con CRM estará disponible próximamente',
@@ -94,7 +88,6 @@ export default function StoryMentions() {
         description: `Procesadas: ${data.processed || 0} menciones, Notificaciones: ${data.notifications_sent || 0}`,
       });
 
-      // Refresh the mentions list
       fetchStoryMentions();
     } catch (error) {
       console.error('Error running worker:', error);
@@ -125,7 +118,6 @@ export default function StoryMentions() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Menciones de Historias</h1>
@@ -138,7 +130,6 @@ export default function StoryMentions() {
             variant="outline"
             size="sm"
             onClick={async () => {
-              // First, try to resolve story mentions
               try {
                 const { data: resolveData, error: resolveError } = await supabase.functions.invoke(
                   'resolve-story-mentions',
@@ -158,7 +149,6 @@ export default function StoryMentions() {
                 console.error('Error calling resolve function:', error);
               }
 
-              // Then run the state worker
               handleRunWorker();
             }}
             disabled={runningWorker}
@@ -180,7 +170,6 @@ export default function StoryMentions() {
         </div>
       </div>
 
-      {/* Info Card */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -202,7 +191,6 @@ export default function StoryMentions() {
         </CardContent>
       </Card>
 
-      {/* Error State */}
       {error && (
         <Card className="border-destructive/50 bg-destructive/10">
           <CardContent className="pt-6">
@@ -214,7 +202,6 @@ export default function StoryMentions() {
         </Card>
       )}
 
-      {/* Main Content */}
       <StoryMentionsList
         mentions={mentions}
         loading={loading}
@@ -225,7 +212,6 @@ export default function StoryMentions() {
         onCreateLead={handleCreateLead}
       />
 
-      {/* Details Modal */}
       <StoryMentionDetails
         mention={selectedMention}
         open={detailsOpen}

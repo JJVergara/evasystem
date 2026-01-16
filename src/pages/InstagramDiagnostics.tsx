@@ -79,7 +79,6 @@ export default function InstagramDiagnostics() {
         description="Herramientas avanzadas para diagnosticar y solucionar problemas de integración con Instagram"
       />
 
-      {/* System Status Overview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -149,10 +148,8 @@ export default function InstagramDiagnostics() {
 
       <Separator />
 
-      {/* Advanced Diagnostics */}
       {isConnected && <InstagramDiagnosticsPanel />}
 
-      {/* Quick Actions */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -203,7 +200,6 @@ export default function InstagramDiagnostics() {
         </CardContent>
       </Card>
 
-      {/* System Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

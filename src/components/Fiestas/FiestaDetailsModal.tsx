@@ -38,7 +38,6 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Event Details */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Detalles del Evento</h3>
             <div className="grid gap-4">
@@ -75,7 +74,6 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
             </div>
           </div>
 
-          {/* Hashtags */}
           {(fiesta.main_hashtag || fiesta.secondary_hashtags) && (
             <div className="space-y-4">
               <h3 className="font-semibold text-lg text-gray-900">Hashtags</h3>
@@ -112,7 +110,6 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
             </div>
           )}
 
-          {/* Timestamps */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Información del Sistema</h3>
             <div className="grid gap-3">

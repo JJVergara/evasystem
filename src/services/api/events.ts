@@ -1,15 +1,6 @@
-/**
- * Events API Service
- *
- * Abstracts Supabase operations for event management.
- */
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Event, CreateEventInput, UpdateEventInput } from '@/types';
 
-/**
- * Fetch all events for an organization
- */
 export async function getEvents(organizationId: string): Promise<Event[]> {
   const { data, error } = await supabase
     .from('events')
@@ -30,9 +21,6 @@ export async function getEvents(organizationId: string): Promise<Event[]> {
   return (data || []) as Event[];
 }
 
-/**
- * Fetch events by fiesta
- */
 export async function getEventsByFiesta(fiestaId: string): Promise<Event[]> {
   const { data, error } = await supabase
     .from('events')
@@ -44,9 +32,6 @@ export async function getEventsByFiesta(fiestaId: string): Promise<Event[]> {
   return (data || []) as Event[];
 }
 
-/**
- * Create a new event
- */
 export async function createEvent(organizationId: string, input: CreateEventInput): Promise<Event> {
   const { data, error } = await supabase
     .from('events')
@@ -65,9 +50,6 @@ export async function createEvent(organizationId: string, input: CreateEventInpu
   return data as Event;
 }
 
-/**
- * Update an event
- */
 export async function updateEvent(input: UpdateEventInput): Promise<Event> {
   const { id, ...updates } = input;
 
@@ -82,9 +64,6 @@ export async function updateEvent(input: UpdateEventInput): Promise<Event> {
   return data as Event;
 }
 
-/**
- * Delete an event
- */
 export async function deleteEvent(eventId: string): Promise<boolean> {
   const { error } = await supabase.from('events').delete().eq('id', eventId);
 

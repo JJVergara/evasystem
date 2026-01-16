@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentOrganization } from './useCurrentOrganization';
 
-// Database row type (not in generated Supabase types yet)
 interface StoryInsightsSnapshotRow {
   id: string;
   instagram_story_id: string;
@@ -102,8 +101,6 @@ async function fetchStoryInsightsData(
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  // Fetch all snapshots for the period
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: snapshots, error: snapshotsError } = (await (supabase as any)
     .from('story_insights_snapshots')
     .select('*')
@@ -118,7 +115,6 @@ async function fetchStoryInsightsData(
     throw new Error(snapshotsError.message);
   }
 
-  // Get unique stories (latest snapshot per story)
   const uniqueStories = new Map<string, StoryInsightsSnapshotRow>();
   for (const snapshot of snapshots || []) {
     if (!uniqueStories.has(snapshot.instagram_story_id)) {
@@ -128,7 +124,6 @@ async function fetchStoryInsightsData(
 
   const latestSnapshots = Array.from(uniqueStories.values());
 
-  // Calculate summary metrics from latest snapshots
   const summary: StoryInsightsSummary = {
     total_stories: latestSnapshots.length,
     total_reach: latestSnapshots.reduce((sum, s) => sum + (s.reach || 0), 0),
@@ -151,7 +146,6 @@ async function fetchStoryInsightsData(
         : 0,
   };
 
-  // Group by date for daily metrics
   const dailyMap = new Map<
     string,
     {
@@ -184,7 +178,6 @@ async function fetchStoryInsightsData(
     }
   }
 
-  // Fill in missing days with zeros
   const daily_metrics: DailyStoryMetrics[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date();
@@ -204,7 +197,6 @@ async function fetchStoryInsightsData(
     });
   }
 
-  // Group by hour for optimal posting time analysis
   const hourMap = new Map<
     number,
     {
@@ -234,7 +226,6 @@ async function fetchStoryInsightsData(
     });
   }
 
-  // Find max stories in any hour
   let max_stories_per_hour = 0;
   for (const [, hourData] of hourMap) {
     if (hourData.stories.length > max_stories_per_hour) {
@@ -266,7 +257,6 @@ async function fetchStoryInsightsData(
     return metrics;
   });
 
-  // Recent snapshots (top 10)
   const recent_snapshots: StorySnapshot[] = latestSnapshots
     .sort((a, b) => {
       const aSnapshotDate = new Date(a.snapshot_at).getTime();
@@ -313,8 +303,8 @@ export function useStoryInsightsAnalytics(selectedPeriod: string = '7d') {
     queryKey,
     queryFn: () => fetchStoryInsightsData(organization!.id, selectedPeriod),
     enabled: !!organization?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const refresh = useCallback(() => {

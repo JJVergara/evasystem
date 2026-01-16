@@ -9,7 +9,6 @@ export default function Auth() {
 
   useEffect(() => {
     if (!loading && user) {
-      console.log('User already authenticated, redirecting to home');
       navigate('/', { replace: true });
     }
   }, [user, loading, navigate]);
@@ -27,7 +26,6 @@ export default function Auth() {
     );
   }
 
-  // Don't show auth form if user is authenticated
   if (user) {
     return null;
   }

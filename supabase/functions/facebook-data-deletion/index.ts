@@ -1,16 +1,8 @@
-/**
- * Facebook Data Deletion Edge Function
- * GDPR compliance endpoint for Facebook/Instagram data deletion requests
- */
-
 import { corsHeaders } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 
 const META_APP_SECRET = Deno.env.get('META_APP_SECRET');
 
-/**
- * Decode base64url-encoded string
- */
 function base64UrlDecode(input: string): string {
   input = input.replace(/-/g, '+').replace(/_/g, '/');
   const pad = input.length % 4;
@@ -21,9 +13,6 @@ function base64UrlDecode(input: string): string {
   return decoder.decode(bytes);
 }
 
-/**
- * Verify Facebook signed request
- */
 async function verifySignedRequest(signedRequest: string): Promise<Record<string, unknown>> {
   if (!META_APP_SECRET) throw new Error('Missing META_APP_SECRET');
   const [sig, payload] = signedRequest.split('.');
@@ -50,13 +39,11 @@ async function verifySignedRequest(signedRequest: string): Promise<Record<string
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Handle POST - Data deletion callback from Facebook
     if (req.method === 'POST') {
       const contentType = req.headers.get('content-type') || '';
       let signedRequest: string | null = null;
@@ -86,7 +73,6 @@ Deno.serve(async (req) => {
       const code = crypto.randomUUID();
       const statusUrl = `https://awpfslcepylnipaolmvv.functions.supabase.co/functions/v1/facebook-data-deletion?code=${code}`;
 
-      // TODO: Optionally mark records for deletion for this userRef
       console.log(
         `Data deletion request received for user: ${userRef}, confirmation code: ${code}`
       );
@@ -97,7 +83,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Handle GET - Status check endpoint
     if (req.method === 'GET') {
       const url = new URL(req.url);
       const code = url.searchParams.get('code') || 'unknown';

@@ -52,16 +52,12 @@ export function AuthForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl mx-auto">
-        {/* Centered Container */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
-          {/* Brand Section - Always Visible */}
           <div className="flex flex-col items-center space-y-8 text-center lg:flex-1">
-            {/* Logo with Animation */}
             <div className="animate-fade-in">
               <ModernLogo size="xl" className="animate-scale-in" />
             </div>
 
-            {/* Title with Futuristic Gradient */}
             <div className="space-y-4 animate-fade-in">
               <h1 className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-600 bg-clip-text text-transparent">
                 EVA System
@@ -75,7 +71,6 @@ export function AuthForm() {
               </p>
             </div>
 
-            {/* Features Grid - More Futuristic */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-3xl animate-fade-in">
               <div className="group p-4 rounded-2xl bg-white/50 backdrop-blur-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -103,10 +98,8 @@ export function AuthForm() {
             </div>
           </div>
 
-          {/* Auth Form - Modern Card */}
           <div className="w-full max-w-md lg:flex-none animate-fade-in">
             <div className="backdrop-blur-md bg-white/80 rounded-3xl shadow-2xl border border-gray-200/50 p-8">
-              {/* Mobile Brand Header */}
               <div className="text-center mb-8 lg:hidden">
                 <ModernLogo size="lg" className="mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">EVA System</h2>
@@ -245,7 +238,6 @@ export function AuthForm() {
           </div>
         </div>
 
-        {/* Floating Elements for Futuristic Feel */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-40"></div>
           <div className="absolute top-3/4 right-1/3 w-1 h-1 bg-blue-400 rounded-full animate-pulse opacity-30 delay-1000"></div>

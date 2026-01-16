@@ -1,12 +1,5 @@
-/**
- * Event and Fiesta type definitions
- */
-
 import type { EventStatus, FiestaStatus } from '@/constants';
 
-/**
- * Core fiesta (party/campaign) data
- */
 export interface Fiesta {
   id: string;
   name: string;
@@ -22,9 +15,6 @@ export interface Fiesta {
   updated_at: string;
 }
 
-/**
- * Fiesta with metrics
- */
 export interface FiestaWithMetrics extends Fiesta {
   ambassadorCount?: number;
   eventCount?: number;
@@ -32,9 +22,6 @@ export interface FiestaWithMetrics extends Fiesta {
   totalReach?: number;
 }
 
-/**
- * Fiesta metrics summary
- */
 export interface FiestaMetrics {
   totalAmbassadors: number;
   totalEvents: number;
@@ -45,9 +32,6 @@ export interface FiestaMetrics {
   avgEngagement: number;
 }
 
-/**
- * Data for creating a new fiesta
- */
 export interface CreateFiestaInput {
   name: string;
   description?: string | null;
@@ -58,16 +42,10 @@ export interface CreateFiestaInput {
   status?: FiestaStatus | string;
 }
 
-/**
- * Data for updating a fiesta
- */
 export interface UpdateFiestaInput extends Partial<CreateFiestaInput> {
   id: string;
 }
 
-/**
- * Core event data
- */
 export interface Event {
   id: string;
   name: string;
@@ -81,18 +59,12 @@ export interface Event {
   updated_at: string;
 }
 
-/**
- * Event with related data
- */
 export interface EventWithRelations extends Event {
   fiesta?: Pick<Fiesta, 'id' | 'name'>;
   ambassadorCount?: number;
   taskCount?: number;
 }
 
-/**
- * Data for creating a new event
- */
 export interface CreateEventInput {
   name: string;
   description?: string | null;
@@ -102,16 +74,10 @@ export interface CreateEventInput {
   status?: EventStatus;
 }
 
-/**
- * Data for updating an event
- */
 export interface UpdateEventInput extends Partial<CreateEventInput> {
   id: string;
 }
 
-/**
- * Task assigned to ambassador for an event
- */
 export interface Task {
   id: string;
   ambassador_id: string;
@@ -127,14 +93,8 @@ export interface Task {
   updated_at: string;
 }
 
-/**
- * Task status values
- */
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 
-/**
- * Task status display labels (Spanish)
- */
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   pending: 'Pendiente',
   in_progress: 'En Progreso',

@@ -1,24 +1,16 @@
-/**
- * Cleanup OAuth States Edge Function
- * Removes expired OAuth state records for security
- */
-
 import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
 import { createSupabaseClient } from '../shared/auth.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return corsPreflightResponse();
   }
 
   try {
-    // Initialize Supabase client with service role for cleanup operations
     const supabaseClient = createSupabaseClient();
 
     console.log('Starting OAuth states cleanup...');
 
-    // Delete expired OAuth states
     const { data, error } = await supabaseClient
       .from('oauth_states')
       .delete()

@@ -1,8 +1,3 @@
-/**
- * Authentication and Authorization Utilities
- * Centralized authentication logic for all edge functions
- */
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './constants.ts';
 import type { SupabaseClient } from './types.ts';
@@ -18,9 +13,6 @@ export interface AuthOptions {
   allowCron?: boolean;
 }
 
-/**
- * Create authenticated Supabase client
- */
 export function createSupabaseClient(): SupabaseClient {
   return createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -28,10 +20,6 @@ export function createSupabaseClient(): SupabaseClient {
   );
 }
 
-/**
- * Authenticate request and return user + client
- * Returns Response if authentication fails, AuthResult if successful
- */
 export async function authenticateRequest(
   req: Request,
   options: AuthOptions = { requireAuth: true, allowCron: false }
@@ -40,12 +28,9 @@ export async function authenticateRequest(
   const cronSecret = req.headers.get('x-cron-secret');
   const supabase = createSupabaseClient();
 
-  // Handle cron requests - check cron secret FIRST (before user auth)
-  // This allows cron jobs to include Authorization header for service role access
   if (options.allowCron && cronSecret) {
     const expectedSecret = Deno.env.get('CRON_SECRET');
     if (expectedSecret && cronSecret === expectedSecret) {
-      // Return a system user for cron jobs
       return {
         user: { id: 'system', isCron: true },
         supabase,
@@ -54,7 +39,6 @@ export async function authenticateRequest(
     }
   }
 
-  // Require authentication
   if (!authHeader && options.requireAuth) {
     return new Response(JSON.stringify({ error: 'Authentication required' }), {
       status: 401,
@@ -78,19 +62,15 @@ export async function authenticateRequest(
     return { user, supabase };
   }
 
-  // No auth required
   return { user: { id: 'anonymous' }, supabase };
 }
 
-/**
- * Verify organization ownership
- */
 export async function verifyOrganizationAccess(
   supabase: SupabaseClient,
   userId: string,
   organizationId: string
 ): Promise<boolean> {
-  if (userId === 'system') return true; // Cron jobs have full access
+  if (userId === 'system') return true;
 
   const { data: org, error } = await supabase
     .from('organizations')
@@ -102,9 +82,6 @@ export async function verifyOrganizationAccess(
   return !error && !!org;
 }
 
-/**
- * Verify organization membership (user is member but not necessarily owner)
- */
 export async function verifyOrganizationMembership(
   supabase: SupabaseClient,
   userId: string,
@@ -118,20 +95,15 @@ export async function verifyOrganizationMembership(
   return !error && isMember === true;
 }
 
-/**
- * Get user's organization via organization_members (more reliable than users.organization_id)
- */
 export async function getUserOrganization(
   supabase: SupabaseClient,
   userId: string
 ): Promise<string | null> {
-  // Use get_user_organizations RPC which queries organization_members
   const { data: userOrgs, error } = await supabase.rpc('get_user_organizations', {
     user_auth_id: userId,
   });
 
   if (error || !userOrgs || userOrgs.length === 0) {
-    // Fallback to users.organization_id for backwards compatibility
     const { data: userData } = await supabase
       .from('users')
       .select('organization_id')
@@ -144,9 +116,6 @@ export async function getUserOrganization(
   return userOrgs[0].organization_id;
 }
 
-/**
- * Get organization with Instagram credentials
- */
 export async function getOrganizationWithCredentials(
   supabase: SupabaseClient,
   organizationId: string
@@ -161,7 +130,6 @@ export async function getOrganizationWithCredentials(
     throw new Error('Organization not found');
   }
 
-  // Get encrypted token from secure table
   const { data: tokenData, error: tokenError } = await supabase
     .from('organization_instagram_tokens')
     .select('access_token, token_expiry')

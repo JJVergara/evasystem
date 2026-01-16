@@ -1,8 +1,3 @@
-/**
- * useAmbassadorRanking hook
- * Manages ambassador ranking data fetching
- */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -10,9 +5,6 @@ import { useCurrentOrganization } from './useCurrentOrganization';
 import { QUERY_KEYS } from '@/constants';
 import { getAmbassadors } from '@/services/api';
 
-/**
- * Extended ranking data with computed fields
- */
 export interface AmbassadorRankingData {
   id: string;
   first_name: string;
@@ -44,12 +36,10 @@ export function useAmbassadorRanking() {
     queryFn: async (): Promise<AmbassadorRankingData[]> => {
       const ambassadors = await getAmbassadors(organizationId!);
 
-      // Filter active ambassadors and sort by points
       const activeAmbassadors = ambassadors
         .filter((a) => a.status === 'active')
         .sort((a, b) => (b.global_points || 0) - (a.global_points || 0));
 
-      // Compute ranking data
       return activeAmbassadors.map((ambassador, index) => {
         const totalTasks = (ambassador.completed_tasks || 0) + (ambassador.failed_tasks || 0);
         const completionRate =
