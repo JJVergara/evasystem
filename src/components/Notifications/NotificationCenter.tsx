@@ -11,19 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import {
-  Bell,
-  AlertTriangle,
-  CheckCircle,
-  Instagram,
-  Clock,
-  User,
-  Filter,
-  Trash2,
-  ExternalLink,
-  Search,
-} from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EMOJIS } from '@/constants';
 
 interface Notification {
   id: string;
@@ -207,27 +197,20 @@ export function NotificationCenter() {
     } catch {}
   };
 
-  const getNotificationIcon = (type: string, priority: string) => {
-    const iconClass =
-      priority === 'high'
-        ? 'text-destructive'
-        : priority === 'normal'
-          ? 'text-warning'
-          : 'text-muted-foreground';
-
+  const getNotificationIcon = (type: string, _priority: string) => {
     switch (type) {
       case 'story_deleted':
-        return <Instagram className={`w-4 h-4 ${iconClass}`} />;
+        return <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />;
       case 'task_expired':
-        return <Clock className={`w-4 h-4 ${iconClass}`} />;
+        return <span>{EMOJIS.status.pending}</span>;
       case 'token_expiring':
-        return <AlertTriangle className={`w-4 h-4 ${iconClass}`} />;
+        return <span>{EMOJIS.status.warning}</span>;
       case 'performance_change':
-        return <User className={`w-4 h-4 ${iconClass}`} />;
+        return <span>{EMOJIS.entities.user}</span>;
       case 'ambassador_pending':
-        return <User className={`w-4 h-4 ${iconClass}`} />;
+        return <span>{EMOJIS.entities.user}</span>;
       default:
-        return <Bell className={`w-4 h-4 ${iconClass}`} />;
+        return <span>{EMOJIS.entities.notification}</span>;
     }
   };
 
@@ -298,7 +281,7 @@ export function NotificationCenter() {
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm" onClick={markAllAsRead}>
-            <CheckCircle className="w-4 h-4 mr-2" />
+            <span className="mr-2">{EMOJIS.status.success}</span>
             Marcar todas como leídas
           </Button>
         </div>
@@ -307,7 +290,9 @@ export function NotificationCenter() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-3 flex-1">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              {EMOJIS.actions.search}
+            </span>
             <Input
               placeholder="Buscar notificaciones..."
               value={searchQuery}
@@ -318,7 +303,7 @@ export function NotificationCenter() {
 
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger className="w-36">
-              <Filter className="w-4 h-4 mr-2" />
+              <span className="mr-2">{EMOJIS.actions.filter}</span>
               <SelectValue placeholder="Prioridad" />
             </SelectTrigger>
             <SelectContent>
@@ -345,7 +330,7 @@ export function NotificationCenter() {
           {filteredNotifications.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <span className="text-5xl block mx-auto mb-4">{EMOJIS.entities.notification}</span>
                 <h3 className="text-lg font-medium mb-2">No hay notificaciones</h3>
                 <p className="text-muted-foreground">
                   {searchQuery
@@ -403,7 +388,7 @@ export function NotificationCenter() {
                           size="sm"
                           onClick={() => markAsRead(notification.id)}
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <span>{EMOJIS.status.success}</span>
                         </Button>
                       )}
                       <Button
@@ -411,7 +396,7 @@ export function NotificationCenter() {
                         size="sm"
                         onClick={() => deleteNotification(notification.id)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <span>{EMOJIS.actions.delete}</span>
                       </Button>
                     </div>
                   </div>

@@ -6,8 +6,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { PartyPopper, Calendar } from 'lucide-react';
 import { useFiestas } from '@/hooks/useFiestas';
+import { EMOJIS } from '@/constants';
 
 interface FiestaSelectorProps {
   onFiestaChange: (fiestaId: string | null) => void;
@@ -31,7 +31,7 @@ export function FiestaSelector({ onFiestaChange, selectedFiestaId }: FiestaSelec
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <PartyPopper className="h-5 w-5 text-primary" />
+          <span className="text-primary">{EMOJIS.entities.fiesta}</span>
           <div className="flex-1">
             <Select
               value={selectedFiestaId || 'all'}
@@ -43,14 +43,14 @@ export function FiestaSelector({ onFiestaChange, selectedFiestaId }: FiestaSelec
               <SelectContent>
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
+                    <span>{EMOJIS.entities.calendar}</span>
                     Todas las fiestas
                   </div>
                 </SelectItem>
                 {fiestas.map((fiesta) => (
                   <SelectItem key={fiesta.id} value={fiesta.id}>
                     <div className="flex items-center gap-2">
-                      <PartyPopper className="h-4 w-4" />
+                      <span>{EMOJIS.entities.fiesta}</span>
                       <div>
                         <p className="font-medium">{fiesta.name}</p>
                         {fiesta.event_date && (

@@ -9,6 +9,7 @@ export default function InstagramBusinessPage() {
         <PageHeader
           title="Instagram Business"
           description="Gestiona tu cuenta de Instagram Business y consulta métricas según la API de Meta"
+          emoji="📸"
         />
         <InstagramBusinessDashboard />
       </div>

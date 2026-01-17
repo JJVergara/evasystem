@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Search, Eye, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { TaskStatusBadge } from './TaskStatusBadge';
+import { EMOJIS } from '@/constants';
 import { TaskStatsCards } from './TaskStatsCards';
 import { useFiestas } from '@/hooks/useFiestas';
 import { useTasksManagement } from '@/hooks/useTasksManagement';
@@ -56,10 +56,11 @@ export default function StoriesManagement() {
         <PageHeader
           title="Historias"
           description="Gestiona y monitorea las historias de tus embajadores"
+          emoji={EMOJIS.entities.story}
         />
         <GlassPanel>
           <div className="text-center text-muted-foreground py-12">
-            <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <span className="text-3xl block mx-auto mb-2 opacity-50">{EMOJIS.status.warning}</span>
             <p>Selecciona una fiesta para gestionar historias</p>
           </div>
         </GlassPanel>
@@ -72,6 +73,7 @@ export default function StoriesManagement() {
       <PageHeader
         title="Gestión de Historias"
         description={`Gestión de historias de ${selectedFiesta?.name || 'la fiesta'}`}
+        emoji={EMOJIS.entities.story}
       >
         <div className="flex items-center space-x-2 flex-wrap gap-2">
           <CreateTaskModal
@@ -83,7 +85,7 @@ export default function StoriesManagement() {
             events={events}
           />
           <Button variant="outline" onClick={exportTasks}>
-            <Download className="h-4 w-4 mr-2" />
+            <span className="mr-2">{EMOJIS.actions.download}</span>
             Exportar
           </Button>
         </div>
@@ -104,10 +106,12 @@ export default function StoriesManagement() {
             <CardTitle>Filtros y Búsqueda</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4 flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                    {EMOJIS.actions.search}
+                  </span>
                   <Input
                     placeholder="Buscar por embajador..."
                     value={searchTerm}
@@ -117,45 +121,57 @@ export default function StoriesManagement() {
                 </div>
               </div>
 
-              <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Todos los eventos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los eventos</SelectItem>
-                  {events.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 sm:gap-3">
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Todos los eventos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los eventos</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="uploaded">Subida</SelectItem>
-                  <SelectItem value="in_progress">En Progreso</SelectItem>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="invalid">Inválida</SelectItem>
-                  <SelectItem value="expired">Expirada</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="uploaded">Subida</SelectItem>
+                    <SelectItem value="in_progress">En Progreso</SelectItem>
+                    <SelectItem value="completed">Completada</SelectItem>
+                    <SelectItem value="invalid">Inválida</SelectItem>
+                    <SelectItem value="expired">Expirada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">Todas las Tareas</TabsTrigger>
-            <TabsTrigger value="pending">Pendientes</TabsTrigger>
-            <TabsTrigger value="completed">Completadas</TabsTrigger>
-            <TabsTrigger value="invalid">Problemáticas</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-1 px-1">
+            <TabsList className="inline-flex min-w-full sm:min-w-0">
+              <TabsTrigger value="all" className="flex-1 sm:flex-none">
+                Todas las Tareas
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="flex-1 sm:flex-none">
+                Pendientes
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="flex-1 sm:flex-none">
+                Completadas
+              </TabsTrigger>
+              <TabsTrigger value="invalid" className="flex-1 sm:flex-none">
+                Problemáticas
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="all">
             <Card>
@@ -171,7 +187,9 @@ export default function StoriesManagement() {
                   </div>
                 ) : filteredTasks.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <span className="text-3xl block mx-auto mb-2 opacity-50">
+                      {EMOJIS.status.pending}
+                    </span>
                     <p>No hay tareas que coincidan con los filtros</p>
                   </div>
                 ) : (
@@ -181,23 +199,25 @@ export default function StoriesManagement() {
                         key={task.id}
                         className="border rounded-lg p-4 hover:bg-accent/50 transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3">
-                              <div>
-                                <h4 className="font-medium">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                              <div className="min-w-0">
+                                <h4 className="font-medium truncate">
                                   {task.embassadors
                                     ? `${task.embassadors.first_name} ${task.embassadors.last_name}`
                                     : 'Embajador no encontrado'}
                                 </h4>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground truncate">
                                   @{task.embassadors?.instagram_user || 'usuario_no_encontrado'}
                                 </p>
                               </div>
-                              <Badge variant="outline" className="text-xs">
-                                {task.task_type}
-                              </Badge>
-                              <TaskStatusBadge status={task.status} />
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {task.task_type}
+                                </Badge>
+                                <TaskStatusBadge status={task.status} />
+                              </div>
                             </div>
                             <div className="mt-2 text-sm text-muted-foreground">
                               {task.expected_hashtag && (
@@ -210,15 +230,15 @@ export default function StoriesManagement() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="text-right text-sm">
+                          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-2">
+                            <div className="text-left sm:text-right text-sm">
                               <div className="font-medium">{task.points_earned} pts</div>
                               <div className="text-muted-foreground">
                                 {task.reach_count.toLocaleString()} alcance
                               </div>
                             </div>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
+                            <Button variant="outline" size="sm" className="shrink-0">
+                              <span>{EMOJIS.actions.view}</span>
                             </Button>
                           </div>
                         </div>
@@ -234,7 +254,9 @@ export default function StoriesManagement() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center text-muted-foreground">
-                  <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <span className="text-3xl block mx-auto mb-2 opacity-50">
+                    {EMOJIS.status.pending}
+                  </span>
                   <p>Tareas pendientes aparecerán aquí</p>
                 </div>
               </CardContent>
@@ -245,7 +267,9 @@ export default function StoriesManagement() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center text-muted-foreground">
-                  <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <span className="text-3xl block mx-auto mb-2 opacity-50">
+                    {EMOJIS.status.success}
+                  </span>
                   <p>Tareas completadas aparecerán aquí</p>
                 </div>
               </CardContent>
@@ -256,7 +280,9 @@ export default function StoriesManagement() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center text-muted-foreground">
-                  <XCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <span className="text-3xl block mx-auto mb-2 opacity-50">
+                    {EMOJIS.status.error}
+                  </span>
                   <p>Tareas problemáticas aparecerán aquí</p>
                 </div>
               </CardContent>

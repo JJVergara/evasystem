@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, Copy, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Copy, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
 
 interface MetaAppCredentialsFormProps {
   isOpen: boolean;
@@ -135,9 +136,9 @@ export function MetaAppCredentialsForm({
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 {hasCredentials ? (
-                  <CheckCircle className="h-5 w-5 text-success" />
+                  <span className="text-success">{EMOJIS.status.success}</span>
                 ) : (
-                  <AlertCircle className="h-5 w-5 text-warning" />
+                  <span className="text-warning">{EMOJIS.status.warning}</span>
                 )}
                 Estado de Configuración
               </CardTitle>

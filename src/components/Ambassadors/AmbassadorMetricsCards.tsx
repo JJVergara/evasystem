@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MetricCard } from '@/components/Dashboard/MetricCard';
-import { Users, Trophy, Target, TrendingUp, Eye, Heart, Image, AlertTriangle } from 'lucide-react';
+import { EMOJIS } from '@/constants';
 
 interface AmbassadorMetricsCardsProps {
   metrics: {
@@ -60,20 +60,20 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
     <div className="space-y-6">
       {/* Ambassador Header Card */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16">
-              <AvatarFallback className="text-lg">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0">
+              <AvatarFallback className="text-base sm:text-lg">
                 {metrics.name
                   .split(' ')
                   .map((n) => n[0])
                   .join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold">{metrics.name}</h2>
-              <p className="text-muted-foreground">@{metrics.instagram_user}</p>
-              <div className="flex gap-2 mt-2">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold truncate">{metrics.name}</h2>
+              <p className="text-muted-foreground truncate">@{metrics.instagram_user}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
                 <Badge variant={metrics.status === 'active' ? 'default' : 'secondary'}>
                   {metrics.status === 'active' ? 'Activo' : 'Inactivo'}
                 </Badge>
@@ -92,8 +92,10 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
                 </Badge>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-primary">{metrics.global_points}</div>
+            <div className="text-left sm:text-right mt-2 sm:mt-0">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
+                {metrics.global_points}
+              </div>
               <p className="text-sm text-muted-foreground">Puntos Globales</p>
             </div>
           </div>
@@ -101,25 +103,25 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
       </Card>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <MetricCard
           title="Eventos Participados"
           value={metrics.events_participated}
-          icon={<Users className="w-4 h-4" />}
+          icon={<span>{EMOJIS.navigation.events}</span>}
           description="Total de eventos"
         />
 
         <MetricCard
           title="Tareas Completadas"
           value={metrics.completed_tasks}
-          icon={<Trophy className="w-4 h-4" />}
+          icon={<span>{EMOJIS.feedback.trophy}</span>}
           description={`${metrics.failed_tasks} fallidas`}
         />
 
         <MetricCard
           title="Tasa de Cumplimiento"
           value={`${metrics.completion_rate}%`}
-          icon={<Target className="w-4 h-4" />}
+          icon={<span>{EMOJIS.feedback.target}</span>}
           trend={{
             value: metrics.completion_rate > 80 ? 5 : -2,
             isPositive: metrics.completion_rate > 80,
@@ -129,21 +131,21 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
         <MetricCard
           title="Alcance Total"
           value={metrics.total_reach.toLocaleString()}
-          icon={<Eye className="w-4 h-4" />}
+          icon={<span>{EMOJIS.actions.view}</span>}
           description="Visualizaciones totales"
         />
 
         <MetricCard
           title="Engagement Promedio"
           value={`${metrics.avg_engagement}%`}
-          icon={<Heart className="w-4 h-4" />}
+          icon={<span>{EMOJIS.feedback.heart}</span>}
           description="Interacción media"
         />
 
         <MetricCard
           title="Seguidores"
           value={metrics.follower_count.toLocaleString()}
-          icon={<TrendingUp className="w-4 h-4" />}
+          icon={<span>{EMOJIS.social.followers}</span>}
           description="Instagram followers"
         />
       </div>
@@ -152,7 +154,7 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
       {metrics.insights_error && (
         <div className="mt-6">
           <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
+            <span>{EMOJIS.status.warning}</span>
             <AlertDescription>
               No se pudieron cargar los insights de Stories. Los datos básicos del embajador están
               disponibles.
@@ -169,7 +171,7 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    <Image className="w-5 h-5 text-primary" />
+                    <span className="text-primary">{EMOJIS.entities.story}</span>
                     Insights de Stories
                   </CardTitle>
                   <Badge
@@ -184,32 +186,32 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <MetricCard
                     title="Stories Totales"
                     value={metrics.story_insights.total_stories}
-                    icon={<Image className="w-4 h-4" />}
+                    icon={<span>{EMOJIS.entities.story}</span>}
                     description="Historias con insights"
                   />
 
                   <MetricCard
                     title="Alcance Stories"
                     value={metrics.story_insights.total_reach.toLocaleString()}
-                    icon={<Eye className="w-4 h-4" />}
+                    icon={<span>{EMOJIS.social.reach}</span>}
                     description={`Promedio: ${metrics.story_insights.avg_reach_per_story.toLocaleString()}`}
                   />
 
                   <MetricCard
                     title="Impresiones"
                     value={metrics.story_insights.total_impressions.toLocaleString()}
-                    icon={<TrendingUp className="w-4 h-4" />}
+                    icon={<span>{EMOJIS.social.impressions}</span>}
                     description={`Promedio: ${metrics.story_insights.avg_impressions_per_story.toLocaleString()}`}
                   />
 
                   <MetricCard
                     title="Engagement"
                     value={metrics.story_insights.total_engagement.toLocaleString()}
-                    icon={<Heart className="w-4 h-4" />}
+                    icon={<span>{EMOJIS.feedback.heart}</span>}
                     description={`${metrics.story_insights.total_replies} respuestas, ${metrics.story_insights.total_shares} shares`}
                   />
                 </div>
@@ -224,7 +226,7 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
           <Card className="border-dashed border-2 border-muted">
             <CardContent className="pt-6">
               <div className="text-center text-muted-foreground">
-                <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <span className="text-5xl block mb-4 opacity-50">{EMOJIS.entities.story}</span>
                 <p className="font-medium mb-2">Insights de Stories</p>
                 <p className="text-sm">
                   Los insights aparecerán aquí cuando el embajador publique Stories mencionando la

@@ -9,6 +9,7 @@ const Settings = () => {
         <PageHeader
           title="Configuración"
           description="Gestiona la configuración de tu organización y conectividad"
+          emoji="⚙️"
         />
         <SettingsContent />
       </div>

@@ -6,17 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import {
-  Download,
-  Upload,
-  Database,
-  History,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  FileArchive,
-} from 'lucide-react';
 import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -236,13 +227,13 @@ export default function BackupCenter() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-success" />;
+        return <span className="text-success">{EMOJIS.status.success}</span>;
       case 'failed':
-        return <AlertCircle className="w-4 h-4 text-destructive" />;
+        return <span className="text-destructive">{EMOJIS.status.error}</span>;
       case 'partial':
-        return <AlertCircle className="w-4 h-4 text-warning" />;
+        return <span className="text-warning">{EMOJIS.status.warning}</span>;
       default:
-        return <Clock className="w-4 h-4 text-muted-foreground" />;
+        return <span className="text-muted-foreground">{EMOJIS.status.pending}</span>;
     }
   };
 
@@ -261,11 +252,11 @@ export default function BackupCenter() {
         <h3 className="text-xl font-semibold">Centro de Respaldos</h3>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportOrganizationData('csv')}>
-            <Download className="w-4 h-4 mr-2" />
+            <span className="mr-2">{EMOJIS.actions.download}</span>
             Export CSV
           </Button>
           <Button onClick={createFullBackup} disabled={isProcessing}>
-            <Database className="w-4 h-4 mr-2" />
+            <span className="mr-2">{EMOJIS.entities.database}</span>
             Respaldo Completo
           </Button>
         </div>
@@ -294,7 +285,7 @@ export default function BackupCenter() {
           <div className="grid gap-6 md:grid-cols-2">
             <GlassPanel size="sm">
               <div className="flex items-center gap-2 mb-4">
-                <Database className="w-5 h-5" />
+                <span>{EMOJIS.entities.database}</span>
                 <h4 className="font-semibold">Respaldo Completo</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
@@ -302,14 +293,14 @@ export default function BackupCenter() {
                 embajadores, eventos, tareas y configuraciones.
               </p>
               <Button onClick={createFullBackup} disabled={isProcessing} className="w-full">
-                <Database className="w-4 h-4 mr-2" />
+                <span className="mr-2">{EMOJIS.entities.database}</span>
                 Crear Respaldo Completo
               </Button>
             </GlassPanel>
 
             <GlassPanel size="sm">
               <div className="flex items-center gap-2 mb-4">
-                <FileArchive className="w-5 h-5" />
+                <span>{EMOJIS.entities.file}</span>
                 <h4 className="font-semibold">Exportación Selectiva</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
@@ -322,7 +313,7 @@ export default function BackupCenter() {
                   variant="outline"
                   className="w-full"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <span className="mr-2">{EMOJIS.actions.download}</span>
                   Exportar JSON
                 </Button>
                 <Button
@@ -331,7 +322,7 @@ export default function BackupCenter() {
                   variant="outline"
                   className="w-full"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <span className="mr-2">{EMOJIS.actions.download}</span>
                   Exportar CSV
                 </Button>
               </div>
@@ -342,7 +333,7 @@ export default function BackupCenter() {
         <TabsContent value="restore" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Upload className="w-5 h-5" />
+              <span>{EMOJIS.actions.upload}</span>
               <h4 className="font-semibold">Restaurar desde Respaldo</h4>
             </div>
 
@@ -402,7 +393,7 @@ export default function BackupCenter() {
 
               <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                  <span className="mt-0.5">{EMOJIS.status.warning}</span>
                   <div>
                     <h4 className="font-medium">Advertencia</h4>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -418,7 +409,7 @@ export default function BackupCenter() {
                 disabled={isProcessing || !selectedFile}
                 className="w-full"
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <span className="mr-2">{EMOJIS.actions.upload}</span>
                 Restaurar Datos
               </Button>
             </div>
@@ -428,7 +419,7 @@ export default function BackupCenter() {
         <TabsContent value="history" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <History className="w-5 h-5" />
+              <span>{EMOJIS.entities.timer}</span>
               <h4 className="font-semibold">Historial de Operaciones</h4>
             </div>
 

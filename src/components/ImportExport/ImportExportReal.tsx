@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Download, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { EMOJIS } from '@/constants';
 import { toast } from 'sonner';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
@@ -171,11 +171,12 @@ export default function ImportExportReal() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Importación y Exportación</h3>
-        <Button variant="outline" onClick={downloadTemplate}>
-          <Download className="w-4 h-4 mr-2" />
-          Descargar Plantilla
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h3 className="text-lg sm:text-xl font-semibold">Importación y Exportación</h3>
+        <Button variant="outline" onClick={downloadTemplate} className="w-full sm:w-auto">
+          <span className="mr-2">{EMOJIS.actions.download}</span>
+          <span className="hidden sm:inline">Descargar Plantilla</span>
+          <span className="sm:hidden">Plantilla</span>
         </Button>
       </div>
 
@@ -188,7 +189,7 @@ export default function ImportExportReal() {
         <TabsContent value="import" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Upload className="w-5 h-5" />
+              <span>{EMOJIS.actions.upload}</span>
               <h4 className="font-semibold">Importar Embajadores</h4>
             </div>
 
@@ -203,7 +204,7 @@ export default function ImportExportReal() {
 
               {importFile ? (
                 <div className="space-y-2">
-                  <FileSpreadsheet className="w-12 h-12 text-primary mx-auto" />
+                  <span className="text-5xl block mx-auto">{EMOJIS.entities.file}</span>
                   <p className="font-medium">{importFile.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {(importFile.size / 1024).toFixed(1)} KB
@@ -219,7 +220,9 @@ export default function ImportExportReal() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+                  <span className="text-5xl block mx-auto text-muted-foreground">
+                    {EMOJIS.actions.upload}
+                  </span>
                   <p className="text-lg font-medium">Arrastra tu archivo aquí</p>
                   <p className="text-sm text-muted-foreground">
                     Soporta archivos Excel (.xlsx, .xls) y CSV
@@ -231,7 +234,7 @@ export default function ImportExportReal() {
 
             <div className="bg-info/10 border border-info/20 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-info mt-0.5" />
+                <span className="mt-0.5">{EMOJIS.status.info}</span>
                 <div>
                   <h4 className="font-medium">Campos requeridos</h4>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -246,12 +249,12 @@ export default function ImportExportReal() {
         <TabsContent value="export" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Download className="w-5 h-5" />
+              <span>{EMOJIS.actions.download}</span>
               <h4 className="font-semibold">Configurar Exportación</h4>
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de datos</Label>
                   <Select

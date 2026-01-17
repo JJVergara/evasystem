@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Eye, UserPlus, Upload, Download, Edit, Trash2, Clock } from 'lucide-react';
 import { AmbassadorMetricsCards } from './AmbassadorMetricsCards';
+import { EMOJIS } from '@/constants';
 import { AmbassadorPerformanceChart } from './AmbassadorPerformanceChart';
 import { AmbassadorActivityTimeline } from './AmbassadorActivityTimeline';
 import { AmbassadorRequestsTab } from './AmbassadorRequestsTab';
@@ -104,29 +104,29 @@ export function EnhancedAmbassadorDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard de Embajadores</h1>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard de Embajadores</h1>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.actions.upload}</span>
             Importar
           </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
+          <Button variant="outline" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.actions.download}</span>
             Exportar
           </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <UserPlus className="w-4 h-4 mr-2" />
+          <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
+            <span className="mr-2">{EMOJIS.actions.add}</span>
             Agregar Embajador
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="list" className="space-y-6">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 w-full sm:max-w-md">
           <TabsTrigger value="list">Embajadores</TabsTrigger>
           <TabsTrigger value="requests" className="relative">
-            <Clock className="h-4 w-4 mr-1" />
+            <span className="mr-1">{EMOJIS.status.pending}</span>
             Solicitudes
             {pendingRequestsCount > 0 && (
               <Badge variant="destructive" className="ml-1 px-1 min-w-[1.2rem] h-5 text-xs">
@@ -139,7 +139,9 @@ export function EnhancedAmbassadorDashboard({
         <TabsContent value="list" className="space-y-6">
           <div className="flex gap-4 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <span className="absolute left-3 top-2.5 text-muted-foreground">
+                {EMOJIS.actions.search}
+              </span>
               <Input
                 placeholder="Buscar embajadores..."
                 value={searchTerm}
@@ -150,8 +152,8 @@ export function EnhancedAmbassadorDashboard({
           </div>
 
           <Card>
-            <CardContent className="p-0">
-              <Table>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Embajador</TableHead>
@@ -170,7 +172,7 @@ export function EnhancedAmbassadorDashboard({
                     <TableRow key={ambassador.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <Avatar>
+                          <Avatar className="shrink-0">
                             <AvatarFallback>
                               {ambassador.first_name[0]}
                               {ambassador.last_name[0]}
@@ -221,21 +223,21 @@ export function EnhancedAmbassadorDashboard({
                             size="sm"
                             onClick={() => setSelectedAmbassadorId(ambassador.id)}
                           >
-                            <Eye className="w-4 h-4" />
+                            <span>{EMOJIS.actions.view}</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setEditingAmbassador(ambassador)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <span>{EMOJIS.actions.edit}</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setDeletingAmbassador(ambassador)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <span>{EMOJIS.actions.delete}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -256,7 +258,7 @@ export function EnhancedAmbassadorDashboard({
         open={!!selectedAmbassadorId}
         onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}
       >
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Dashboard del Embajador</DialogTitle>
           </DialogHeader>

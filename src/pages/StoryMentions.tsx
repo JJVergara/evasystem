@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle, BookOpen, Play } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { StoryMentionsList } from '@/components/StoryMentions/StoryMentionsList';
+import { EMOJIS } from '@/constants';
 import { StoryMentionDetails } from '@/components/StoryMentions/StoryMentionDetails';
 import { useStoryMentions } from '@/hooks/useStoryMentions';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
@@ -109,7 +110,9 @@ export default function StoryMentions() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <span className="text-5xl block mx-auto mb-4 opacity-50">
+                {EMOJIS.status.warning}
+              </span>
               <p>Selecciona una organización para ver las menciones de historias</p>
             </div>
           </CardContent>
@@ -145,7 +148,7 @@ export default function StoryMentions() {
             disabled={runningWorker}
             className="flex items-center gap-2"
           >
-            <Play className={`w-4 h-4 ${runningWorker ? 'animate-spin' : ''}`} />
+            <span className={runningWorker ? 'animate-spin' : ''}>{EMOJIS.status.inProgress}</span>
             {runningWorker ? 'Ejecutando...' : 'Resolver y Verificar'}
           </Button>
           <Button
@@ -164,7 +167,7 @@ export default function StoryMentions() {
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
+            <span>{EMOJIS.status.info}</span>
             ¿Qué son las menciones de historias?
           </CardTitle>
         </CardHeader>
@@ -186,7 +189,7 @@ export default function StoryMentions() {
         <Card className="border-destructive/50 bg-destructive/10">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-5 h-5" />
+              <span>{EMOJIS.status.error}</span>
               <p>Error al cargar las menciones: {error}</p>
             </div>
           </CardContent>

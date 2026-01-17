@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { EMOJIS } from '@/constants';
 
 interface ErrorMessageProps {
   title?: string;
@@ -20,7 +21,7 @@ export function ErrorMessage({
       <Card className="max-w-md text-center">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 justify-center text-destructive">
-            <AlertTriangle className="h-5 w-5" />
+            <span>{EMOJIS.status.warning}</span>
             {title}
           </CardTitle>
         </CardHeader>

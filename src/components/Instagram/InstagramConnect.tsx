@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Instagram, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -99,10 +99,10 @@ export function InstagramConnect({
   if (currentStatus.isConnected) {
     return (
       <div className="flex items-center gap-2 p-3 border rounded-lg bg-success/5 dark:bg-success/10">
-        <CheckCircle className="w-4 h-4 text-success" />
+        <span className="text-success">✅</span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <Instagram className="w-4 h-4" />
+            <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />
             {currentStatus.username ? (
               <span className="font-medium">@{currentStatus.username}</span>
             ) : (
@@ -129,7 +129,7 @@ export function InstagramConnect({
 
   return (
     <div className="flex items-center gap-2 p-3 border rounded-lg border-dashed">
-      <AlertCircle className="w-4 h-4 text-warning" />
+      <span className="text-warning">⚠️</span>
       <div className="flex-1">
         <p className="font-medium">Instagram no conectado</p>
         <p className="text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ export function InstagramConnect({
         {isConnecting ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Instagram className="w-4 h-4" />
+          <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />
         )}
         {isConnecting ? 'Conectando...' : 'Conectar Instagram'}
       </Button>

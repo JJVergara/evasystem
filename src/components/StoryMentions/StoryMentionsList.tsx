@@ -2,18 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  MessageCircle,
-  Eye,
-  UserPlus,
-  ExternalLink,
-  Instagram,
-  AlertTriangle,
-  CheckCircle,
-} from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { StoryMention } from '@/types/storyMentions';
+import { EMOJIS } from '@/constants';
 
 interface StoryMentionsListProps {
   mentions: StoryMention[];
@@ -62,14 +55,14 @@ export function StoryMentionsList({
       case 'new':
         return (
           <Badge variant={isExpired ? 'secondary' : 'default'} className="flex items-center gap-1">
-            {isExpired ? <CheckCircle className="w-3 h-3" /> : null}
+            {isExpired ? <span>{EMOJIS.status.success}</span> : null}
             {isExpired ? `Expirada${checksInfo}` : `Nueva${checksInfo}`}
           </Badge>
         );
       case 'completed':
         return (
           <Badge variant="secondary" className="flex items-center gap-1">
-            <CheckCircle className="w-3 h-3" />
+            <span>{EMOJIS.status.success}</span>
             Completada (24h)
             {checksCount && <span className="ml-1 text-xs">({checksCount} verificaciones)</span>}
           </Badge>
@@ -77,7 +70,7 @@ export function StoryMentionsList({
       case 'flagged_early_delete':
         return (
           <Badge variant="destructive" className="flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
+            <span>{EMOJIS.status.warning}</span>
             Borrada temprano
             {checksCount && <span className="ml-1 text-xs">({checksCount} verificaciones)</span>}
           </Badge>
@@ -85,7 +78,7 @@ export function StoryMentionsList({
       case 'expired_unknown':
         return (
           <Badge variant="outline" className="flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
+            <span>{EMOJIS.status.warning}</span>
             No verificable
             {checksCount && <span className="ml-1 text-xs">({checksCount} intentos)</span>}
           </Badge>
@@ -142,7 +135,9 @@ export function StoryMentionsList({
       <Card>
         <CardContent className="pt-6">
           <div className="text-center text-muted-foreground">
-            <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <span className="text-5xl block mx-auto mb-4 opacity-50">
+              {EMOJIS.entities.message}
+            </span>
             <p className="text-lg font-medium mb-2">No hay menciones de historias</p>
             <p>Las menciones aparecerán aquí cuando alguien interactúe con tus historias</p>
           </div>
@@ -159,19 +154,20 @@ export function StoryMentionsList({
 
         return (
           <Card key={mention.id} className={`${isNew ? 'border-primary/50 bg-primary/5' : ''}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Instagram className="w-5 h-5 text-primary" />@{mention.instagram_username}
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2 min-w-0">
+                  <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5 shrink-0" />
+                  <span className="truncate">@{mention.instagram_username}</span>
                   {mention.ambassador_name && (
-                    <Badge variant="secondary" className="ml-2">
+                    <Badge variant="secondary" className="shrink-0">
                       {mention.ambassador_name}
                     </Badge>
                   )}
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {getStateBadge(mention.state, mention.expires_at, mention.checks_count)}
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(mention.mentioned_at), {
                       addSuffix: true,
                       locale: es,
@@ -180,38 +176,43 @@ export function StoryMentionsList({
                 </div>
               </div>
               {timeRemaining && mention.state === 'new' && (
-                <div className="text-sm text-muted-foreground">⏱️ {timeRemaining}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {EMOJIS.entities.timer} {timeRemaining}
+                </div>
               )}
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4 line-clamp-2">{mention.content}</p>
+            <CardContent className="pt-0">
+              <p className="text-muted-foreground mb-4 line-clamp-2 text-sm sm:text-base">
+                {mention.content}
+              </p>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onViewDetails(mention)}
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <Eye className="w-4 h-4" />
-                  Ver detalles
+                  <span className="shrink-0">{EMOJIS.actions.view}</span>
+                  <span className="hidden sm:inline">Ver detalles</span>
+                  <span className="sm:hidden">Detalles</span>
                 </Button>
 
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onReply(mention)}
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  Responder
+                  <span className="shrink-0">{EMOJIS.entities.message}</span>
+                  <span>Responder</span>
                 </Button>
 
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleViewStory(mention)}
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   title={
                     mention.story_url
                       ? 'Abrir enlace directo a la historia'
@@ -220,12 +221,15 @@ export function StoryMentionsList({
                         : 'Ver perfil de Instagram'
                   }
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  {mention.story_url
-                    ? 'Ver historia'
-                    : mention.deep_link
-                      ? 'Ver historia (respaldo)'
-                      : 'Ver perfil'}
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">
+                    {mention.story_url
+                      ? 'Ver historia'
+                      : mention.deep_link
+                        ? 'Ver historia (respaldo)'
+                        : 'Ver perfil'}
+                  </span>
+                  <span className="sm:hidden">Historia</span>
                 </Button>
 
                 {!mention.ambassador_name && (
@@ -233,10 +237,11 @@ export function StoryMentionsList({
                     variant="outline"
                     size="sm"
                     onClick={() => onCreateLead(mention)}
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   >
-                    <UserPlus className="w-4 h-4" />
-                    Crear lead
+                    <span className="shrink-0">{EMOJIS.entities.user}</span>
+                    <span className="hidden sm:inline">Crear lead</span>
+                    <span className="sm:hidden">Lead</span>
                   </Button>
                 )}
 
@@ -246,18 +251,21 @@ export function StoryMentionsList({
                       variant="secondary"
                       size="sm"
                       onClick={() => onMarkAsProcessed(mention.id)}
+                      className="text-xs sm:text-sm"
                     >
-                      Marcar como procesada
+                      <span className="hidden sm:inline">Marcar como procesada</span>
+                      <span className="sm:hidden">Procesada</span>
                     </Button>
 
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => onFlagAsEarlyDelete(mention.id)}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm col-span-2 sm:col-span-1"
                     >
-                      <AlertTriangle className="w-4 h-4" />
-                      Borrada antes de 24h
+                      <span className="shrink-0">{EMOJIS.status.warning}</span>
+                      <span className="hidden sm:inline">Borrada antes de 24h</span>
+                      <span className="sm:hidden">Borrada temprano</span>
                     </Button>
                   </>
                 )}

@@ -2,21 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Instagram,
-  AlertCircle,
-  CheckCircle,
-  RefreshCw,
-  Eye,
-  AlertTriangle,
-  Info,
-  ExternalLink,
-  Shield,
-  Search,
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-} from 'lucide-react';
+import { RefreshCw, ExternalLink, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useInstagramConnection } from '@/hooks/useInstagramConnection';
@@ -64,7 +50,7 @@ export function EnhancedInstagramSettings() {
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Instagram className="h-5 w-5 text-primary" />
+              <img src="/instagram-icon.webp" alt="Instagram" className="h-5 w-5" />
               Conexión de Instagram
             </CardTitle>
             <CardDescription>
@@ -138,7 +124,7 @@ export function EnhancedInstagramSettings() {
       return {
         status: 'Desconectado',
         variant: 'destructive' as const,
-        icon: <AlertCircle className="h-4 w-4" />,
+        icon: <span>❌</span>,
         description: 'Instagram no está conectado a tu organización',
       };
     }
@@ -147,7 +133,7 @@ export function EnhancedInstagramSettings() {
       return {
         status: 'Token Expirado',
         variant: 'destructive' as const,
-        icon: <AlertCircle className="h-4 w-4" />,
+        icon: <span>❌</span>,
         description: 'El token de acceso ha expirado y necesita ser renovado',
       };
     }
@@ -155,7 +141,7 @@ export function EnhancedInstagramSettings() {
     return {
       status: 'Conectado',
       variant: 'default' as const,
-      icon: <CheckCircle className="h-4 w-4" />,
+      icon: <span>✅</span>,
       description: 'Instagram está conectado y funcionando correctamente',
     };
   };
@@ -167,7 +153,7 @@ export function EnhancedInstagramSettings() {
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Instagram className="h-5 w-5 text-primary" />
+            <img src="/instagram-icon.webp" alt="Instagram" className="h-5 w-5" />
             Conexión de Instagram
           </CardTitle>
           <CardDescription>
@@ -185,7 +171,8 @@ export function EnhancedInstagramSettings() {
                 </Badge>
                 {instagramUsername && (
                   <Badge variant="outline" className="flex items-center gap-1 bg-card">
-                    <Instagram className="h-3 w-3" />@{instagramUsername}
+                    <img src="/instagram-icon.webp" alt="Instagram" className="h-3 w-3" />@
+                    {instagramUsername}
                   </Badge>
                 )}
               </div>
@@ -232,7 +219,7 @@ export function EnhancedInstagramSettings() {
                   className="flex items-center gap-2 w-full sm:w-auto"
                   size="lg"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <img src="/instagram-icon.webp" alt="Instagram" className="h-5 w-5" />
                   {orgLoading
                     ? 'Cargando...'
                     : !organization
@@ -247,7 +234,7 @@ export function EnhancedInstagramSettings() {
 
           {!isConnected && (
             <div className="flex items-start gap-3 text-sm bg-info/10 text-info p-4 rounded-lg">
-              <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <span className="text-lg mt-0.5 flex-shrink-0">ℹ️</span>
               <div className="space-y-2">
                 <p className="font-medium">¿Qué necesitas para conectar?</p>
                 <ul className="space-y-1 text-info/80">
@@ -307,7 +294,7 @@ export function EnhancedInstagramSettings() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
+                <span>👁️</span>
                 Detalles de la Cuenta
               </CardTitle>
               <Button onClick={handleRefreshAll} variant="ghost" size="sm" disabled={isConnecting}>
@@ -336,7 +323,7 @@ export function EnhancedInstagramSettings() {
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                  <span>📅</span>
                   Expira en
                 </p>
                 <p
@@ -394,7 +381,7 @@ export function EnhancedInstagramSettings() {
             {!businessAccountId && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 text-sm text-warning bg-warning/10 p-4 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <span className="text-lg mt-0.5 flex-shrink-0">⚠️</span>
                   <div className="flex-1">
                     <p className="font-medium mb-1">Información incompleta</p>
                     <p className="text-warning/80 mb-3">
@@ -446,7 +433,11 @@ export function EnhancedInstagramSettings() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="p-2 bg-success/20 rounded-full">
-                                <Instagram className="h-5 w-5 text-success" />
+                                <img
+                                  src="/instagram-icon.webp"
+                                  alt="Instagram"
+                                  className="h-5 w-5"
+                                />
                               </div>
                               <div>
                                 <p className="font-medium text-success">
@@ -461,7 +452,7 @@ export function EnhancedInstagramSettings() {
                               </div>
                             </div>
                             <Badge variant="success">
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              <span className="mr-1">✅</span>
                               Conectada
                             </Badge>
                           </div>
@@ -511,7 +502,7 @@ export function EnhancedInstagramSettings() {
       <Card className="border-success/20 bg-success/5">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-success mt-0.5" />
+            <span className="text-lg mt-0.5">🛡️</span>
             <div className="space-y-1">
               <p className="font-medium text-success">Tu privacidad está protegida</p>
               <p className="text-sm text-success/80">

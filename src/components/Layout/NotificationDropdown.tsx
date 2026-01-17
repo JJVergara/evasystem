@@ -7,18 +7,16 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { LucideIcon } from 'lucide-react';
-import { Bell, Check, AlertCircle, Info, Calendar, Users } from 'lucide-react';
 import { useRealNotifications } from '@/hooks/useRealNotifications';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
-  info: Info,
-  warning: AlertCircle,
-  event: Calendar,
-  ambassador: Users,
-  system: Bell,
+const NOTIFICATION_EMOJIS: Record<string, string> = {
+  info: 'ℹ️',
+  warning: '⚠️',
+  event: '📅',
+  ambassador: '👤',
+  system: '🔔',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -28,8 +26,8 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 function getNotificationIcon(type: string) {
-  const Icon = NOTIFICATION_ICONS[type] || Info;
-  return <Icon className="w-4 h-4" />;
+  const emoji = NOTIFICATION_EMOJIS[type] || 'ℹ️';
+  return <span>{emoji}</span>;
 }
 
 function getPriorityColor(priority: string) {
@@ -64,7 +62,7 @@ export function NotificationDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
-          <Bell className="w-5 h-5" />
+          <span className="text-lg">🔔</span>
           {!loading && unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -89,7 +87,7 @@ export function NotificationDropdown() {
                   onClick={handleMarkAllAsRead}
                   className="text-xs h-auto p-1"
                 >
-                  <Check className="w-3 h-3 mr-1" />
+                  <span className="mr-1">✅</span>
                   Marcar todas
                 </Button>
               </div>
@@ -155,7 +153,7 @@ export function NotificationDropdown() {
                         handleMarkAsRead(notification.id);
                       }}
                     >
-                      <Check className="w-3 h-3" />
+                      <span>✅</span>
                     </Button>
                   )}
                 </div>

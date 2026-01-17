@@ -13,18 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Building,
-  Users,
-  PartyPopper,
-  Instagram,
-  CheckCircle,
-  ArrowRight,
-  Sparkles,
-  Edit3,
-  Loader2,
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { EMOJIS } from '@/constants';
 import { PageHeader } from '@/components/Layout/PageHeader';
 import { AppBackground } from '@/components/Layout/AppBackground';
 
@@ -132,7 +123,7 @@ export default function Onboarding() {
       id: 'organization',
       title: 'Configura tu Organización',
       description: 'Dale un nombre y descripción a tu organización',
-      icon: <Building className="h-6 w-6" />,
+      icon: <span className="text-2xl">{EMOJIS.entities.organization}</span>,
       completed: !!(organization?.name && organization.name !== 'Mi Organización'),
       action: () => setEditingOrg(true),
     },
@@ -140,7 +131,7 @@ export default function Onboarding() {
       id: 'instagram',
       title: 'Conecta Instagram',
       description: 'Vincula tu cuenta de Instagram para gestionar embajadores',
-      icon: <Instagram className="h-6 w-6" />,
+      icon: <img src="/instagram-icon.webp" alt="Instagram" className="h-6 w-6" />,
       completed: instagramConnected,
       action: handleInstagramConnect,
     },
@@ -148,7 +139,7 @@ export default function Onboarding() {
       id: 'fiesta',
       title: 'Crea tu Primera Fiesta',
       description: 'Configura tu primer evento para comenzar a gestionar embajadores',
-      icon: <PartyPopper className="h-6 w-6" />,
+      icon: <span className="text-2xl">{EMOJIS.navigation.events}</span>,
       completed: fiestas.length > 0,
       action: handleCreateFiesta,
     },
@@ -156,7 +147,7 @@ export default function Onboarding() {
       id: 'ambassadors',
       title: 'Agrega Embajadores',
       description: 'Invita o importa tus primeros embajadores',
-      icon: <Users className="h-6 w-6" />,
+      icon: <span className="text-2xl">{EMOJIS.navigation.ambassadors}</span>,
       completed: ambassadorCount > 0,
       action: handleAddAmbassadors,
     },
@@ -191,6 +182,7 @@ export default function Onboarding() {
         <PageHeader
           title="Configuración Inicial"
           description="Te guiaremos paso a paso para configurar tu cuenta EVA System"
+          emoji={EMOJIS.feedback.rocket}
         />
 
         <div className="space-y-8">
@@ -198,13 +190,15 @@ export default function Onboarding() {
             <div className="space-y-6">
               <div className="flex items-center justify-center">
                 <div className="bg-primary p-4 rounded-full">
-                  <Sparkles className="h-12 w-12 text-primary-foreground" />
+                  <span className="text-5xl">{EMOJIS.feedback.sparkles}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-4xl font-bold text-primary">¡Bienvenido a EVA System!</h1>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
+                  ¡Bienvenido a EVA System!
+                </h1>
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                   Tu plataforma inteligente para gestionar embajadores y eventos. Comencemos
                   configurando tu experiencia paso a paso.
                 </p>
@@ -227,7 +221,7 @@ export default function Onboarding() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold flex items-center">
-                    <Edit3 className="h-5 w-5 mr-2" />
+                    <span className="mr-2">{EMOJIS.actions.edit}</span>
                     Configura tu Organización
                   </h3>
                 </div>
@@ -278,7 +272,7 @@ export default function Onboarding() {
             </GlassPanel>
           )}
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
             {steps.map((step, index) => (
               <GlassPanel
                 key={step.id}
@@ -293,7 +287,7 @@ export default function Onboarding() {
                 {step.completed && (
                   <div className="absolute -top-2 -right-2">
                     <div className="bg-success text-success-foreground p-1 rounded-full">
-                      <CheckCircle className="h-4 w-4" />
+                      <span>{EMOJIS.status.success}</span>
                     </div>
                   </div>
                 )}
@@ -334,7 +328,7 @@ export default function Onboarding() {
                       ) : (
                         <>
                           Configurar Ahora
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          <span className="ml-2">{EMOJIS.actions.next}</span>
                         </>
                       )}
                     </Button>
@@ -348,7 +342,7 @@ export default function Onboarding() {
             <GlassPanel className="text-center border-success/20 bg-success/5">
               <div className="space-y-4">
                 <div className="bg-success/10 p-4 rounded-full w-fit mx-auto">
-                  <CheckCircle className="h-12 w-12 text-success" />
+                  <span className="text-5xl text-success">{EMOJIS.status.success}</span>
                 </div>
 
                 <div className="space-y-2">

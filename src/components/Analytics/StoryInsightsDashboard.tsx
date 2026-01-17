@@ -13,21 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '@/components/Layout/PageHeader';
 import { GlassPanel } from '@/components/Layout/GlassPanel';
-import { HelpCircle } from 'lucide-react';
-import {
-  Eye,
-  Users,
-  Share2,
-  MessageCircle,
-  TrendingUp,
-  Clock,
-  Instagram,
-  RefreshCw,
-  BarChart3,
-  Activity,
-  Target,
-  Sparkles,
-} from 'lucide-react';
+import { HelpCircle, RefreshCw } from 'lucide-react';
+import { EMOJIS } from '@/constants';
 import {
   Line,
   BarChart,
@@ -81,6 +68,7 @@ export function StoryInsightsDashboard() {
         <PageHeader
           title="Story Insights"
           description="Análisis de rendimiento de Instagram Stories"
+          emoji={EMOJIS.navigation.analytics}
         />
         <div className="animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -101,10 +89,15 @@ export function StoryInsightsDashboard() {
         <PageHeader
           title="Story Insights"
           description="Análisis de rendimiento de Instagram Stories"
+          emoji={EMOJIS.navigation.analytics}
         />
         <GlassPanel>
           <div className="text-center text-muted-foreground py-12">
-            <Instagram className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <img
+              src="/instagram-icon.webp"
+              alt="Instagram"
+              className="h-12 w-12 mx-auto mb-4 opacity-50"
+            />
             <p className="text-lg font-medium mb-2">No hay datos de Stories disponibles</p>
             <p className="text-sm mb-4">
               Recolecta insights de tus Stories activas para ver métricas
@@ -134,11 +127,15 @@ export function StoryInsightsDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Story Insights" description="Análisis de rendimiento de Instagram Stories">
+      <PageHeader
+        title="Story Insights"
+        description="Análisis de rendimiento de Instagram Stories"
+        emoji={EMOJIS.navigation.analytics}
+      >
         <div className="w-full flex justify-center">
-          <div className="flex items-center space-x-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
@@ -166,36 +163,42 @@ export function StoryInsightsDashboard() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-              <Instagram className="w-3 h-3 mr-1" />
+              <img src="/instagram-icon.webp" alt="Instagram" className="w-3 h-3 mr-1" />
               Instagram Stories API v24.0
             </Badge>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
             <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Stories</p>
-                    <p className="text-2xl font-bold text-primary">{summary.total_stories}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
+                      Stories
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-primary">
+                      {summary.total_stories}
+                    </p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-primary/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.entities.story}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-info/5 border-info/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1 cursor-help">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                               Alcance
                             </p>
-                            <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+                            <HelpCircle className="w-3 h-3 text-muted-foreground/50 hidden sm:block" />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="max-w-xs">
@@ -207,27 +210,29 @@ export function StoryInsightsDashboard() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-info">
+                    <p className="text-xl sm:text-2xl font-bold text-info">
                       {formatNumber(summary.total_reach)}
                     </p>
                   </div>
-                  <Eye className="w-8 h-8 text-info/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.social.reach}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-success/5 border-success/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-1 cursor-help">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                               Vistas
                             </p>
-                            <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+                            <HelpCircle className="w-3 h-3 text-muted-foreground/50 hidden sm:block" />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" className="max-w-xs">
@@ -240,104 +245,122 @@ export function StoryInsightsDashboard() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-success">
+                    <p className="text-xl sm:text-2xl font-bold text-success">
                       {formatNumber(summary.total_views)}
                     </p>
                   </div>
-                  <Activity className="w-8 h-8 text-success/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.actions.view}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-warning/5 border-warning/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                       Visitas Perfil
                     </p>
-                    <p className="text-2xl font-bold text-warning">
+                    <p className="text-xl sm:text-2xl font-bold text-warning">
                       {formatNumber(summary.total_profile_visits)}
                     </p>
                   </div>
-                  <Users className="w-8 h-8 text-warning/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.social.followers}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                       Interacciones
                     </p>
-                    <p className="text-2xl font-bold text-primary">
+                    <p className="text-xl sm:text-2xl font-bold text-primary">
                       {formatNumber(summary.total_interactions)}
                     </p>
                   </div>
-                  <Sparkles className="w-8 h-8 text-primary/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.feedback.sparkles}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-info/5 border-info/20">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                       Compartidos
                     </p>
-                    <p className="text-2xl font-bold text-info">
+                    <p className="text-xl sm:text-2xl font-bold text-info">
                       {formatNumber(summary.total_shares)}
                     </p>
                   </div>
-                  <Share2 className="w-8 h-8 text-info/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.actions.share}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-muted/50 border-border">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">
                       Respuestas
                     </p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
                       {formatNumber(summary.total_replies)}
                     </p>
                   </div>
-                  <MessageCircle className="w-8 h-8 text-muted-foreground/50" />
+                  <span className="text-xl sm:text-2xl lg:text-3xl opacity-50 shrink-0">
+                    {EMOJIS.entities.message}
+                  </span>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Target className="w-6 h-6 text-primary" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-primary/10 shrink-0">
+                  <span className="text-xl sm:text-2xl">{EMOJIS.feedback.target}</span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Alcance promedio por Story</p>
-                  <p className="text-3xl font-bold">{formatNumber(summary.avg_reach_per_story)}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Alcance promedio por Story
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold">
+                    {formatNumber(summary.avg_reach_per_story)}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-success/10">
-                  <TrendingUp className="w-6 h-6 text-success" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-success/10 shrink-0">
+                  <span className="text-xl sm:text-2xl">{EMOJIS.social.reach}</span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Vistas promedio por Story</p>
-                  <p className="text-3xl font-bold">{formatNumber(summary.avg_views_per_story)}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Vistas promedio por Story
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold">
+                    {formatNumber(summary.avg_views_per_story)}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -345,17 +368,25 @@ export function StoryInsightsDashboard() {
         </div>
 
         <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="trends">Tendencias</TabsTrigger>
-            <TabsTrigger value="timing">Mejor Horario</TabsTrigger>
-            <TabsTrigger value="stories">Stories Recientes</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-1 px-1">
+            <TabsList className="inline-flex min-w-full sm:grid sm:w-full sm:grid-cols-3">
+              <TabsTrigger value="trends" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                Tendencias
+              </TabsTrigger>
+              <TabsTrigger value="timing" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                Mejor Horario
+              </TabsTrigger>
+              <TabsTrigger value="stories" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                Stories Recientes
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="trends" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <span>{EMOJIS.social.reach}</span>
                   Evolución de Métricas
                 </CardTitle>
                 <CardDescription>Alcance, vistas y visitas al perfil por día</CardDescription>
@@ -436,7 +467,7 @@ export function StoryInsightsDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <span>{EMOJIS.entities.story}</span>
                   Stories por Día
                 </CardTitle>
               </CardHeader>
@@ -475,7 +506,7 @@ export function StoryInsightsDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
+                  <span>{EMOJIS.entities.timer}</span>
                   Rendimiento por Hora
                 </CardTitle>
                 <CardDescription>
@@ -705,7 +736,7 @@ export function StoryInsightsDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Instagram className="w-5 h-5 text-primary" />
+                  <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5" />
                   Stories Recientes
                 </CardTitle>
                 <CardDescription>Últimos snapshots de insights recolectados</CardDescription>
@@ -713,7 +744,11 @@ export function StoryInsightsDashboard() {
               <CardContent>
                 {recent_snapshots.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Instagram className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <img
+                      src="/instagram-icon.webp"
+                      alt="Instagram"
+                      className="w-12 h-12 mx-auto mb-2 opacity-50"
+                    />
                     <p>No hay snapshots recientes</p>
                   </div>
                 ) : (
@@ -732,8 +767,8 @@ export function StoryInsightsDashboard() {
                           className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="p-2 rounded-full bg-primary">
-                              <Instagram className="w-4 h-4 text-primary-foreground" />
+                            <div className="p-2 rounded-full bg-primary flex items-center justify-center">
+                              <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />
                             </div>
                             <div>
                               <p className="font-medium text-sm">

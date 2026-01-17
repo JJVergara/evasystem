@@ -11,16 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Hash,
-  Search,
-  Filter,
-  Calendar,
-  TrendingUp,
-  MessageCircle,
-  ExternalLink,
-} from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useMentionsOptimized } from '@/hooks/useMentionsOptimized';
+import { EMOJIS } from '@/constants';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -69,10 +62,11 @@ export default function MentionsOptimized() {
         <PageHeader
           title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="p-4 bg-card/50 rounded-lg">
                   <Skeleton className="h-16 w-full" />
@@ -91,6 +85,7 @@ export default function MentionsOptimized() {
         <PageHeader
           title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel className="flex items-center justify-center min-h-64">
           <div className="text-center">
@@ -110,6 +105,7 @@ export default function MentionsOptimized() {
         <PageHeader
           title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel className="text-center py-12">
           <p className="text-destructive mb-4">{error}</p>
@@ -124,15 +120,18 @@ export default function MentionsOptimized() {
       <PageHeader
         title="Menciones"
         description={`Monitorea las menciones y hashtags de ${organization?.name}`}
+        emoji={EMOJIS.navigation.mentions}
       >
-        <div className="flex items-center space-x-3 flex-wrap gap-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros Avanzados
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.actions.filter}</span>
+            <span className="hidden sm:inline">Filtros Avanzados</span>
+            <span className="sm:hidden">Filtros</span>
           </Button>
-          <Button size="sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            Programar Reporte
+          <Button size="sm" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.entities.calendar}</span>
+            <span className="hidden sm:inline">Programar Reporte</span>
+            <span className="sm:hidden">Reporte</span>
           </Button>
         </div>
       </PageHeader>
@@ -143,7 +142,7 @@ export default function MentionsOptimized() {
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-primary/20 rounded-lg">
-                  <Hash className="w-5 h-5 text-primary" />
+                  <span className="text-xl">{EMOJIS.navigation.mentions}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Menciones</p>
@@ -155,7 +154,7 @@ export default function MentionsOptimized() {
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-success/20 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-success" />
+                  <span className="text-xl">{EMOJIS.social.reach}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Alcance Total</p>
@@ -171,7 +170,7 @@ export default function MentionsOptimized() {
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-warning/20 rounded-lg">
-                  <MessageCircle className="w-5 h-5 text-warning" />
+                  <span className="text-xl">{EMOJIS.entities.message}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Engagement</p>
@@ -183,7 +182,7 @@ export default function MentionsOptimized() {
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-info/20 rounded-lg">
-                  <Hash className="w-5 h-5 text-info" />
+                  <span className="text-xl">{EMOJIS.status.pending}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Sin Asignar</p>
@@ -195,9 +194,11 @@ export default function MentionsOptimized() {
         </GlassPanel>
 
         <GlassPanel>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                {EMOJIS.actions.search}
+              </span>
               <Input
                 placeholder="Buscar menciones..."
                 value={searchTerm}
@@ -206,28 +207,30 @@ export default function MentionsOptimized() {
               />
             </div>
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48 bg-card/50">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="hashtag">Hashtags</SelectItem>
-                <SelectItem value="mention">Menciones</SelectItem>
-                <SelectItem value="story">Historias</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 sm:gap-3">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="flex-1 sm:w-40 md:w-48 bg-card/50">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="hashtag">Hashtags</SelectItem>
+                  <SelectItem value="mention">Menciones</SelectItem>
+                  <SelectItem value="story">Historias</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-card/50">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="assigned">Asignadas</SelectItem>
-                <SelectItem value="unassigned">Sin asignar</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="flex-1 sm:w-40 md:w-48 bg-card/50">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="assigned">Asignadas</SelectItem>
+                  <SelectItem value="unassigned">Sin asignar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </GlassPanel>
 
@@ -241,9 +244,9 @@ export default function MentionsOptimized() {
                     key={mention.id}
                     className="p-4 bg-card/30 rounded-lg hover:bg-card/40 transition-colors"
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shrink-0">
                           <span className="text-primary-foreground font-medium text-sm">
                             {mention.ambassador_name
                               ? mention.ambassador_name
@@ -253,19 +256,21 @@ export default function MentionsOptimized() {
                               : mention.instagram_username.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                          <h4 className="font-medium">
+                        <div className="min-w-0">
+                          <h4 className="font-medium truncate">
                             {mention.ambassador_name || `@${mention.instagram_username}`}
                           </h4>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground truncate">
                             @{mention.instagram_username}
                           </p>
                           {mention.fiesta_name && (
-                            <p className="text-xs text-muted-foreground">{mention.fiesta_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {mention.fiesta_name}
+                            </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={getMentionTypeColor(mention.mention_type)}>
                           {getMentionTypeLabel(mention.mention_type)}
                         </Badge>

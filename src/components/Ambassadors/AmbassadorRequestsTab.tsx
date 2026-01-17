@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, Check, X, Clock, Instagram, MessageCircle } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import type { AmbassadorRequest } from '@/hooks/useAmbassadorRequests';
 import { useAmbassadorRequests } from '@/hooks/useAmbassadorRequests';
 import { toast } from 'sonner';
@@ -118,26 +118,30 @@ export function AmbassadorRequestsTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
+            <span>🕐</span>
             Solicitudes Pendientes ({pendingRequests.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {pendingRequests.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <span className="text-5xl block mx-auto mb-4 opacity-50">🌟</span>
               <p>No hay solicitudes pendientes</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {pendingRequests.map((request) => (
                 <Card key={request.id} className="border-dashed">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
                         <AvatarImage src={request.profile_picture_url} />
                         <AvatarFallback>
-                          <Instagram className="h-6 w-6" />
+                          <img
+                            src="/instagram-icon.webp"
+                            alt="Instagram"
+                            className="h-5 w-5 sm:h-6 sm:w-6"
+                          />
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
@@ -150,7 +154,7 @@ export function AmbassadorRequestsTab() {
 
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <MessageCircle className="h-4 w-4" />
+                        <span>💬</span>
                         <span>{request.total_mentions} menciones</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -180,7 +184,7 @@ export function AmbassadorRequestsTab() {
                               {selectedRequest?.instagram_username}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <Label htmlFor="first_name">Nombre *</Label>
                                 <Input
@@ -218,7 +222,7 @@ export function AmbassadorRequestsTab() {
                               />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <Label htmlFor="date_of_birth">Fecha de Nacimiento</Label>
                                 <Input
@@ -310,7 +314,7 @@ export function AmbassadorRequestsTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+              <span>🌟</span>
               Solicitudes Procesadas ({processedRequests.length})
             </CardTitle>
           </CardHeader>
@@ -319,13 +323,13 @@ export function AmbassadorRequestsTab() {
               {processedRequests.map((request) => (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-8 w-8 shrink-0">
                       <AvatarImage src={request.profile_picture_url} />
                       <AvatarFallback>
-                        <Instagram className="h-4 w-4" />
+                        <img src="/instagram-icon.webp" alt="Instagram" className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
                     <div>

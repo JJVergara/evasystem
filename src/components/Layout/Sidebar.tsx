@@ -3,44 +3,65 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import {
-  LayoutDashboard,
-  Hash,
-  BarChart3,
-  Calendar,
-  Users,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  MessageCircle,
-  Activity,
-} from 'lucide-react';
-import { Instagram } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModernLogo } from '@/components/Logo/ModernLogo';
 import { UserProfileDropdown } from './UserProfileDropdown';
 import { OrganizationSwitcher } from '@/components/Organizations/OrganizationSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { EMOJIS } from '@/constants';
 
-const navigation = [
-  { name: 'dashboard', label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'stories', label: 'Historias', href: '/stories', icon: Instagram },
-  { name: 'mentions', label: 'Menciones', href: '/mentions', icon: Hash },
+interface NavItem {
+  name: string;
+  label: string;
+  href: string;
+  emoji?: string;
+  isInstagram?: boolean;
+}
+
+const navigation: NavItem[] = [
+  { name: 'dashboard', label: 'Dashboard', href: '/', emoji: EMOJIS.navigation.dashboard },
+  { name: 'stories', label: 'Historias', href: '/stories', isInstagram: true },
+  { name: 'mentions', label: 'Menciones', href: '/mentions', emoji: EMOJIS.navigation.mentions },
   {
     name: 'storyMentions',
     label: 'Menciones Historias',
     href: '/story-mentions',
-    icon: MessageCircle,
+    emoji: EMOJIS.navigation.storyMentions,
   },
-  { name: 'analytics', label: 'Analíticas', href: '/analytics', icon: BarChart3 },
-  { name: 'events', label: 'Fiestas', href: '/events', icon: Calendar },
-  { name: 'ambassadors', label: 'Embajadores', href: '/ambassadors', icon: Users },
+  {
+    name: 'analytics',
+    label: 'Analíticas',
+    href: '/analytics',
+    emoji: EMOJIS.navigation.analytics,
+  },
+  { name: 'events', label: 'Fiestas', href: '/events', emoji: EMOJIS.navigation.events },
+  {
+    name: 'ambassadors',
+    label: 'Embajadores',
+    href: '/ambassadors',
+    emoji: EMOJIS.navigation.ambassadors,
+  },
 ];
 
-const secondaryNavigation = [
-  { name: 'settings', label: 'Configuración', href: '/settings', icon: Settings },
-  { name: 'importExport', label: 'Import/Export', href: '/import-export', icon: Download },
-  { name: 'diagnostics', label: 'Diagnósticos', href: '/instagram-diagnostics', icon: Activity },
+const secondaryNavigation: NavItem[] = [
+  {
+    name: 'settings',
+    label: 'Configuración',
+    href: '/settings',
+    emoji: EMOJIS.navigation.settings,
+  },
+  {
+    name: 'importExport',
+    label: 'Import/Export',
+    href: '/import-export',
+    emoji: EMOJIS.navigation.import,
+  },
+  {
+    name: 'diagnostics',
+    label: 'Diagnósticos',
+    href: '/instagram-diagnostics',
+    emoji: EMOJIS.ui.maintenance,
+  },
 ];
 
 interface SidebarProps {
@@ -75,7 +96,6 @@ function SidebarContent({
       <div className="flex-1 overflow-y-auto py-4 min-h-0">
         <nav className="px-2 space-y-1">
           {navigation.map((item) => {
-            const Icon = item.icon;
             const isActive = location.pathname === item.href;
 
             return (
@@ -90,7 +110,21 @@ function SidebarContent({
                     : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
                 )}
               >
-                <Icon className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')} />
+                {item.isInstagram ? (
+                  <img
+                    src="/instagram-icon.webp"
+                    alt="Instagram"
+                    className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')}
+                  />
+                ) : (
+                  <span
+                    className={cn('flex-shrink-0 text-lg', collapsed ? 'w-5 h-5' : 'mr-3')}
+                    role="img"
+                    aria-label={item.label}
+                  >
+                    {item.emoji}
+                  </span>
+                )}
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -103,7 +137,6 @@ function SidebarContent({
 
         <nav className="px-2 space-y-1">
           {secondaryNavigation.map((item) => {
-            const Icon = item.icon;
             const isActive = location.pathname === item.href;
 
             return (
@@ -118,7 +151,13 @@ function SidebarContent({
                     : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
                 )}
               >
-                <Icon className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')} />
+                <span
+                  className={cn('flex-shrink-0 text-lg', collapsed ? 'w-5 h-5' : 'mr-3')}
+                  role="img"
+                  aria-label={item.label}
+                >
+                  {item.emoji}
+                </span>
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );

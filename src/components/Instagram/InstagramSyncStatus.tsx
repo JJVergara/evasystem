@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Zap, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useInstagramSync } from '@/hooks/useInstagramSync';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,9 +125,9 @@ export function InstagramSyncStatus() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Estado de Sync</CardTitle>
           {syncStats.isAutoSyncActive ? (
-            <CheckCircle className="h-4 w-4 text-success" />
+            <span className="text-success">✅</span>
           ) : (
-            <AlertTriangle className="h-4 w-4 text-warning" />
+            <span className="text-warning">⚠️</span>
           )}
         </CardHeader>
         <CardContent>
@@ -143,7 +143,7 @@ export function InstagramSyncStatus() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Hoy</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span>🕐</span>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{syncStats.todayMentions + syncStats.todayTags}</div>
@@ -156,7 +156,7 @@ export function InstagramSyncStatus() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
-          <Zap className="h-4 w-4 text-muted-foreground" />
+          <span>⚡</span>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{syncStats.weeklyMentions}</div>

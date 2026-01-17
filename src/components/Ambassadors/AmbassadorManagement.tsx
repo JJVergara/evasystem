@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/Layout/PageHeader';
 import { GlassPanel } from '@/components/Layout/GlassPanel';
 import { useAmbassadors } from '@/hooks/useAmbassadors';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EMOJIS } from '@/constants';
 
 export default function AmbassadorManagement() {
   const { ambassadors, loading, refreshAmbassadors } = useAmbassadors();
@@ -10,7 +11,11 @@ export default function AmbassadorManagement() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Embajadores" description="Cargando embajadores..." />
+        <PageHeader
+          title="Embajadores"
+          description="Cargando embajadores..."
+          emoji={EMOJIS.navigation.ambassadors}
+        />
         <GlassPanel className="p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -38,6 +43,7 @@ export default function AmbassadorManagement() {
       <PageHeader
         title="Embajadores"
         description="Gestiona y monitorea el rendimiento de tus embajadores"
+        emoji={EMOJIS.navigation.ambassadors}
       />
       <EnhancedAmbassadorDashboard ambassadors={ambassadors} onRefresh={refreshAmbassadors} />
     </div>

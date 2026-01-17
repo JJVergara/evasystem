@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Webhook, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
 
 export function N8nConfigurationSection() {
   const { settings, updateIntegrationSettings, saving } = useOrganizationSettings();
@@ -115,16 +115,16 @@ export function N8nConfigurationSection() {
 
   const getStatusIcon = () => {
     if (!settings.integration_settings.n8n_webhook_url) {
-      return <Settings className="w-5 h-5 text-muted-foreground" />;
+      return <span className="text-muted-foreground">{EMOJIS.navigation.settings}</span>;
     }
 
     switch (connectionStatus) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-success" />;
+        return <span className="text-success">{EMOJIS.status.success}</span>;
       case 'error':
-        return <AlertTriangle className="w-5 h-5 text-destructive" />;
+        return <span className="text-destructive">{EMOJIS.status.warning}</span>;
       default:
-        return <Webhook className="w-5 h-5 text-muted-foreground" />;
+        return <span className="text-muted-foreground">{EMOJIS.entities.webhook}</span>;
     }
   };
 

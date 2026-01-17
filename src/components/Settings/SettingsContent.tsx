@@ -13,10 +13,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Instagram, Bell, Shield, Palette, Zap, Building2, Upload } from 'lucide-react';
 import { EnhancedInstagramSettings } from '@/components/Settings/EnhancedInstagramSettings';
 import { N8nConfigurationSection } from '@/components/Settings/N8nConfigurationSection';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { EMOJIS } from '@/constants';
 
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 
@@ -94,47 +94,49 @@ export default function SettingsContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gradient">Configuraciones</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gradient">Configuraciones</h1>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid grid-cols-6 w-full overflow-x-auto">
-          <TabsTrigger value="general" className="flex items-center gap-2 shrink-0">
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger value="instagram" className="flex items-center gap-2 shrink-0">
-            <Instagram className="w-4 h-4" />
-            <span className="hidden sm:inline">Instagram</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2 shrink-0">
-            <Bell className="w-4 h-4" />
-            <span className="hidden sm:inline">Notificaciones</span>
-          </TabsTrigger>
-          <TabsTrigger value="permissions" className="flex items-center gap-2 shrink-0">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Permisos</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2 shrink-0">
-            <Palette className="w-4 h-4" />
-            <span className="hidden sm:inline">Apariencia</span>
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex items-center gap-2 shrink-0">
-            <Zap className="w-4 h-4" />
-            <span className="hidden sm:inline">Integraciones</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="inline-flex min-w-full sm:grid sm:grid-cols-6 sm:w-full">
+            <TabsTrigger value="general" className="flex items-center gap-2 shrink-0">
+              <span>{EMOJIS.entities.organization}</span>
+              <span className="hidden sm:inline">General</span>
+            </TabsTrigger>
+            <TabsTrigger value="instagram" className="flex items-center gap-2 shrink-0">
+              <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />
+              <span className="hidden sm:inline">Instagram</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2 shrink-0">
+              <span>{EMOJIS.navigation.notifications}</span>
+              <span className="hidden sm:inline">Notificaciones</span>
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="flex items-center gap-2 shrink-0">
+              <span>{EMOJIS.ui.security}</span>
+              <span className="hidden sm:inline">Permisos</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2 shrink-0">
+              <span>🎨</span>
+              <span className="hidden sm:inline">Apariencia</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2 shrink-0">
+              <span>{EMOJIS.feedback.lightning}</span>
+              <span className="hidden sm:inline">Integraciones</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="general">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
+                <span>{EMOJIS.entities.organization}</span>
                 Configuración General
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="orgName">Nombre de la Organización</Label>
                   <Input
@@ -185,7 +187,7 @@ export default function SettingsContent() {
                     placeholder="https://ejemplo.com/logo.png"
                   />
                   <Button variant="outline">
-                    <Upload className="w-4 h-4" />
+                    <span>{EMOJIS.actions.upload}</span>
                   </Button>
                 </div>
               </div>
@@ -199,7 +201,7 @@ export default function SettingsContent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Instagram className="w-5 h-5" />
+                <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5" />
                 Conexión de Instagram
               </CardTitle>
               <CardDescription>
@@ -217,7 +219,7 @@ export default function SettingsContent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
+                <span>{EMOJIS.navigation.notifications}</span>
                 Preferencias de Notificaciones
               </CardTitle>
             </CardHeader>
@@ -295,7 +297,7 @@ export default function SettingsContent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
+                <span>{EMOJIS.ui.security}</span>
                 Configuración de Permisos
               </CardTitle>
             </CardHeader>
@@ -358,12 +360,12 @@ export default function SettingsContent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
+                <span>🎨</span>
                 Configuración de Apariencia
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="theme">Tema</Label>
                   <Select
@@ -426,7 +428,7 @@ export default function SettingsContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
+                  <span>{EMOJIS.feedback.lightning}</span>
                   Otras Integraciones
                 </CardTitle>
               </CardHeader>

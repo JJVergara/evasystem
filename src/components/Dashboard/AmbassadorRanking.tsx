@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAmbassadorRanking } from '@/hooks/useAmbassadorRanking';
 import { toast } from 'sonner';
-import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { EMOJIS } from '@/constants';
 
 const CATEGORY_STYLES: Record<string, string> = {
   bronze: 'bg-warning/10 text-warning border-warning/30',
@@ -63,16 +64,17 @@ export function AmbassadorRanking() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-warning" />
-          <CardTitle>Ranking de Embajadores</CardTitle>
+          <span className="text-xl text-warning">{EMOJIS.feedback.trophy}</span>
+          <CardTitle className="text-lg sm:text-xl">Ranking de Embajadores</CardTitle>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={handleRefresh}
           disabled={refreshing || loading}
+          className="w-full sm:w-auto"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Actualizar
@@ -99,42 +101,43 @@ export function AmbassadorRanking() {
           </div>
         ) : ranking.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <span className="text-5xl block mb-4 opacity-50">{EMOJIS.feedback.trophy}</span>
             <p>No hay embajadores activos en tu organización.</p>
             <p className="text-sm mt-2">
               Los embajadores aparecerán aquí cuando se registren y participen en eventos.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">Rank</TableHead>
+                  <TableHead className="w-12 sm:w-16">Rank</TableHead>
                   <TableHead>Embajador</TableHead>
                   <TableHead className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Award className="h-4 w-4" />
+                      <span className="hidden sm:inline">{EMOJIS.feedback.medal}</span>
                       Puntos
                     </div>
                   </TableHead>
-                  <TableHead className="text-center">Categoría</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-center hidden sm:table-cell">Categoría</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
                     <div className="flex items-center justify-end gap-1">
-                      <Target className="h-4 w-4" />
+                      <span>{EMOJIS.feedback.target}</span>
                       Eventos
                     </div>
                   </TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-right hidden md:table-cell">
                     <div className="flex items-center justify-end gap-1">
-                      <MessageSquare className="h-4 w-4" />
+                      <span>{EMOJIS.entities.task}</span>
                       Tareas
                     </div>
                   </TableHead>
                   <TableHead className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <TrendingUp className="h-4 w-4" />
-                      Completación
+                      <span className="hidden sm:inline">{EMOJIS.navigation.analytics}</span>
+                      <span className="hidden sm:inline">Completación</span>
+                      <span className="sm:hidden">%</span>
                     </div>
                   </TableHead>
                 </TableRow>
@@ -158,11 +161,13 @@ export function AmbassadorRanking() {
                     <TableCell className="text-right font-medium">
                       {formatNumber(ambassador.global_points)}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center hidden sm:table-cell">
                       {getCategoryBadge(ambassador.global_category)}
                     </TableCell>
-                    <TableCell className="text-right">{ambassador.events_participated}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right hidden md:table-cell">
+                      {ambassador.events_participated}
+                    </TableCell>
+                    <TableCell className="text-right hidden md:table-cell">
                       <div className="flex flex-col items-end">
                         <span className="font-medium">{ambassador.completed_tasks}</span>
                         <span className="text-xs text-muted-foreground">

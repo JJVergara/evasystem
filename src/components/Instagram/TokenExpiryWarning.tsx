@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Clock, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface TokenExpiryWarningProps {
   daysUntilExpiry: number | null | undefined;
@@ -32,9 +32,9 @@ export function TokenExpiryWarning({
       }
     >
       {isCritical ? (
-        <AlertTriangle className="h-4 w-4 text-destructive" />
+        <span className="text-destructive">⚠️</span>
       ) : (
-        <Clock className="h-4 w-4 text-warning" />
+        <span className="text-warning">🕐</span>
       )}
       <AlertTitle className={isCritical ? 'text-destructive' : 'text-warning'}>
         {isCritical ? 'Conexión próxima a expirar' : 'Token de Instagram expirando pronto'}

@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Instagram, Calendar, Users, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { SimpleDashboardContent } from './SimpleDashboardContent';
+import { EMOJIS } from '@/constants';
 
 export function EVABrandedDashboard() {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ export function EVABrandedDashboard() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-info">
-                  <AlertCircle className="h-5 w-5" />
+                  <span>{EMOJIS.feedback.bulb}</span>
                   Completa la configuración de tu sistema
                 </CardTitle>
                 <CardDescription className="text-info/80">
@@ -39,7 +39,7 @@ export function EVABrandedDashboard() {
                 onClick={() => navigate('/onboarding')}
                 className="gap-2 w-full sm:w-auto text-sm sm:text-base shrink-0"
               >
-                <Settings className="h-4 w-4" />
+                <span>{EMOJIS.feedback.rocket}</span>
                 <span className="hidden sm:inline">Completar Configuración</span>
                 <span className="sm:hidden">Completar</span>
               </Button>
@@ -52,29 +52,28 @@ export function EVABrandedDashboard() {
                   switch (stepId) {
                     case 'instagram':
                       return {
-                        icon: Instagram,
+                        emoji: EMOJIS.entities.story,
                         label: 'Conectar Instagram',
                         action: () => navigate('/settings'),
                       };
                     case 'fiesta':
                       return {
-                        icon: Calendar,
+                        emoji: EMOJIS.navigation.events,
                         label: 'Crear Primera Fiesta',
                         action: () => navigate('/events'),
                       };
                     case 'ambassadors':
                       return {
-                        icon: Users,
+                        emoji: EMOJIS.navigation.ambassadors,
                         label: 'Añadir Embajadores',
                         action: () => navigate('/ambassadors'),
                       };
                     default:
-                      return { icon: AlertCircle, label: step.title, action: () => {} };
+                      return { emoji: EMOJIS.entities.task, label: step.title, action: () => {} };
                   }
                 };
 
                 const stepInfo = getStepInfo(step.id);
-                const Icon = stepInfo.icon;
 
                 return (
                   <Button
@@ -84,7 +83,7 @@ export function EVABrandedDashboard() {
                     onClick={stepInfo.action}
                     className="gap-2"
                   >
-                    <Icon className="h-4 w-4" />
+                    <span>{stepInfo.emoji}</span>
                     {stepInfo.label}
                   </Button>
                 );
@@ -97,16 +96,21 @@ export function EVABrandedDashboard() {
       {overallProgress < 100 && (
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <CardTitle className="text-lg">Progreso de Configuración</CardTitle>
-                <CardDescription>{Math.round(overallProgress)}% completado</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Progreso de Configuración</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  {Math.round(overallProgress)}% completado
+                </CardDescription>
               </div>
-              <Badge variant={overallProgress === 100 ? 'default' : 'secondary'}>
+              <Badge
+                variant={overallProgress === 100 ? 'default' : 'secondary'}
+                className="self-start sm:self-auto"
+              >
                 {Math.round(overallProgress)}%
               </Badge>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2 mt-2 sm:mt-0">
               <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${overallProgress}%` }}
@@ -120,7 +124,7 @@ export function EVABrandedDashboard() {
         <Card className="border-success/30 bg-success/5 dark:bg-success/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-success" />
+              <span className="text-xl">{EMOJIS.status.success}</span>
               <div>
                 <p className="font-medium text-success">¡Configuración completa!</p>
                 <p className="text-sm text-success/80">

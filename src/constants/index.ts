@@ -19,3 +19,21 @@ export {
 } from './entityStatus';
 
 export { QUERY_KEYS } from './queryKeys';
+
+export {
+  EMOJIS,
+  getStatusEmoji,
+  getNavigationEmoji,
+  getEntityEmoji,
+  getActionEmoji,
+  getFeedbackEmoji,
+  type EmojiCategory,
+  type StatusEmoji,
+  type NavigationEmoji,
+  type ActionEmoji,
+  type EntityEmoji,
+  type FeedbackEmoji,
+  type SocialEmoji,
+  type UIEmoji,
+  type PriorityEmoji,
+} from './emojis';

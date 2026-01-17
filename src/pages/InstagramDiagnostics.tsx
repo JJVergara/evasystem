@@ -4,18 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  Instagram,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  Activity,
-  Settings,
-  Database,
-  Zap,
-  Globe,
-} from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { useInstagramConnection } from '@/hooks/useInstagramConnection';
 import { useInstagramSync } from '@/hooks/useInstagramSync';
@@ -33,13 +22,13 @@ export default function InstagramDiagnostics() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-success" />;
+        return <span className="text-xl text-success">✅</span>;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-warning" />;
+        return <span className="text-xl text-warning">⚠️</span>;
       case 'error':
-        return <XCircle className="w-5 h-5 text-destructive" />;
+        return <span className="text-xl text-destructive">❌</span>;
       default:
-        return <Activity className="w-5 h-5 text-muted-foreground" />;
+        return <span className="text-xl text-muted-foreground">📊</span>;
     }
   };
 
@@ -77,12 +66,13 @@ export default function InstagramDiagnostics() {
       <PageHeader
         title="Diagnósticos de Instagram"
         description="Herramientas avanzadas para diagnosticar y solucionar problemas de integración con Instagram"
+        emoji="🔧"
       />
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="w-5 h-5" />
+            <span>🗄️</span>
             Estado del Sistema
           </CardTitle>
           <CardDescription>
@@ -111,12 +101,12 @@ export default function InstagramDiagnostics() {
               {systemChecks.map((check, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg bg-background/50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 border rounded-lg bg-background/50"
                 >
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(check.status)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <span className="shrink-0">{getStatusIcon(check.status)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium">{check.name}</p>
                         <Badge variant={getStatusVariant(check.status)} className="text-xs">
                           {check.status === 'success'
@@ -153,17 +143,17 @@ export default function InstagramDiagnostics() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
+            <span>⚡</span>
             Acciones Rápidas
           </CardTitle>
           <CardDescription>Herramientas comunes para solucionar problemas</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <Button
               onClick={() => refreshTokenStatus()}
               variant="outline"
-              className="h-auto p-4 flex flex-col items-start gap-2"
+              className="h-auto p-3 sm:p-4 flex flex-col items-start gap-2"
             >
               <RefreshCw className="w-5 h-5" />
               <div className="text-left">
@@ -178,7 +168,7 @@ export default function InstagramDiagnostics() {
               variant="outline"
               className="h-auto p-4 flex flex-col items-start gap-2"
             >
-              <Instagram className="w-5 h-5" />
+              <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5" />
               <div className="text-left">
                 <div className="font-medium">Forzar Sincronización</div>
                 <div className="text-sm text-muted-foreground">Sincroniza datos manualmente</div>
@@ -190,7 +180,7 @@ export default function InstagramDiagnostics() {
               variant="outline"
               className="h-auto p-4 flex flex-col items-start gap-2"
             >
-              <Settings className="w-5 h-5" />
+              <span className="text-xl">⚙️</span>
               <div className="text-left">
                 <div className="font-medium">Configuración</div>
                 <div className="text-sm text-muted-foreground">Ir a configuración de Instagram</div>
@@ -203,12 +193,12 @@ export default function InstagramDiagnostics() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5" />
+            <span>🌐</span>
             Información del Sistema
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
             <div>
               <strong>Webhook URL:</strong>
               <code className="block mt-1 p-2 bg-muted rounded text-xs break-all">

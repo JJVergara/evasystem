@@ -4,21 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  MessageCircle,
-  ExternalLink,
-  Instagram,
-  Calendar,
-  User,
-  Hash,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { StoryMention } from '@/types/storyMentions';
+import { EMOJIS } from '@/constants';
 
 interface StoryMentionDetailsProps {
   mention: StoryMention | null;
@@ -84,28 +75,28 @@ export function StoryMentionDetails({
       case 'new':
         return (
           <Badge variant="default" className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+            <span>{EMOJIS.status.pending}</span>
             Nueva
           </Badge>
         );
       case 'completed':
         return (
           <Badge variant="secondary" className="flex items-center gap-1">
-            <CheckCircle className="w-3 h-3" />
+            <span>{EMOJIS.status.success}</span>
             Completada (24h)
           </Badge>
         );
       case 'flagged_early_delete':
         return (
           <Badge variant="destructive" className="flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
+            <span>{EMOJIS.status.warning}</span>
             Borrada antes de 24h
           </Badge>
         );
       case 'expired_unknown':
         return (
           <Badge variant="outline" className="flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
+            <span>{EMOJIS.status.warning}</span>
             Estado desconocido
           </Badge>
         );
@@ -142,24 +133,24 @@ export function StoryMentionDetails({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Instagram className="w-5 h-5 text-primary" />
+            <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5" />
             Mención de Historia - @{mention.instagram_username}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {getStateBadge(mention.state)}
               {mention.ambassador_name && (
                 <Badge variant="outline">Embajador: {mention.ambassador_name}</Badge>
               )}
             </div>
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+            <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+              <span>{EMOJIS.entities.calendar}</span>
               {format(new Date(mention.mentioned_at), "dd MMM yyyy 'a las' HH:mm", { locale: es })}
             </span>
           </div>
@@ -167,7 +158,7 @@ export function StoryMentionDetails({
           {timeRemaining && isNew && (
             <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2 text-primary">
-                <Clock className="w-4 h-4" />
+                <span>{EMOJIS.entities.timer}</span>
                 <span className="font-medium">{timeRemaining}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -176,14 +167,14 @@ export function StoryMentionDetails({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">{EMOJIS.entities.user}</span>
               <span className="font-medium">@{mention.instagram_username}</span>
             </div>
             {mention.instagram_user_id && (
               <div className="flex items-center gap-2">
-                <Hash className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">{EMOJIS.navigation.mentions}</span>
                 <span className="text-sm text-muted-foreground">
                   ID: {mention.instagram_user_id}
                 </span>
@@ -208,7 +199,7 @@ export function StoryMentionDetails({
                 onClick={() => window.open(mention.inbox_link, '_blank', 'noopener,noreferrer')}
                 className="flex items-center gap-2"
               >
-                <MessageCircle className="w-4 h-4" />
+                <span>{EMOJIS.entities.message}</span>
                 Abrir en Bandeja
               </Button>
             )}
@@ -230,7 +221,7 @@ export function StoryMentionDetails({
                   onClick={() => onFlagAsEarlyDelete(mention.id)}
                   className="flex items-center gap-2"
                 >
-                  <AlertTriangle className="w-4 h-4" />
+                  <span>{EMOJIS.status.warning}</span>
                   Borrada antes de 24h
                 </Button>
               </>
@@ -241,7 +232,7 @@ export function StoryMentionDetails({
 
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" />
+              <span>{EMOJIS.entities.message}</span>
               Responder por mensaje directo
             </h3>
 

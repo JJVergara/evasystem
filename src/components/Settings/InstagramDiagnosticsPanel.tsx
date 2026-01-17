@@ -3,19 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertCircle,
-  Play,
-  Zap,
-  Globe,
-  Activity,
-  Settings,
-  Copy,
-  AlertTriangle,
-} from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useInstagramDiagnostics } from '@/hooks/useInstagramDiagnostics';
 
@@ -26,13 +14,13 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-success" />;
+        return <span className="text-success">✅</span>;
       case 'error':
-        return <XCircle className="w-4 h-4 text-destructive" />;
+        return <span className="text-destructive">❌</span>;
       case 'pending':
-        return <Clock className="w-4 h-4 text-warning animate-pulse" />;
+        return <span className="text-warning animate-pulse">🕐</span>;
       default:
-        return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
+        return <span className="text-muted-foreground">ℹ️</span>;
     }
   };
 
@@ -60,7 +48,7 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
+            <span>📊</span>
             Diagnósticos de Instagram
           </CardTitle>
           <CardDescription>
@@ -76,12 +64,12 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
             >
               {isRunning ? (
                 <>
-                  <Clock className="w-4 h-4 animate-spin" />
+                  <span className="animate-spin">🕐</span>
                   Ejecutando...
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4" />
+                  <span>▶️</span>
                   Ejecutar Diagnósticos
                 </>
               )}
@@ -92,7 +80,7 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
               variant="outline"
               className="flex items-center gap-2"
             >
-              <Zap className="w-4 h-4" />
+              <span>⚡</span>
               Probar Webhook
             </Button>
           </div>
@@ -128,7 +116,7 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
 
           {webhookStatus && (
             <Alert>
-              <Globe className="w-4 h-4" />
+              <span>🌐</span>
               <AlertDescription>
                 <strong>Estado del Webhook:</strong>{' '}
                 {webhookStatus.configured && webhookStatus.reachable
@@ -150,7 +138,7 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
       <Card className="bg-card/50 backdrop-blur-sm border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
-            <Settings className="h-5 w-5" />
+            <span>⚙️</span>
             Estado del Webhook
           </CardTitle>
           <CardDescription>Estado de configuración y conectividad del webhook</CardDescription>
@@ -234,7 +222,7 @@ export const InstagramDiagnosticsPanel: React.FC = () => {
           </div>
 
           <Alert>
-            <AlertTriangle className="h-4 w-4" />
+            <span>⚠️</span>
             <AlertTitle>Configuración Importante</AlertTitle>
             <AlertDescription className="text-sm">
               1. Verifica que en Meta Developer Console el URL del webhook sea exactamente el

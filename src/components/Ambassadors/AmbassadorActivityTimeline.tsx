@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { EMOJIS } from '@/constants';
 
 interface ActivityTimelineProps {
   activities: Array<{
@@ -16,17 +16,17 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-success" />;
+        return <span className="text-success">{EMOJIS.status.success}</span>;
       case 'invalid':
       case 'expired':
-        return <XCircle className="w-4 h-4 text-destructive" />;
+        return <span className="text-destructive">{EMOJIS.status.error}</span>;
       case 'pending':
       case 'uploaded':
-        return <Clock className="w-4 h-4 text-warning" />;
+        return <span className="text-warning">{EMOJIS.status.pending}</span>;
       case 'in_progress':
-        return <AlertCircle className="w-4 h-4 text-info" />;
+        return <span className="text-info">{EMOJIS.status.inProgress}</span>;
       default:
-        return <Clock className="w-4 h-4 text-muted-foreground" />;
+        return <span className="text-muted-foreground">{EMOJIS.status.pending}</span>;
     }
   };
 
@@ -72,14 +72,14 @@ export function AmbassadorActivityTimeline({ activities }: ActivityTimelineProps
             activities.map((activity, index) => (
               <div
                 key={index}
-                className="flex items-start space-x-3 pb-4 border-b border-border last:border-b-0"
+                className="flex items-start gap-2 sm:gap-3 pb-4 border-b border-border last:border-b-0"
               >
                 <div className="flex-shrink-0 mt-0.5">{getStatusIcon(activity.status)}</div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
                     <p className="text-sm font-medium text-foreground">{activity.description}</p>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                       {activity.points && activity.points > 0 && (
                         <Badge variant="outline" className="text-xs">
                           +{activity.points} pts
