@@ -165,13 +165,15 @@ function SidebarContent({
         </nav>
       </div>
 
-      <div className="p-4 border-t space-y-3 shrink-0">
+      <div className="p-3 border-t space-y-3 shrink-0 min-w-0">
         {!collapsed && <UserProfileDropdown />}
 
         {!collapsed && (
-          <div className="bg-accent/50 rounded-lg p-3 border border-border">
-            <div className="text-sm font-medium">Conectado a Instagram</div>
-            <div className="text-xs text-muted-foreground mt-1">Token válido hasta: 30 días</div>
+          <div className="bg-accent/50 rounded-lg p-3 border border-border min-w-0">
+            <div className="text-sm font-medium truncate">Conectado a Instagram</div>
+            <div className="text-xs text-muted-foreground mt-1 truncate">
+              Token válido hasta: 30 días
+            </div>
             <div className="w-full bg-secondary rounded-full h-2 mt-2">
               <div className="bg-primary h-2 rounded-full w-4/5" />
             </div>

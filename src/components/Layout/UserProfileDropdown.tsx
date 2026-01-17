@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -15,6 +14,7 @@ import { User, Settings, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getInitialsAsEmoji } from '@/constants/emojis';
 
 interface UserData {
   id: string;
@@ -85,20 +85,13 @@ export function UserProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 p-2 h-auto hover:bg-accent rounded-lg"
+          className="flex items-center gap-2 p-2 h-auto hover:bg-accent rounded-lg w-full max-w-full"
         >
-          <Avatar className="w-8 h-8">
-            <AvatarImage src="" />
-            <AvatarFallback className="text-xs">
-              {userData.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-start text-left">
-            <span className="text-sm font-medium">{userData.name}</span>
+          <span className="text-lg shrink-0" role="img" aria-label={userData.name}>
+            {getInitialsAsEmoji(userData.name)}
+          </span>
+          <div className="flex flex-col items-start text-left min-w-0 flex-1">
+            <span className="text-sm font-medium truncate w-full">{userData.name}</span>
             <div className="flex items-center gap-1">
               <Badge variant="secondary" className="text-xs px-1 py-0">
                 Usuario

@@ -129,6 +129,35 @@ export const EMOJIS = {
     moon: '🌙',
     cloud: '☁️',
   },
+
+  letters: {
+    A: '🅰',
+    B: '🅱',
+    C: '🅲',
+    D: '🅳',
+    E: '🅴',
+    F: '🅵',
+    G: '🅶',
+    H: '🅷',
+    I: '🅸',
+    J: '🅹',
+    K: '🅺',
+    L: '🅻',
+    M: '🅼',
+    N: '🅽',
+    O: '🅾',
+    P: '🅿',
+    Q: '🆀',
+    R: '🆁',
+    S: '🆂',
+    T: '🆃',
+    U: '🆄',
+    V: '🆅',
+    W: '🆆',
+    X: '🆇',
+    Y: '🆈',
+    Z: '🆉',
+  },
 } as const;
 
 export type EmojiCategory = keyof typeof EMOJIS;
@@ -161,4 +190,25 @@ export function getActionEmoji(action: ActionEmoji): string {
 
 export function getFeedbackEmoji(feedback: FeedbackEmoji): string {
   return EMOJIS.feedback[feedback];
+}
+
+export type LetterEmoji = keyof typeof EMOJIS.letters;
+
+export function getLetterEmoji(letter: string): string {
+  const upperLetter = letter.toUpperCase() as LetterEmoji;
+  return EMOJIS.letters[upperLetter] || letter;
+}
+
+export function getInitialsAsEmoji(name: string): string {
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  return initials
+    .split('')
+    .map((letter) => getLetterEmoji(letter))
+    .join('');
 }
