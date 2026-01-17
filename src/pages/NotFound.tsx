@@ -6,9 +6,7 @@ import { Home } from 'lucide-react';
 const NotFound = () => {
   const location = useLocation();
 
-  useEffect(() => {
-    void ('404 Error: User attempted to access non-existent route:', location.pathname);
-  }, [location.pathname]);
+  useEffect(() => {}, [location.pathname]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

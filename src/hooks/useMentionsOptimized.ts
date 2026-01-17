@@ -22,7 +22,7 @@ interface SocialMention {
   fiesta_name?: string;
   story_url?: string;
   hashtag?: string;
-  raw_data?: any;
+  raw_data?: Record<string, unknown>;
 }
 
 interface MentionStats {
@@ -117,7 +117,6 @@ export function useMentionsOptimized(
       const { data: mentionsData, error: fetchError, count } = await query;
 
       if (fetchError) {
-        void ('Error fetching social mentions:', fetchError);
         throw new Error('Error al cargar menciones');
       }
 
@@ -141,20 +140,26 @@ export function useMentionsOptimized(
         raw_data: mention.raw_data,
       }));
 
-      const totalReach = mentions.reduce((sum, m) => sum + m.reach_count, 0);
-      const avgEngagement =
-        mentions.length > 0
-          ? mentions.reduce((sum, m) => sum + m.engagement_score, 0) / mentions.length
-          : 0;
-      const uniqueHashtags = new Set(mentions.filter((m) => m.hashtag).map((m) => m.hashtag)).size;
-      const unassignedCount = mentions.filter((m) => !m.matched_ambassador_id).length;
+      const computedStats = mentions.reduce(
+        (acc, m) => {
+          acc.reach += m.reach_count;
+          acc.engagement += m.engagement_score;
+          if (m.hashtag) acc.hashtags.add(m.hashtag);
+          if (!m.matched_ambassador_id) acc.unassigned++;
+          return acc;
+        },
+        { reach: 0, engagement: 0, hashtags: new Set<string>(), unassigned: 0 }
+      );
 
       const stats: MentionStats = {
         total: count || 0,
-        reach: totalReach,
-        engagement: Math.round(avgEngagement * 100) / 100,
-        unique_hashtags: uniqueHashtags,
-        unassigned: unassignedCount,
+        reach: computedStats.reach,
+        engagement:
+          mentions.length > 0
+            ? Math.round((computedStats.engagement / mentions.length) * 100) / 100
+            : 0,
+        unique_hashtags: computedStats.hashtags.size,
+        unassigned: computedStats.unassigned,
       };
 
       return {
@@ -187,8 +192,7 @@ export function useMentionsOptimized(
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.socialMentions(organization?.id || ''),
       });
-    } catch (error) {
-      void ('Error assigning mention:', error);
+    } catch {
       toast.error('Error al asignar mención');
     }
   };

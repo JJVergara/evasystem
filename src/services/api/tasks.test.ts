@@ -224,9 +224,9 @@ describe('Tasks Service', () => {
 
       mockSupabase.from = vi.fn().mockReturnValue(mockChain);
 
-      await expect(
-        updateTask({ taskId: 'task-123', status: 'completed' })
-      ).rejects.toThrow('Update failed');
+      await expect(updateTask({ taskId: 'task-123', status: 'completed' })).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 

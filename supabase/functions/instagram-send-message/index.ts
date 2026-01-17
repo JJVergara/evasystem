@@ -54,13 +54,6 @@ Deno.serve(async (req) => {
 
     const responseData = await sendInstagramMessage(recipientId, message, decryptedToken);
 
-    void ('Instagram message sent successfully:', {
-      organizationId,
-      recipientId,
-      messageId: responseData.message_id,
-      sentBy: user.id,
-    });
-
     return jsonResponse({
       success: true,
       messageId: responseData.message_id,

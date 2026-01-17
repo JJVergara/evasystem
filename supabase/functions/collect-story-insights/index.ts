@@ -19,15 +19,11 @@ Deno.serve(async (req) => {
     let targetOrgId: string | null = null;
 
     if (isCron) {
-      void ('Starting Story insights collection... (CRON JOB)');
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch {
-        void 0;
-      }
+      } catch {}
     } else {
-      void ('Starting Story insights collection... (USER REQUEST)');
       targetOrgId = await getUserOrganization(supabase, user.id);
     }
 
@@ -43,11 +39,8 @@ Deno.serve(async (req) => {
     const { data: organizations, error: orgsError } = await organizationsQuery;
 
     if (orgsError) {
-      void ('Error fetching organizations:', orgsError);
       throw new Error('Failed to fetch organizations');
     }
-
-    void (`Found ${organizations?.length || 0} organization(s) to process`);
 
     interface OrgResult {
       organization_id: string;
@@ -65,8 +58,6 @@ Deno.serve(async (req) => {
 
     for (const org of organizations || []) {
       try {
-        void (`Processing organization: ${org.name} (${org.id})`);
-
         const { data: tokenData, error: tokenError } = await supabase
           .from('organization_instagram_tokens')
           .select('access_token, token_expiry')
@@ -74,7 +65,6 @@ Deno.serve(async (req) => {
           .single();
 
         if (tokenError || !tokenData) {
-          void (`No Instagram token found for organization ${org.name}`);
           results.push({
             organization_id: org.id,
             organization_name: org.name,
@@ -85,8 +75,6 @@ Deno.serve(async (req) => {
         }
 
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-          void (`Token expired for organization ${org.name}`);
-
           await supabase.from('notifications').insert({
             organization_id: org.id,
             type: 'token_expired',
@@ -118,7 +106,6 @@ Deno.serve(async (req) => {
           ...orgResult,
         });
       } catch (error) {
-        void (`Error processing organization ${org.name}:`, error);
         results.push({
           organization_id: org.id,
           organization_name: org.name,
@@ -127,12 +114,6 @@ Deno.serve(async (req) => {
         });
       }
     }
-
-    void (
-      `Story insights collection completed: ` +
-        `${totalStoriesFound} stories found, ` +
-        `${totalSnapshotsCreated} snapshots created`
-    );
 
     return jsonResponse({
       success: true,
@@ -165,7 +146,6 @@ async function collectOrganizationStoryInsights(
     );
 
     storiesFound = stories.length;
-    void (`Found ${storiesFound} active stories for ${organization.name}`);
 
     if (storiesFound === 0) {
       return { storiesFound, snapshotsCreated, errors };
@@ -176,24 +156,16 @@ async function collectOrganizationStoryInsights(
         const storyId = story.id;
 
         if (!storyId) {
-          void ('Skipping story without ID');
           continue;
         }
 
         const storyAge = story.timestamp ? calculateStoryAgeHours(story.timestamp) : null;
 
-        void (
-          `Fetching insights for story ${storyId} (age: ${storyAge?.toFixed(1) || 'unknown'}h)`
-        );
-
         const insights = await fetchStoryInsights(storyId, accessToken);
 
         if (!insights) {
-          void (`No insights available for story ${storyId}`);
           continue;
         }
-
-        void (`Story ${storyId} insights:`, JSON.stringify(insights));
 
         const { data: existingMention } = await supabase
           .from('social_mentions')
@@ -232,19 +204,15 @@ async function collectOrganizationStoryInsights(
           .insert(snapshot);
 
         if (insertError) {
-          void (`Error inserting snapshot for story ${storyId}:`, insertError);
           errors.push(`Failed to insert snapshot for ${storyId}: ${insertError.message}`);
         } else {
           snapshotsCreated++;
-          void (`Created snapshot for story ${storyId}`);
         }
       } catch (error) {
-        void (`Error processing story ${story.id}:`, error);
         errors.push(`Story ${story.id} error: ${error.message}`);
       }
     }
   } catch (error) {
-    void (`Error in collectOrganizationStoryInsights:`, error);
     errors.push(`Organization processing error: ${error.message}`);
   }
 

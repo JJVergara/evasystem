@@ -71,9 +71,7 @@ export default function BackupCenter() {
 
       if (error) throw error;
       setBackupLogs(data || []);
-    } catch (error) {
-      void ('Error fetching backup logs:', error);
-    }
+    } catch {}
   };
 
   const createFullBackup = async () => {
@@ -111,8 +109,7 @@ export default function BackupCenter() {
       setProgress(100);
       toast.success('Respaldo completo creado y descargado exitosamente');
       fetchBackupLogs();
-    } catch (error) {
-      void ('Error creating backup:', error);
+    } catch {
       toast.error('Error al crear el respaldo');
     } finally {
       setIsProcessing(false);
@@ -162,8 +159,7 @@ export default function BackupCenter() {
       setProgress(100);
       toast.success(`Exportación ${format.toUpperCase()} completada exitosamente`);
       fetchBackupLogs();
-    } catch (error) {
-      void ('Error exporting data:', error);
+    } catch {
       toast.error('Error al exportar los datos');
     } finally {
       setIsProcessing(false);
@@ -212,8 +208,7 @@ export default function BackupCenter() {
       }
 
       fetchBackupLogs();
-    } catch (error) {
-      void ('Error restoring backup:', error);
+    } catch {
       toast.error('Error al restaurar el respaldo');
     } finally {
       setIsProcessing(false);

@@ -33,7 +33,6 @@ export async function encryptToken(token: string): Promise<string> {
 
     return btoa(String.fromCharCode(...combined));
   } catch (error) {
-    void ('Token encryption failed (raw):', error);
     throw new Error(
       `Failed to encrypt token: ${error instanceof Error ? error.message : String(error)}`
     );
@@ -56,7 +55,6 @@ export async function decryptToken(encryptedToken: string): Promise<string> {
 
     return new TextDecoder().decode(decrypted);
   } catch (error) {
-    void ('Token decryption failed:', error);
     throw new Error(
       `Failed to decrypt token: ${error instanceof Error ? error.message : String(error)}`
     );
@@ -82,7 +80,6 @@ export async function migrateToken(token: string): Promise<string> {
 
 export async function safeDecryptToken(token: string): Promise<string> {
   if (!isEncrypted(token)) {
-    void ('Found unencrypted token - consider migrating');
     return token;
   }
 

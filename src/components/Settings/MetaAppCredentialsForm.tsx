@@ -51,7 +51,6 @@ export function MetaAppCredentialsForm({
       });
 
       if (error) {
-        void ('Error checking credentials status:', error);
         return;
       }
 
@@ -59,9 +58,7 @@ export function MetaAppCredentialsForm({
         setHasCredentials(data[0].has_credentials || false);
         setLastUpdated(data[0].updated_at);
       }
-    } catch (error) {
-      void ('Error checking credentials status:', error);
-    }
+    } catch {}
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,15 +85,13 @@ export function MetaAppCredentialsForm({
       });
 
       if (error) {
-        void ('Error saving credentials:', error);
         toast.error('Error al guardar credenciales: ' + error.message);
         return;
       }
 
       toast.success('Credenciales de Meta guardadas exitosamente');
       onCredentialsSaved();
-    } catch (error) {
-      void ('Error saving credentials:', error);
+    } catch {
       toast.error('Error inesperado al guardar credenciales');
     } finally {
       setLoading(false);

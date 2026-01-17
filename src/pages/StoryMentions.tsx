@@ -92,8 +92,7 @@ export default function StoryMentions() {
       });
 
       fetchStoryMentions();
-    } catch (error) {
-      void ('Error running worker:', error);
+    } catch {
       toast({
         title: 'Error',
         description: 'No se pudo ejecutar el worker de estados',
@@ -134,23 +133,12 @@ export default function StoryMentions() {
             size="sm"
             onClick={async () => {
               try {
-                const { data: resolveData, error: resolveError } = await supabase.functions.invoke(
-                  'resolve-story-mentions',
-                  {
-                    body: {
-                      organizationId: organization.id,
-                    },
-                  }
-                );
-
-                if (resolveError) {
-                  void ('Error resolving story mentions:', resolveError);
-                } else {
-                  void ('Story mentions resolved:', resolveData);
-                }
-              } catch (error) {
-                void ('Error calling resolve function:', error);
-              }
+                await supabase.functions.invoke('resolve-story-mentions', {
+                  body: {
+                    organizationId: organization.id,
+                  },
+                });
+              } catch {}
 
               handleRunWorker();
             }}

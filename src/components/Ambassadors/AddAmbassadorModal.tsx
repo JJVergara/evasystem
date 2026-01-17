@@ -60,14 +60,12 @@ export default function AddAmbassadorModal({
       const { data, error } = await supabase.from('organizations').select('id, name').order('name');
 
       if (error) {
-        void ('Error fetching organizations:', error);
         toast.error('Error al cargar organizaciones');
         return;
       }
 
       setOrganizations(data || []);
-    } catch (error) {
-      void ('Error al obtener organizaciones:', error);
+    } catch {
       setOrganizations([]);
     }
   };
@@ -111,8 +109,6 @@ export default function AddAmbassadorModal({
         status: 'active',
       };
 
-      void ('Creando embajador con datos:', ambassadorData);
-
       const { error: ambassadorError } = await supabase
         .from('embassadors')
         .insert(ambassadorData)
@@ -120,7 +116,6 @@ export default function AddAmbassadorModal({
         .single();
 
       if (ambassadorError) {
-        void ('Error creating ambassador:', ambassadorError);
         toast.error('Error al crear embajador: ' + ambassadorError.message);
         return;
       }
@@ -129,8 +124,7 @@ export default function AddAmbassadorModal({
       resetForm();
       onClose();
       onAmbassadorAdded();
-    } catch (error) {
-      void ('Error creating ambassador:', error);
+    } catch {
       toast.error('Error al crear embajador');
     } finally {
       setLoading(false);

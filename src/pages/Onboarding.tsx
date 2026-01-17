@@ -67,13 +67,10 @@ export default function Onboarding() {
           .select('*', { count: 'exact', head: true })
           .eq('organization_id', organization.id);
 
-        if (error) {
-          void ('Error checking ambassadors:', error);
-        } else {
+        if (!error) {
           setAmbassadorCount(count || 0);
         }
-      } catch (error) {
-        void ('Error checking ambassadors:', error);
+      } catch {
       } finally {
         setCheckingAmbassadors(false);
       }
@@ -117,8 +114,7 @@ export default function Onboarding() {
   const handleInstagramConnect = async () => {
     try {
       await connectInstagram();
-    } catch (error) {
-      void ('Error connecting Instagram:', error);
+    } catch {
       toast.error('Error al conectar Instagram');
     }
   };

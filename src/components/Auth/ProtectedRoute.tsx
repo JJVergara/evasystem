@@ -13,7 +13,6 @@ export function ProtectedRoute({ children, redirectTo = '/auth' }: ProtectedRout
 
   useEffect(() => {
     if (!loading && !user) {
-      void ('No authenticated user, redirecting to:', redirectTo);
       navigate(redirectTo, { replace: true });
     }
   }, [user, loading, navigate, redirectTo]);

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -118,9 +118,9 @@ function generateRecentActivities(
     });
   });
 
-  activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  return activities.slice(0, 10);
+  return [...activities]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
 }
 
 async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<AmbassadorMetrics> {
@@ -134,35 +134,39 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
   if (ambassadorError) throw ambassadorError;
 
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select(
+  const [tasksResult, socialMentionsResult] = await Promise.all([
+    supabase
+      .from('tasks')
+      .select(
+        `
+        id,
+        status,
+        points_earned,
+        reach_count,
+        engagement_score,
+        created_at,
+        task_type,
+        events (name)
       `
-      id,
-      status,
-      points_earned,
-      reach_count,
-      engagement_score,
-      created_at,
-      task_type,
-      events (name)
-    `
-    )
-    .eq('embassador_id', ambassadorId);
+      )
+      .eq('embassador_id', ambassadorId),
+    supabase
+      .from('social_mentions')
+      .select('id, instagram_story_id')
+      .eq('matched_ambassador_id', ambassadorId)
+      .eq('mention_type', 'story_referral'),
+  ]);
+
+  const tasks = tasksResult.data;
 
   let storyInsights: AmbassadorMetrics['story_insights'] = undefined;
   let insightsErrorFlag = false;
 
   try {
-    const { data: socialMentions, error: mentionsError } = await supabase
-      .from('social_mentions')
-      .select('id, instagram_story_id')
-      .eq('matched_ambassador_id', ambassadorId)
-      .eq('mention_type', 'story_referral');
+    const { data: socialMentions, error: mentionsError } = socialMentionsResult;
 
     if (mentionsError) {
       insightsErrorFlag = true;
-      void ('Error fetching social mentions for story insights:', mentionsError);
     } else if (socialMentions && socialMentions.length > 0) {
       const mentionIds = socialMentions.map((m) => m.id);
 
@@ -213,7 +217,6 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
       if (insightsError) {
         insightsErrorFlag = true;
-        void ('Error fetching story insights:', insightsError);
       } else if (storyInsightsData && storyInsightsData.length > 0) {
         const mentionToStoryMap = new Map<string, string>();
         socialMentions.forEach((mention) => {
@@ -238,35 +241,45 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
         });
 
         const latestSnapshots = Array.from(storyMap.values());
-        const totalReach = latestSnapshots.reduce((sum, s) => sum + (s.reach || 0), 0);
-        const totalImpressions = latestSnapshots.reduce((sum, s) => sum + (s.impressions || 0), 0);
-        const totalReplies = latestSnapshots.reduce((sum, s) => sum + (s.replies || 0), 0);
-        const totalShares = latestSnapshots.reduce((sum, s) => sum + (s.shares || 0), 0);
-        const totalEngagement = totalReplies + totalShares;
+        const insightsTotals = latestSnapshots.reduce(
+          (acc, s) => {
+            acc.reach += s.reach || 0;
+            acc.impressions += s.impressions || 0;
+            acc.replies += s.replies || 0;
+            acc.shares += s.shares || 0;
+            return acc;
+          },
+          { reach: 0, impressions: 0, replies: 0, shares: 0 }
+        );
         const storyCount = latestSnapshots.length;
 
         storyInsights = {
           total_stories: storyCount,
-          total_reach: totalReach,
-          total_impressions: totalImpressions,
-          total_engagement: totalEngagement,
-          avg_reach_per_story: storyCount > 0 ? Math.round(totalReach / storyCount) : 0,
-          avg_impressions_per_story: storyCount > 0 ? Math.round(totalImpressions / storyCount) : 0,
-          total_replies: totalReplies,
-          total_shares: totalShares,
+          total_reach: insightsTotals.reach,
+          total_impressions: insightsTotals.impressions,
+          total_engagement: insightsTotals.replies + insightsTotals.shares,
+          avg_reach_per_story: storyCount > 0 ? Math.round(insightsTotals.reach / storyCount) : 0,
+          avg_impressions_per_story:
+            storyCount > 0 ? Math.round(insightsTotals.impressions / storyCount) : 0,
+          total_replies: insightsTotals.replies,
+          total_shares: insightsTotals.shares,
         };
       }
     }
-  } catch (insightsErr) {
+  } catch {
     insightsErrorFlag = true;
-    void ('Error processing story insights:', insightsErr);
   }
 
-  const totalReach = tasks?.reduce((sum, t) => sum + (t.reach_count || 0), 0) || 0;
-  const avgEngagement =
-    tasks?.length > 0
-      ? tasks.reduce((sum, t) => sum + (t.engagement_score || 0), 0) / tasks.length
-      : 0;
+  const tasksTotals = (tasks || []).reduce(
+    (acc, t) => {
+      acc.reach += t.reach_count || 0;
+      acc.engagement += t.engagement_score || 0;
+      return acc;
+    },
+    { reach: 0, engagement: 0 }
+  );
+  const totalReach = tasksTotals.reach;
+  const avgEngagement = tasks?.length > 0 ? tasksTotals.engagement / tasks.length : 0;
   const completionRate =
     ambassador.completed_tasks + ambassador.failed_tasks > 0
       ? (ambassador.completed_tasks / (ambassador.completed_tasks + ambassador.failed_tasks)) * 100
@@ -294,8 +307,11 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 
   const lastActivity =
     tasks?.length > 0
-      ? tasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-          .created_at
+      ? tasks.reduce((latest, task) => {
+          const taskTime = new Date(task.created_at).getTime();
+          const latestTime = new Date(latest.created_at).getTime();
+          return taskTime > latestTime ? task : latest;
+        }, tasks[0]).created_at
       : null;
 
   return {
@@ -325,7 +341,7 @@ async function fetchAmbassadorMetricsData(ambassadorId: string): Promise<Ambassa
 export function useAmbassadorMetrics(ambassadorId?: string) {
   const queryClient = useQueryClient();
 
-  const queryKey = ['ambassadorMetrics', ambassadorId];
+  const queryKey = useMemo(() => ['ambassadorMetrics', ambassadorId], [ambassadorId]);
 
   const {
     data: metrics,

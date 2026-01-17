@@ -29,29 +29,21 @@ Deno.serve(async (req) => {
 
     if (isCronJob) {
       if (!cronSecretHeader || !expectedCronSecret || cronSecretHeader !== expectedCronSecret) {
-        void ('Unauthorized cron request: Invalid or missing CRON_SECRET');
         return new Response(JSON.stringify({ error: 'Unauthorized: Invalid cron secret' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      void ('Starting Instagram sync process... (CRON JOB)');
 
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch {
-        void 0;
-      }
+      } catch {}
     } else {
-      void ('Starting Instagram sync process... (USER REQUEST)');
-
       try {
         const body = await req.json();
         targetOrgId = body?.organization_id ?? null;
-      } catch {
-        void 0;
-      }
+      } catch {}
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
         throw new Error('No authorization header');
@@ -98,16 +90,7 @@ Deno.serve(async (req) => {
     const { data: organizations, error: orgsError } = await organizationsQuery;
 
     if (orgsError) {
-      void ('Error fetching organizations:', orgsError);
       throw new Error('Failed to fetch organizations');
-    }
-
-    void (
-      `Found ${organizations?.length || 0} organization(s) ${targetOrgId ? `(targeted: ${targetOrgId})` : ''}`
-    );
-
-    if (targetOrgId && (!organizations || organizations.length === 0)) {
-      void (`Target organization ${targetOrgId} not found or has no Instagram connected`);
     }
 
     const results: SyncResult[] = [];
@@ -115,8 +98,6 @@ Deno.serve(async (req) => {
 
     for (const org of organizations || []) {
       try {
-        void (`Syncing data for organization: ${org.name} (${org.id})`);
-
         const { data: tokenData, error: tokenError } = await supabaseClient
           .from('organization_instagram_tokens')
           .select('access_token, token_expiry')
@@ -124,13 +105,10 @@ Deno.serve(async (req) => {
           .single();
 
         if (tokenError || !tokenData) {
-          void (`No Instagram token found for organization ${org.name}`);
           continue;
         }
 
         if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-          void (`Token expired for organization ${org.name}, creating notification`);
-
           await supabaseClient.from('notifications').insert({
             organization_id: org.id,
             type: 'token_expired',
@@ -143,7 +121,6 @@ Deno.serve(async (req) => {
         }
 
         if (!org.instagram_user_id) {
-          void (`No Instagram User ID for organization ${org.name}`);
           continue;
         }
 
@@ -160,7 +137,6 @@ Deno.serve(async (req) => {
           .update({ last_instagram_sync: new Date().toISOString() })
           .eq('id', org.id);
 
-        void (`Sync completed for ${org.name}:`, syncResult);
         results.push({
           organization_id: org.id,
           organization_name: org.name,
@@ -170,7 +146,6 @@ Deno.serve(async (req) => {
 
         totalProcessed++;
       } catch (error) {
-        void (`Error syncing organization ${org.name}:`, error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         results.push({
           organization_id: org.id,
@@ -179,15 +154,6 @@ Deno.serve(async (req) => {
           error: errorMessage,
         });
       }
-    }
-
-    void (`Instagram sync completed: ${totalProcessed} organizations processed`);
-
-    if (isCronJob && totalProcessed > 0) {
-      const successCount = results.filter((r) => r.success).length;
-      const failureCount = results.filter((r) => !r.success).length;
-
-      void (`Cron sync summary: ${successCount} successful, ${failureCount} failed`);
     }
 
     return jsonResponse({
@@ -208,129 +174,113 @@ async function syncOrganizationInstagramData(
   igUserId: string,
   accessToken: string
 ) {
-  void (`Syncing Instagram data for organization ${organizationId}, User ID: ${igUserId}`);
+  const instagramMetrics = {
+    totalFollowers: 0,
+    totalPosts: 0,
+    totalReach: 0,
+    totalImpressions: 0,
+    newMentions: 0,
+    newTags: 0,
+  };
 
-  try {
-    const instagramMetrics = {
-      totalFollowers: 0,
-      totalPosts: 0,
-      totalReach: 0,
-      totalImpressions: 0,
-      newMentions: 0,
-      newTags: 0,
-    };
+  const metricsUrl = `${INSTAGRAM_API_BASE}/${igUserId}?fields=followers_count,media_count&access_token=${accessToken}`;
+  const metricsResponse = await fetch(metricsUrl);
+  const metricsData = await metricsResponse.json();
 
-    const metricsUrl = `${INSTAGRAM_API_BASE}/${igUserId}?fields=followers_count,media_count&access_token=${accessToken}`;
-    const metricsResponse = await fetch(metricsUrl);
-    const metricsData = await metricsResponse.json();
+  if (metricsResponse.ok) {
+    instagramMetrics.totalFollowers += metricsData.followers_count || 0;
+    instagramMetrics.totalPosts += metricsData.media_count || 0;
+  }
 
-    if (metricsResponse.ok) {
-      instagramMetrics.totalFollowers += metricsData.followers_count || 0;
-      instagramMetrics.totalPosts += metricsData.media_count || 0;
-    } else {
-      void (`Failed to fetch metrics for user ${igUserId}:`, metricsData);
-    }
+  const mediaUrl = `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=id,media_type,media_product_type,timestamp,username&limit=50&access_token=${accessToken}`;
+  const mediaResponse = await fetch(mediaUrl);
+  const mediaData = await mediaResponse.json();
 
-    const mediaUrl = `${INSTAGRAM_API_BASE}/${igUserId}/media?fields=id,media_type,media_product_type,timestamp,username&limit=50&access_token=${accessToken}`;
-    const mediaResponse = await fetch(mediaUrl);
-    const mediaData = await mediaResponse.json();
+  if (mediaResponse.ok && mediaData.data) {
+    for (const media of mediaData.data) {
+      try {
+        const isStory = media.media_product_type === 'STORY';
+        const mediaTime = new Date(media.timestamp).getTime();
+        const now = new Date().getTime();
+        const ageHours = (now - mediaTime) / (1000 * 60 * 60);
+        const isActive = ageHours < 24;
 
-    if (mediaResponse.ok && mediaData.data) {
-      for (const media of mediaData.data) {
-        try {
-          const isStory = media.media_product_type === 'STORY';
-          const mediaTime = new Date(media.timestamp).getTime();
-          const now = new Date().getTime();
-          const ageHours = (now - mediaTime) / (1000 * 60 * 60);
-          const isActive = ageHours < 24;
+        const metrics = isStory
+          ? 'impressions,reach,replies,exits,taps_forward,taps_back,shares'
+          : 'reach,impressions';
 
-          const metrics = isStory
-            ? 'impressions,reach,replies,exits,taps_forward,taps_back,shares'
-            : 'reach,impressions';
+        const insightsUrl = `${INSTAGRAM_API_BASE}/${media.id}/insights?metric=${metrics}&access_token=${accessToken}`;
+        const insightsResponse = await fetch(insightsUrl);
+        const insightsData = await insightsResponse.json();
 
-          const insightsUrl = `${INSTAGRAM_API_BASE}/${media.id}/insights?metric=${metrics}&access_token=${accessToken}`;
-          const insightsResponse = await fetch(insightsUrl);
-          const insightsData = await insightsResponse.json();
-
-          if (insightsResponse.ok && insightsData.data) {
-            for (const insight of insightsData.data) {
-              if (insight.name === 'reach') {
-                instagramMetrics.totalReach += insight.values[0]?.value || 0;
-              } else if (insight.name === 'impressions') {
-                instagramMetrics.totalImpressions += insight.values[0]?.value || 0;
-              }
-            }
-
-            if (isStory && isActive) {
-              const { data: storyMention } = await supabaseClient
-                .from('social_mentions')
-                .select('id')
-                .eq('organization_id', organizationId)
-                .or(`instagram_story_id.eq.${media.id},instagram_media_id.eq.${media.id}`)
-                .maybeSingle();
-
-              if (storyMention) {
-                const insights: InsightsMap = {};
-                for (const insight of insightsData.data) {
-                  insights[insight.name] = insight.values?.[0]?.value || 0;
-                }
-
-                const snapshot = {
-                  social_mention_id: storyMention.id,
-                  organization_id: organizationId,
-                  instagram_story_id: media.id,
-                  instagram_media_id: media.id,
-                  snapshot_at: new Date().toISOString(),
-                  story_age_hours: Math.round(ageHours * 100) / 100,
-                  impressions: insights.impressions || 0,
-                  reach: insights.reach || 0,
-                  replies: insights.replies || 0,
-                  exits: insights.exits || 0,
-                  taps_forward: insights.taps_forward || 0,
-                  taps_back: insights.taps_back || 0,
-                  shares: insights.shares || 0,
-                  navigation: {},
-                  raw_insights: insightsData,
-                };
-
-                await supabaseClient.from('story_insights_snapshots').insert(snapshot);
-
-                void (`Created story insights snapshot during sync for story ${media.id}`);
-              }
+        if (insightsResponse.ok && insightsData.data) {
+          for (const insight of insightsData.data) {
+            if (insight.name === 'reach') {
+              instagramMetrics.totalReach += insight.values[0]?.value || 0;
+            } else if (insight.name === 'impressions') {
+              instagramMetrics.totalImpressions += insight.values[0]?.value || 0;
             }
           }
-        } catch (error) {
-          void (`Error getting insights for media ${media.id}:`, error);
+
+          if (isStory && isActive) {
+            const { data: storyMention } = await supabaseClient
+              .from('social_mentions')
+              .select('id')
+              .eq('organization_id', organizationId)
+              .or(`instagram_story_id.eq.${media.id},instagram_media_id.eq.${media.id}`)
+              .maybeSingle();
+
+            if (storyMention) {
+              const insights: InsightsMap = {};
+              for (const insight of insightsData.data) {
+                insights[insight.name] = insight.values?.[0]?.value || 0;
+              }
+
+              const snapshot = {
+                social_mention_id: storyMention.id,
+                organization_id: organizationId,
+                instagram_story_id: media.id,
+                instagram_media_id: media.id,
+                snapshot_at: new Date().toISOString(),
+                story_age_hours: Math.round(ageHours * 100) / 100,
+                impressions: insights.impressions || 0,
+                reach: insights.reach || 0,
+                replies: insights.replies || 0,
+                exits: insights.exits || 0,
+                taps_forward: insights.taps_forward || 0,
+                taps_back: insights.taps_back || 0,
+                shares: insights.shares || 0,
+                navigation: {},
+                raw_insights: insightsData,
+              };
+
+              await supabaseClient.from('story_insights_snapshots').insert(snapshot);
+            }
+          }
         }
-      }
-    } else {
-      void (`Failed to fetch media for user ${igUserId}:`, mediaData);
+      } catch (error) {}
     }
-
-    const mentionResults = await processInstagramMentionsAndTags(
-      supabaseClient,
-      organizationId,
-      igUserId,
-      accessToken
-    );
-    instagramMetrics.newMentions += mentionResults.newMentions;
-    instagramMetrics.newTags += mentionResults.newTags;
-
-    if (instagramMetrics.newMentions > 0 || instagramMetrics.newTags > 0) {
-      await supabaseClient.from('notifications').insert({
-        organization_id: organizationId,
-        type: 'sync_completed',
-        message: `Sincronización completada: ${instagramMetrics.newMentions} nuevas menciones, ${instagramMetrics.newTags} nuevas etiquetas detectadas.`,
-        priority: 'normal',
-      });
-    }
-
-    void (`Instagram metrics for organization ${organizationId}:`, instagramMetrics);
-    return instagramMetrics;
-  } catch (error) {
-    void (`Error syncing Instagram data for organization ${organizationId}:`, error);
-    throw error;
   }
+
+  const mentionResults = await processInstagramMentionsAndTags(
+    supabaseClient,
+    organizationId,
+    igUserId,
+    accessToken
+  );
+  instagramMetrics.newMentions += mentionResults.newMentions;
+  instagramMetrics.newTags += mentionResults.newTags;
+
+  if (instagramMetrics.newMentions > 0 || instagramMetrics.newTags > 0) {
+    await supabaseClient.from('notifications').insert({
+      organization_id: organizationId,
+      type: 'sync_completed',
+      message: `Sincronización completada: ${instagramMetrics.newMentions} nuevas menciones, ${instagramMetrics.newTags} nuevas etiquetas detectadas.`,
+      priority: 'normal',
+    });
+  }
+
+  return instagramMetrics;
 }
 
 async function processInstagramMentionsAndTags(
@@ -346,7 +296,6 @@ async function processInstagramMentionsAndTags(
     .not('instagram_user', 'is', null);
 
   if (ambassadorsError) {
-    void ('Error loading ambassadors for org', organizationId, ambassadorsError);
     return { newMentions: 0, newTags: 0 };
   }
 
@@ -362,10 +311,6 @@ async function processInstagramMentionsAndTags(
     .from('fiestas')
     .select('id')
     .eq('organization_id', organizationId);
-
-  if (fiestasError) {
-    void ('Error loading fiestas for org', organizationId, fiestasError);
-  }
 
   const fiestaIds = (fiestas || []).map((f: Fiesta) => f.id);
   let activeEventId: string | null = null;
@@ -393,10 +338,6 @@ async function processInstagramMentionsAndTags(
     const mentionsData = await mentionsRes.json();
 
     if (mentionsRes.ok && Array.isArray(mentionsData.data)) {
-      void (
-        `Found ${mentionsData.data.length} mentioned media for organization ${organizationId}`
-      );
-
       for (const m of mentionsData.data) {
         const isNew = await processMentionOrTag(
           supabaseClient,
@@ -408,12 +349,8 @@ async function processInstagramMentionsAndTags(
         );
         if (isNew) newMentions++;
       }
-    } else {
-      void ('Failed to load mentioned_media:', mentionsData?.error || mentionsData);
     }
-  } catch (err) {
-    void ('Error fetching mentioned_media:', err);
-  }
+  } catch (err) {}
 
   try {
     const tagsUrl = `${INSTAGRAM_API_BASE}/${igUserId}/tags?fields=id,media_type,media_url,permalink,caption,timestamp,username&limit=50&access_token=${accessToken}`;
@@ -421,8 +358,6 @@ async function processInstagramMentionsAndTags(
     const tagsData = await tagsRes.json();
 
     if (tagsRes.ok && Array.isArray(tagsData.data)) {
-      void (`Found ${tagsData.data.length} tagged media for organization ${organizationId}`);
-
       for (const t of tagsData.data) {
         const isNew = await processMentionOrTag(
           supabaseClient,
@@ -434,12 +369,8 @@ async function processInstagramMentionsAndTags(
         );
         if (isNew) newTags++;
       }
-    } else {
-      void ('Failed to load tags:', tagsData?.error || tagsData);
     }
-  } catch (err) {
-    void ('Error fetching tags:', err);
-  }
+  } catch (err) {}
 
   return { newMentions, newTags };
 }
@@ -495,7 +426,6 @@ async function processMentionOrTag(
       .single();
 
     if (socialMentionError) {
-      void ('Error creating social mention:', socialMentionError);
       return false;
     }
 
@@ -512,13 +442,10 @@ async function processMentionOrTag(
         upload_time: mediaItem.timestamp,
         last_status_update: new Date().toISOString(),
       });
-
-      void (`Created ${type} task for ambassador ${ambassador.id} (${mediaItem.username})`);
     }
 
     return true;
   } catch (err) {
-    void (`Error processing ${type} media:`, err);
     return false;
   }
 }

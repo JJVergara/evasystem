@@ -47,12 +47,10 @@ async function fetchUserProfileData(
     .maybeSingle();
 
   if (fetchError) {
-    void ('Error fetching user profile:', fetchError);
     throw new Error('Error al obtener datos del usuario');
   }
 
   if (!data) {
-    void ('User profile not found, creating one...');
     const { data: createdUser, error: createError } = await supabase
       .from('users')
       .insert({
@@ -77,7 +75,6 @@ async function fetchUserProfileData(
       .single();
 
     if (createError) {
-      void ('Error creating user profile:', createError);
       throw new Error('Error al crear el perfil de usuario');
     }
 
@@ -130,10 +127,6 @@ async function fetchUserProfileData(
   }
 
   if (!data.organization_id) {
-    void (
-      'User exists but no organization assigned, checking for available organizations...'
-    );
-
     const { data: userOrganizations, error: orgError } = await supabase
       .from('organizations')
       .select('id, name')
@@ -143,7 +136,6 @@ async function fetchUserProfileData(
 
     if (!orgError && userOrganizations && userOrganizations.length > 0) {
       const firstOrg = userOrganizations[0];
-      void ('Auto-assigning organization:', firstOrg.name);
 
       const { data: updatedUser, error: updateError } = await supabase
         .from('users')
@@ -187,8 +179,6 @@ async function fetchUserProfileData(
         };
       }
     } else if (!orgError) {
-      void ('No organizations found, creating default organization...');
-
       const { data: newOrg, error: createOrgError } = await supabase
         .from('organizations')
         .insert({
@@ -202,8 +192,6 @@ async function fetchUserProfileData(
         .single();
 
       if (!createOrgError && newOrg) {
-        void ('Created new organization:', newOrg.id);
-
         const { data: updatedUser, error: updateError } = await supabase
           .from('users')
           .update({ organization_id: newOrg.id })

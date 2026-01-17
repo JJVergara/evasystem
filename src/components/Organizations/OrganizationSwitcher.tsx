@@ -25,8 +25,7 @@ export const OrganizationSwitcher = () => {
       await switchOrganization(organizationId);
       toast.success('Organización cambiada exitosamente');
       window.location.reload();
-    } catch (error) {
-      void ('Error switching organization:', error);
+    } catch {
       toast.error('Error al cambiar de organización');
     } finally {
       setSwitching(false);

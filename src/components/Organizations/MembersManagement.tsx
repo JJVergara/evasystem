@@ -86,8 +86,7 @@ export const MembersManagement = () => {
       );
 
       setMembers(membersWithUsers);
-    } catch (error) {
-      void ('Error fetching members:', error);
+    } catch {
       toast.error('Error al cargar miembros');
     } finally {
       setLoading(false);
@@ -144,8 +143,7 @@ export const MembersManagement = () => {
       setInviteRole('member');
       setInviteDialogOpen(false);
       fetchMembers();
-    } catch (error) {
-      void ('Error inviting member:', error);
+    } catch {
       toast.error('Error al invitar miembro');
     }
   };
@@ -158,8 +156,7 @@ export const MembersManagement = () => {
 
       toast.success('Miembro removido exitosamente');
       fetchMembers();
-    } catch (error) {
-      void ('Error removing member:', error);
+    } catch {
       toast.error('Error al remover miembro');
     }
   };

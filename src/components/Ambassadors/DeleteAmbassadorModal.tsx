@@ -51,8 +51,7 @@ export function DeleteAmbassadorModal({
       toast.success('Embajador eliminado exitosamente');
       onAmbassadorDeleted();
       onClose();
-    } catch (error) {
-      void ('Error deleting ambassador:', error);
+    } catch {
       toast.error('Error al eliminar embajador');
     } finally {
       setLoading(false);

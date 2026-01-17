@@ -62,8 +62,7 @@ export function StoryInsightsDashboard() {
         `Insights recolectados: ${result.totalSnapshotsCreated || 0} snapshots creados`
       );
       refresh();
-    } catch (err) {
-      void ('Error collecting insights:', err);
+    } catch {
       toast.error('Error al recolectar insights de Stories');
     } finally {
       setIsCollecting(false);

@@ -50,8 +50,7 @@ export function UserProfileDropdown() {
       if (userRecord) {
         setUserData(userRecord);
       }
-    } catch (error) {
-      void ('Error fetching user data:', error);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -60,8 +59,7 @@ export function UserProfileDropdown() {
   const handleSignOut = async () => {
     try {
       await signOut();
-    } catch (error) {
-      void ('Error signing out:', error);
+    } catch {
       toast.error('Error al cerrar sesión');
     }
   };

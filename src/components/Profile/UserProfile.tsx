@@ -81,8 +81,7 @@ export default function UserProfile() {
           email: userRecord.email,
         });
       }
-    } catch (error) {
-      void ('Error fetching user data:', error);
+    } catch {
       toast.error('Error al cargar datos del usuario');
     } finally {
       setLoading(false);
@@ -108,8 +107,7 @@ export default function UserProfile() {
       setUserData((prev) => (prev ? { ...prev, ...formData } : null));
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
-    } catch (error) {
-      void ('Error updating profile:', error);
+    } catch {
       toast.error('Error al actualizar perfil');
     } finally {
       setSaving(false);

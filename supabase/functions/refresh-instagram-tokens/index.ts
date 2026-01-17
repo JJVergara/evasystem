@@ -22,9 +22,6 @@ Deno.serve(async (req) => {
     return corsPreflightResponse();
   }
 
-  void ('=== INSTAGRAM TOKEN REFRESH CRON START ===');
-  void ('Timestamp:', new Date().toISOString());
-
   try {
     const cronSecret = Deno.env.get('CRON_SECRET');
     const authHeader = req.headers.get('Authorization');
@@ -32,7 +29,6 @@ Deno.serve(async (req) => {
     const providedSecret = authHeader?.replace('Bearer ', '') || req.headers.get('x-cron-secret');
 
     if (cronSecret && providedSecret !== cronSecret) {
-      void ('Unauthorized cron call - invalid secret');
       return jsonResponse(
         {
           error: 'unauthorized',
@@ -48,25 +44,17 @@ Deno.serve(async (req) => {
     const thresholdDate = new Date(Date.now() + TOKEN_REFRESH_THRESHOLD_DAYS * 24 * 60 * 60 * 1000);
     const now = new Date();
 
-    void ('Checking for tokens expiring before:', thresholdDate.toISOString());
-
     const { data: expiringOrgTokens, error: orgQueryError } = await supabase
       .from('organization_instagram_tokens')
       .select('organization_id, access_token, token_expiry')
       .lt('token_expiry', thresholdDate.toISOString())
       .gt('token_expiry', now.toISOString());
 
-    if (orgQueryError) {
-      void ('Error querying organization tokens:', orgQueryError);
-    } else if (expiringOrgTokens && expiringOrgTokens.length > 0) {
-      void (`Found ${expiringOrgTokens.length} organization tokens to refresh`);
-
+    if (!orgQueryError && expiringOrgTokens && expiringOrgTokens.length > 0) {
       for (const tokenRecord of expiringOrgTokens) {
         const result = await refreshOrganizationToken(supabase, tokenRecord);
         results.push(result);
       }
-    } else {
-      void ('No organization tokens need refreshing');
     }
 
     const { data: expiringAmbassadorTokens, error: ambassadorQueryError } = await supabase
@@ -75,22 +63,15 @@ Deno.serve(async (req) => {
       .lt('token_expiry', thresholdDate.toISOString())
       .gt('token_expiry', now.toISOString());
 
-    if (ambassadorQueryError) {
-      void ('Error querying ambassador tokens:', ambassadorQueryError);
-    } else if (expiringAmbassadorTokens && expiringAmbassadorTokens.length > 0) {
-      void (`Found ${expiringAmbassadorTokens.length} ambassador tokens to refresh`);
-
+    if (!ambassadorQueryError && expiringAmbassadorTokens && expiringAmbassadorTokens.length > 0) {
       for (const tokenRecord of expiringAmbassadorTokens) {
         const result = await refreshAmbassadorToken(supabase, tokenRecord);
         results.push(result);
       }
-    } else {
-      void ('No ambassador tokens need refreshing');
     }
 
     const failures = results.filter((r) => !r.success);
     if (failures.length > 0) {
-      void (`${failures.length} token refresh failures - creating notifications`);
       await createFailureNotifications(supabase, failures);
     }
 
@@ -108,18 +89,12 @@ Deno.serve(async (req) => {
       })),
     };
 
-    void ('=== INSTAGRAM TOKEN REFRESH CRON COMPLETE ===');
-    void ('Summary:', JSON.stringify(summary, null, 2));
-
     return jsonResponse({
       success: true,
       message: 'Token refresh completed',
       summary,
     });
   } catch (error) {
-    void ('=== INSTAGRAM TOKEN REFRESH CRON ERROR ===');
-    void ('Error:', error);
-
     return jsonResponse(
       {
         success: false,
@@ -134,10 +109,7 @@ async function refreshOrganizationToken(
   supabase: ReturnType<typeof createSupabaseClient>,
   tokenRecord: { organization_id: string; access_token: string; token_expiry: string }
 ): Promise<RefreshResult> {
-  const { organization_id, access_token, token_expiry } = tokenRecord;
-
-  void (`Refreshing organization token: ${organization_id}`);
-  void (`Current expiry: ${token_expiry}`);
+  const { organization_id, access_token } = tokenRecord;
 
   try {
     const decryptedToken = await safeDecryptToken(access_token);
@@ -163,9 +135,6 @@ async function refreshOrganizationToken(
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 
-    void (`Successfully refreshed organization token: ${organization_id}`);
-    void (`New expiry: ${newExpiryDate.toISOString()}`);
-
     return {
       type: 'organization',
       id: organization_id,
@@ -174,7 +143,6 @@ async function refreshOrganizationToken(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    void (`Failed to refresh organization token ${organization_id}:`, errorMessage);
 
     return {
       type: 'organization',
@@ -189,10 +157,7 @@ async function refreshAmbassadorToken(
   supabase: ReturnType<typeof createSupabaseClient>,
   tokenRecord: { embassador_id: string; access_token: string; token_expiry: string }
 ): Promise<RefreshResult> {
-  const { embassador_id, access_token, token_expiry } = tokenRecord;
-
-  void (`Refreshing ambassador token: ${embassador_id}`);
-  void (`Current expiry: ${token_expiry}`);
+  const { embassador_id, access_token } = tokenRecord;
 
   try {
     const decryptedToken = await safeDecryptToken(access_token);
@@ -218,9 +183,6 @@ async function refreshAmbassadorToken(
       throw new Error(`Database update failed: ${updateError.message}`);
     }
 
-    void (`Successfully refreshed ambassador token: ${embassador_id}`);
-    void (`New expiry: ${newExpiryDate.toISOString()}`);
-
     return {
       type: 'ambassador',
       id: embassador_id,
@@ -229,7 +191,6 @@ async function refreshAmbassadorToken(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    void (`Failed to refresh ambassador token ${embassador_id}:`, errorMessage);
 
     return {
       type: 'ambassador',
@@ -254,13 +215,11 @@ async function refreshInstagramToken(accessToken: string): Promise<{
   const data = await response.json();
 
   if (!response.ok || data.error) {
-    void ('Instagram token refresh error:', data.error || data);
     throw new Error(
       data.error?.message || data.error_message || 'Failed to refresh Instagram token'
     );
   }
 
-  void ('Instagram token refreshed successfully');
   return data;
 }
 
@@ -304,11 +263,7 @@ async function createFailureNotifications(
             error: failure.error,
           },
         });
-
-        void (`Created failure notification for ${failure.type} ${failure.id}`);
       }
-    } catch (notifError) {
-      void (`Failed to create notification for ${failure.type} ${failure.id}:`, notifError);
-    }
+    } catch (notifError) {}
   }
 }

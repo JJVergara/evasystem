@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     const { organizationId, mentionId } = await req.json();
 
     if (!mentionId) {
-      void ('Missing mentionId parameter');
       return jsonResponse(
         {
           success: false,
@@ -27,7 +26,6 @@ Deno.serve(async (req) => {
     }
 
     if (!organizationId) {
-      void ('Missing organizationId parameter');
       return jsonResponse(
         {
           success: false,
@@ -37,8 +35,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    void (`Resolving story mention ${mentionId} for organization ${organizationId}`);
-
     const { data: mention, error: mentionError } = await supabase
       .from('social_mentions')
       .select('*')
@@ -47,7 +43,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (mentionError || !mention) {
-      void ('Mention not found:', mentionError);
       return jsonResponse(
         {
           success: false,
@@ -64,8 +59,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (!tokenInfo || !tokenInfo.access_token) {
-      void ('No Instagram token found for organization');
-
       await supabase
         .from('social_mentions')
         .update({
@@ -85,8 +78,6 @@ Deno.serve(async (req) => {
     }
 
     if (tokenInfo.token_expiry && new Date(tokenInfo.token_expiry) < new Date()) {
-      void ('Instagram token expired');
-
       await supabase
         .from('social_mentions')
         .update({
@@ -138,12 +129,6 @@ Deno.serve(async (req) => {
                 })
                 .eq('id', mentionId);
 
-              if (updateError) {
-                void ('Error updating mention with resolved data:', updateError);
-              } else {
-                void ('Successfully resolved story media for mention');
-              }
-
               return jsonResponse({
                 success: true,
                 resolved: true,
@@ -153,9 +138,7 @@ Deno.serve(async (req) => {
             }
           }
         }
-      } catch (error) {
-        void ('Error calling Instagram API:', error);
-      }
+      } catch {}
     }
 
     const fallbackLink = mention.instagram_username
@@ -169,10 +152,6 @@ Deno.serve(async (req) => {
         raw_data: { ...mention.raw_data, resolution_attempt: new Date().toISOString() },
       })
       .eq('id', mentionId);
-
-    if (updateError) {
-      void ('Error updating mention with fallback:', updateError);
-    }
 
     return jsonResponse({
       success: true,

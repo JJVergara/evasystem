@@ -45,13 +45,11 @@ async function fetchOrganizationsData(userId: string): Promise<{
       const lockTime = parseInt(existingLock);
       const now = Date.now();
       if (now - lockTime < 10000) {
-        void ('Organization creation in progress (locked), skipping...');
         return { currentOrganization: null, userOrganizations: [] };
       }
     }
 
     localStorage.setItem(lockKey, Date.now().toString());
-    void ('User has no organizations, creating default organization...');
 
     try {
       const { data: userProfile } = await supabase
@@ -61,7 +59,6 @@ async function fetchOrganizationsData(userId: string): Promise<{
         .single();
 
       if (userProfile?.organization_id) {
-        void ('Organization already exists, refreshing...');
         localStorage.removeItem(lockKey);
         const { data: retryOrgs } = await supabase.rpc('get_user_organizations', {
           user_auth_id: userId,
@@ -95,12 +92,9 @@ async function fetchOrganizationsData(userId: string): Promise<{
         .single();
 
       if (createError) {
-        void ('Error creating organization:', createError);
         localStorage.removeItem(lockKey);
         throw createError;
       }
-
-      void ('Organization created:', newOrg.id);
 
       const { data: refreshedOrgs } = await supabase.rpc('get_user_organizations', {
         user_auth_id: userId,
@@ -183,17 +177,12 @@ export const useCurrentOrganization = () => {
     async (organizationId: string) => {
       if (!user?.id) return;
 
-      try {
-        await supabase
-          .from('users')
-          .update({ organization_id: organizationId })
-          .eq('auth_user_id', user.id);
+      await supabase
+        .from('users')
+        .update({ organization_id: organizationId })
+        .eq('auth_user_id', user.id);
 
-        await queryClient.invalidateQueries({ queryKey });
-      } catch (error) {
-        void ('Error switching organization:', error);
-        throw error;
-      }
+      await queryClient.invalidateQueries({ queryKey });
     },
     [user?.id, queryClient, queryKey]
   );

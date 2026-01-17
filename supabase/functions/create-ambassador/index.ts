@@ -74,7 +74,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (ambassadorError) {
-      void ('Error creating ambassador:', ambassadorError);
       return errorResponse(`Error creating ambassador: ${ambassadorError.message}`, 400);
     }
 
@@ -106,7 +105,6 @@ Deno.serve(async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    void ('Error in create-ambassador:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

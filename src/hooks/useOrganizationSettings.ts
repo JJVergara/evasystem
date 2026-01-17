@@ -133,10 +133,6 @@ async function fetchOrganizationSettingsData(
     integration_settings: defaultSettings.integration_settings,
   });
 
-  if (insertError) {
-    void ('Error creating default settings:', insertError);
-  }
-
   return defaultSettings;
 }
 

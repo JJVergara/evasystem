@@ -7,10 +7,34 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { LucideIcon } from 'lucide-react';
 import { Bell, Check, AlertCircle, Info, Calendar, Users } from 'lucide-react';
 import { useRealNotifications } from '@/hooks/useRealNotifications';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
+  info: Info,
+  warning: AlertCircle,
+  event: Calendar,
+  ambassador: Users,
+  system: Bell,
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  high: 'text-destructive',
+  normal: 'text-foreground',
+  low: 'text-muted-foreground',
+};
+
+function getNotificationIcon(type: string) {
+  const Icon = NOTIFICATION_ICONS[type] || Info;
+  return <Icon className="w-4 h-4" />;
+}
+
+function getPriorityColor(priority: string) {
+  return PRIORITY_COLORS[priority] || PRIORITY_COLORS.normal;
+}
 
 export function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useRealNotifications();
@@ -23,27 +47,6 @@ export function NotificationDropdown() {
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
     toast.success('Todas las notificaciones marcadas como leídas');
-  };
-
-  const getNotificationIcon = (type: string) => {
-    const icons: Record<string, any> = {
-      info: Info,
-      warning: AlertCircle,
-      event: Calendar,
-      ambassador: Users,
-      system: Bell,
-    };
-    const Icon = icons[type] || Info;
-    return <Icon className="w-4 h-4" />;
-  };
-
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      high: 'text-destructive',
-      normal: 'text-foreground',
-      low: 'text-muted-foreground',
-    };
-    return colors[priority] || colors.normal;
   };
 
   const formatTimeAgo = (dateString: string) => {

@@ -18,7 +18,6 @@ async function fetchRequests(organizationId: string): Promise<AmbassadorRequest[
     .order('created_at', { ascending: false });
 
   if (error) {
-    void ('Error fetching ambassador requests:', error);
     throw new Error('Error al cargar solicitudes de embajadores');
   }
 
@@ -88,10 +87,6 @@ export function useAmbassadorRequests() {
             processed_at: new Date().toISOString(),
           })
           .in('id', request.source_mention_ids);
-
-        if (updateMentionsError) {
-          void ('Error updating social mentions:', updateMentionsError);
-        }
       }
 
       const { error: updateError } = await supabase

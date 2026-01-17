@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,28 @@ import AddAmbassadorModal from './AddAmbassadorModal';
 import { EditAmbassadorModal } from './EditAmbassadorModal';
 import { DeleteAmbassadorModal } from './DeleteAmbassadorModal';
 import { InstagramProfileLink } from './InstagramProfileLink';
+
+const CATEGORY_STYLES: Record<string, string> = {
+  bronze: 'bg-amber-100 text-amber-800',
+  silver: 'bg-gray-100 text-gray-800',
+  gold: 'bg-yellow-100 text-yellow-800',
+  diamond: 'bg-purple-100 text-purple-800',
+};
+
+const PERFORMANCE_STYLES: Record<string, string> = {
+  cumple: 'bg-green-100 text-green-800',
+  advertencia: 'bg-yellow-100 text-yellow-800',
+  no_cumple: 'bg-red-100 text-red-800',
+  exclusivo: 'bg-purple-100 text-purple-800',
+};
+
+function getCategoryBadge(category: string) {
+  return CATEGORY_STYLES[category] || CATEGORY_STYLES.bronze;
+}
+
+function getPerformanceBadge(status: string) {
+  return PERFORMANCE_STYLES[status] || PERFORMANCE_STYLES.cumple;
+}
 
 interface Ambassador {
   id: string;
@@ -69,31 +91,16 @@ export function EnhancedAmbassadorDashboard({
 
   const pendingRequestsCount = getPendingCount();
 
-  const filteredAmbassadors = ambassadors.filter((ambassador) => {
-    const searchText =
-      `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
-    return searchText.includes(searchTerm.toLowerCase());
-  });
-
-  const getCategoryBadge = (category: string) => {
-    const styles = {
-      bronze: 'bg-amber-100 text-amber-800',
-      silver: 'bg-gray-100 text-gray-800',
-      gold: 'bg-yellow-100 text-yellow-800',
-      diamond: 'bg-purple-100 text-purple-800',
-    };
-    return styles[category as keyof typeof styles] || styles.bronze;
-  };
-
-  const getPerformanceBadge = (status: string) => {
-    const styles = {
-      cumple: 'bg-green-100 text-green-800',
-      advertencia: 'bg-yellow-100 text-yellow-800',
-      no_cumple: 'bg-red-100 text-red-800',
-      exclusivo: 'bg-purple-100 text-purple-800',
-    };
-    return styles[status as keyof typeof styles] || styles.cumple;
-  };
+  const searchTermLower = searchTerm.toLowerCase();
+  const filteredAmbassadors = useMemo(
+    () =>
+      ambassadors.filter((ambassador) => {
+        const searchText =
+          `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
+        return searchText.includes(searchTermLower);
+      }),
+    [ambassadors, searchTermLower]
+  );
 
   return (
     <div className="space-y-6">

@@ -49,9 +49,6 @@ async function verifyXHubSignature(
   const credentials = await getWebhookCredentials(supabaseClient, instagramUserId);
   const APP_SECRET = credentials.APP_SECRET;
 
-  void ('DEBUG: Using APP_SECRET starting with:',
-  APP_SECRET ? APP_SECRET.substring(0, 8) + '...' : 'NOT SET');
-
   if (!APP_SECRET) throw new Error('APP secret not configured');
   if (!signatureHeader || !signatureHeader.startsWith('sha256='))
     throw new Error('Missing signature');
@@ -96,23 +93,18 @@ Deno.serve(async (req) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      void ('Webhook verification request:', { mode, token, challenge });
-
       const WEBHOOK_VERIFY_TOKEN = Deno.env.get('WEBHOOK_VERIFY_TOKEN');
 
       if (!WEBHOOK_VERIFY_TOKEN) {
-        void 'WEBHOOK_VERIFY_TOKEN is not configured';
         return new Response('Server misconfigured', { status: 500, headers: corsHeaders });
       }
 
       if (mode === 'subscribe' && token === WEBHOOK_VERIFY_TOKEN) {
-        void 'Webhook verified successfully';
         return new Response(challenge, {
           status: 200,
           headers: { 'Content-Type': 'text/plain' },
         });
       } else {
-        void 'Webhook verification failed';
         return new Response('Forbidden', { status: 403, headers: corsHeaders });
       }
     }
@@ -123,40 +115,18 @@ Deno.serve(async (req) => {
         req.headers.get('x-hub-signature-256') || req.headers.get('X-Hub-Signature-256');
 
       const body = rawBody ? JSON.parse(rawBody) : {};
-      void ('Instagram webhook received:',
-      {
-        object: body.object,
-        entries: Array.isArray(body.entry) ? body.entry.length : 0,
-      });
 
       if (body.object === 'instagram') {
         for (const entry of body.entry || []) {
-          void ('Processing entry ID:', entry.id);
-
           try {
             await verifyXHubSignature(supabase, rawBody, signatureHeader, entry.id);
-            void ('Webhook signature verified successfully for entry:', entry.id);
           } catch (e) {
             const errorMessage = e instanceof Error ? e.message : String(e);
-            void ('Invalid webhook signature for entry:', entry.id, errorMessage);
 
             try {
               const credentials = await getWebhookCredentials(supabase, entry.id);
-              void ('Signature validation failed using:',
-              {
-                has_org_secret:
-                  !!credentials.APP_SECRET &&
-                  credentials.APP_SECRET !== Deno.env.get('INSTAGRAM_APP_SECRET'),
-                using_fallback: credentials.APP_SECRET === Deno.env.get('INSTAGRAM_APP_SECRET'),
-                signature_header: signatureHeader
-                  ? `${signatureHeader.substring(0, 15)}...`
-                  : 'missing',
-              });
-            } catch (credError) {
-              void ('Could not log credential info:', credError);
-            }
+            } catch {}
 
-            void 'Returning 200 to prevent retry flood despite signature mismatch';
             return new Response(
               JSON.stringify({ received: true, warning: 'signature_mismatch_logged' }),
               {
@@ -177,17 +147,8 @@ Deno.serve(async (req) => {
                   break;
                 case 'messages': {
                   const msgData = change.value;
-                  void ('DEBUG: Message from changes:',
-                  {
-                    hasReferral: !!msgData.referral,
-                    referralSource: msgData.referral?.source,
-                    referralType: msgData.referral?.type,
-                    hasQuickReply: !!msgData.message?.quick_reply,
-                    messageKeys: Object.keys(msgData),
-                  });
 
                   if (msgData.message?.quick_reply?.payload) {
-                    void ('DEBUG: Quick reply detected:', msgData.message.quick_reply.payload);
                     await handleMessages(
                       supabase,
                       { ...msgData, quick_reply: msgData.message.quick_reply },
@@ -198,10 +159,8 @@ Deno.serve(async (req) => {
                     msgData.referral.source === 'SHORTLINK' &&
                     msgData.referral.type === 'STORY'
                   ) {
-                    void 'DEBUG: Routing to handleStoryMentionReferral';
                     await handleStoryMentionReferral(supabase, msgData, entry.id);
                   } else {
-                    void 'DEBUG: Routing to handleMessages (default)';
                     await handleMessages(supabase, msgData, entry.id);
                   }
                   break;
@@ -210,24 +169,13 @@ Deno.serve(async (req) => {
                   await handleStoryInsights(supabase, change.value, entry.id);
                   break;
                 default:
-                  void ('Unhandled webhook field:', change.field);
               }
             }
           }
 
           if (entry.messaging) {
             for (const message of entry.messaging) {
-              void ('DEBUG: Message routing check:',
-              {
-                hasReferral: !!message.referral,
-                referralSource: message.referral?.source,
-                referralType: message.referral?.type,
-                hasQuickReply: !!message.message?.quick_reply,
-                messageKeys: Object.keys(message),
-              });
-
               if (message.message?.quick_reply?.payload) {
-                void ('DEBUG: Quick reply detected:', message.message.quick_reply.payload);
                 await handleMessages(
                   supabase,
                   { ...message, quick_reply: message.message.quick_reply },
@@ -238,10 +186,8 @@ Deno.serve(async (req) => {
                 message.referral.source === 'SHORTLINK' &&
                 message.referral.type === 'STORY'
               ) {
-                void 'DEBUG: Routing to handleStoryMentionReferral';
                 await handleStoryMentionReferral(supabase, message, entry.id);
               } else {
-                void 'DEBUG: Routing to handleMessages (default)';
                 await handleMessages(supabase, message, entry.id);
               }
             }
@@ -267,8 +213,6 @@ async function handleMediaChange(
   instagramUserId: string
 ): Promise<void> {
   try {
-    void ('Handling media change:', { mediaId: mediaData?.id, instagramUserId });
-
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username')
@@ -276,7 +220,6 @@ async function handleMediaChange(
       .maybeSingle();
 
     if (orgError || !organization) {
-      void ('Organization not found for Instagram user:', instagramUserId);
       return;
     }
 
@@ -327,10 +270,6 @@ async function handleMediaChange(
       .select()
       .single();
 
-    if (mentionError) {
-      void ('Error creating social mention:', mentionError);
-    }
-
     if (ambassador) {
       await supabase.from('notifications').insert({
         organization_id: ambassador.organization_id,
@@ -348,15 +287,8 @@ async function handleMediaChange(
         target_id: socialMention?.id,
         priority: 'high',
       });
-
-      void ('Ambassador not found for Instagram user:',
-      instagramUserId,
-      'username:',
-      mediaData.username);
     }
-  } catch (error) {
-    void ('Error handling media change:', error);
-  }
+  } catch {}
 }
 
 async function handleComments(
@@ -365,8 +297,6 @@ async function handleComments(
   instagramUserId: string
 ): Promise<void> {
   try {
-    void ('Handling comment:', { instagramUserId, commentId: commentData?.id });
-
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username')
@@ -374,7 +304,6 @@ async function handleComments(
       .maybeSingle();
 
     if (orgError || !organization) {
-      void ('Organization not found for Instagram user:', instagramUserId);
       return;
     }
 
@@ -412,7 +341,6 @@ async function handleComments(
       .single();
 
     if (mentionError) {
-      void ('Error creating social mention for comment:', mentionError);
       return;
     }
 
@@ -435,11 +363,7 @@ async function handleComments(
         priority: 'medium',
       });
     }
-
-    void ('Comment notification created for organization:', organization.id);
-  } catch (error) {
-    void ('Error handling comment:', error);
-  }
+  } catch {}
 }
 
 async function getActiveFiestas(
@@ -458,7 +382,6 @@ async function getActiveFiestas(
     .limit(13);
 
   if (error) {
-    void ('Error fetching active fiestas:', error);
     return [];
   }
 
@@ -478,11 +401,8 @@ async function handleFiestaSelectionReply(
   const senderId = messageData.sender?.id;
 
   if (!senderId || !fiestaId) {
-    void 'Invalid fiesta selection reply: missing sender or fiesta ID';
     return true;
   }
-
-  void ('Processing fiesta selection reply:', { senderId, fiestaId });
 
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
@@ -498,14 +418,12 @@ async function handleFiestaSelectionReply(
       .maybeSingle();
 
     if (!orgFallback) {
-      void ('Organization not found for fiesta selection:', instagramBusinessAccountId);
       return true;
     }
     Object.assign(organization || {}, orgFallback);
   }
 
   if (!organization) {
-    void ('Organization not found for fiesta selection:', instagramBusinessAccountId);
     return true;
   }
 
@@ -520,7 +438,6 @@ async function handleFiestaSelectionReply(
     .maybeSingle();
 
   if (mentionError || !pendingMention) {
-    void ('No pending fiesta selection found for user:', senderId);
     return true;
   }
 
@@ -532,7 +449,6 @@ async function handleFiestaSelectionReply(
     .maybeSingle();
 
   if (fiestaError || !fiesta) {
-    void ('Invalid fiesta selected:', fiestaId);
     return true;
   }
 
@@ -546,7 +462,6 @@ async function handleFiestaSelectionReply(
     .eq('id', pendingMention.id);
 
   if (updateError) {
-    void ('Failed to update mention with fiesta:', updateError);
     return true;
   }
 
@@ -562,17 +477,8 @@ async function handleFiestaSelectionReply(
       const confirmationMessage = `¡Perfecto! Gracias por compartir sobre ${fiesta.name} 🎊`;
 
       await sendInstagramMessage(senderId, confirmationMessage, decryptedToken);
-
-      void ('Fiesta selection confirmed:',
-      {
-        mentionId: pendingMention.id,
-        fiestaId: fiesta.id,
-        fiestaName: fiesta.name,
-      });
     }
-  } catch (confirmError) {
-    void ('Failed to send confirmation (non-fatal):', confirmError);
-  }
+  } catch {}
 
   await supabase.from('notifications').insert({
     organization_id: organization.id,
@@ -592,20 +498,12 @@ async function handleMessages(
   instagramUserId: string
 ): Promise<void> {
   try {
-    void ('Handling message:', { instagramUserId, messageId: messageData?.id });
-
     if (messageData.quick_reply?.payload) {
       const handled = await handleFiestaSelectionReply(supabase, messageData, instagramUserId);
       if (handled) {
-        void 'Message handled as fiesta selection reply';
         return;
       }
     }
-
-    void ('DEBUG: Querying organizations with instagram_user_id =',
-    instagramUserId,
-    'type:',
-    typeof instagramUserId);
 
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
@@ -613,10 +511,7 @@ async function handleMessages(
       .eq('instagram_user_id', instagramUserId)
       .maybeSingle();
 
-    void ('DEBUG: Query result:', { organization, orgError });
-
     if (orgError || !organization) {
-      void ('Organization not found for Instagram user:', instagramUserId);
       return;
     }
 
@@ -651,11 +546,8 @@ async function handleMessages(
             'id,username,name'
           );
           senderUsername = userInfo.username || userInfo.name || null;
-          void ('Fetched username from Instagram API:', senderUsername);
         }
-      } catch (fetchError) {
-        void ('Could not fetch username from Instagram API (non-fatal):', fetchError);
-      }
+      } catch {}
     }
 
     const mentionData = {
@@ -677,7 +569,6 @@ async function handleMessages(
       .single();
 
     if (mentionError) {
-      void ('Error creating social mention for message:', mentionError);
       return;
     }
 
@@ -701,8 +592,6 @@ async function handleMessages(
       });
     }
 
-    void ('Message notification created for organization:', organization.id);
-
     if (messageData.sender?.id) {
       try {
         const { data: tokenData, error: tokenError } = await supabase
@@ -711,11 +600,12 @@ async function handleMessages(
           .eq('organization_id', organization.id)
           .single();
 
-        if (tokenError || !tokenData?.access_token) {
-          void ('No Instagram token found for auto-response, skipping:', organization.id);
-        } else if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-          void ('Instagram token expired for auto-response, skipping:', organization.id);
-        } else {
+        const tokenValid =
+          !tokenError &&
+          tokenData?.access_token &&
+          (!tokenData.token_expiry || new Date(tokenData.token_expiry) >= new Date());
+
+        if (tokenValid) {
           const decryptedToken = await safeDecryptToken(tokenData.access_token);
           const activeFiestas = await getActiveFiestas(supabase, organization.id);
 
@@ -725,7 +615,6 @@ async function handleMessages(
               '¡Gracias por publicarnos! Nos vemos en el evento 🎉',
               decryptedToken
             );
-            void 'Simple thank you sent (no active fiestas)';
           } else {
             const quickReplies = activeFiestas.map((fiesta) => ({
               content_type: 'text' as const,
@@ -749,17 +638,11 @@ async function handleMessages(
                 ).toISOString(),
               })
               .eq('id', socialMention.id);
-
-            void ('Fiesta selection sent with', activeFiestas.length, 'options');
           }
         }
-      } catch (autoResponseError) {
-        void ('Failed to send auto-response (non-fatal):', autoResponseError);
-      }
+      } catch {}
     }
-  } catch (error) {
-    void ('Error handling message:', error);
-  }
+  } catch {}
 }
 
 async function handleStoryMentionReferral(
@@ -768,15 +651,6 @@ async function handleStoryMentionReferral(
   instagramBusinessAccountId: string
 ): Promise<void> {
   try {
-    void ('Handling story mention referral (sanitized):',
-    {
-      instagramBusinessAccountId,
-      senderId: messageData.sender?.id,
-      referralSource: messageData.referral?.source,
-      referralType: messageData.referral?.type,
-      hasRefererUri: !!messageData.referral?.referer_uri,
-    });
-
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name, instagram_username, facebook_page_id')
@@ -784,7 +658,6 @@ async function handleStoryMentionReferral(
       .maybeSingle();
 
     if (orgError || !organization) {
-      void ('Organization not found for Instagram business account:', instagramBusinessAccountId);
       return;
     }
 
@@ -793,7 +666,6 @@ async function handleStoryMentionReferral(
       : new Date().toISOString();
 
     if (!messageData.sender?.id) {
-      void 'No sender ID in story mention referral';
       return;
     }
 
@@ -809,15 +681,10 @@ async function handleStoryMentionReferral(
       .maybeSingle();
 
     if (checkError) {
-      void ('Error checking for existing mention:', checkError);
       return;
     }
 
     if (existingMention) {
-      void ('Story mention referral already processed for user:',
-      messageData.sender.id,
-      'at:',
-      mentionedAt);
       return;
     }
 
@@ -886,7 +753,6 @@ async function handleStoryMentionReferral(
       .single();
 
     if (mentionError) {
-      void ('Error creating social mention for story referral:', mentionError);
       return;
     }
 
@@ -910,11 +776,12 @@ async function handleStoryMentionReferral(
         .eq('organization_id', organization.id)
         .single();
 
-      if (tokenError || !tokenData?.access_token) {
-        void ('No Instagram token found for auto-response, skipping:', organization.id);
-      } else if (tokenData.token_expiry && new Date(tokenData.token_expiry) < new Date()) {
-        void ('Instagram token expired for auto-response, skipping:', organization.id);
-      } else {
+      const tokenValid =
+        !tokenError &&
+        tokenData?.access_token &&
+        (!tokenData.token_expiry || new Date(tokenData.token_expiry) >= new Date());
+
+      if (tokenValid) {
         const decryptedToken = await safeDecryptToken(tokenData.access_token);
 
         const activeFiestas = await getActiveFiestas(supabase, organization.id);
@@ -927,13 +794,6 @@ async function handleStoryMentionReferral(
             simpleMessage,
             decryptedToken
           );
-
-          void ('Simple thank you sent (no active fiestas):',
-          {
-            organizationId: organization.id,
-            recipientId: messageData.sender.id,
-            messageId: sendResult.message_id,
-          });
 
           await supabase
             .from('social_mentions')
@@ -980,24 +840,10 @@ async function handleStoryMentionReferral(
               },
             })
             .eq('id', socialMention.id);
-
-          void ('Fiesta selection sent:',
-          {
-            organizationId: organization.id,
-            recipientId: messageData.sender.id,
-            messageId: sendResult.message_id,
-            fiestasOffered: activeFiestas.length,
-          });
         }
       }
-    } catch (autoResponseError) {
-      void ('Failed to send auto-response (non-fatal):', autoResponseError);
-    }
-
-    void ('Story mention referral processed successfully for organization:', organization.id);
-  } catch (error) {
-    void ('Error handling story mention referral:', error);
-  }
+    } catch {}
+  } catch {}
 }
 
 async function handleStoryInsights(
@@ -1006,13 +852,6 @@ async function handleStoryInsights(
   instagramBusinessAccountId: string
 ): Promise<void> {
   try {
-    void ('Handling story insights webhook:',
-    {
-      instagramBusinessAccountId,
-      mediaId: insightsData?.media_id,
-      hasMetrics: !!insightsData?.metric_values,
-    });
-
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('id, name')
@@ -1020,14 +859,12 @@ async function handleStoryInsights(
       .maybeSingle();
 
     if (orgError || !organization) {
-      void ('Organization not found for Instagram business account:', instagramBusinessAccountId);
       return;
     }
 
     const mediaId = insightsData?.media_id || insightsData?.id;
 
     if (!mediaId) {
-      void 'No media ID in story insights data';
       return;
     }
 
@@ -1039,7 +876,6 @@ async function handleStoryInsights(
       .maybeSingle();
 
     if (mentionError) {
-      void ('Error finding story mention:', mentionError);
       return;
     }
 
@@ -1091,19 +927,7 @@ async function handleStoryInsights(
         raw_insights: metrics.raw || {},
       };
 
-      const { error: insertError } = await supabase
-        .from('story_insights_snapshots')
-        .insert(snapshot);
-
-      if (insertError) {
-        void ('Error inserting story insights snapshot:', insertError);
-      } else {
-        void `Created story insights snapshot from webhook for story ${mediaId}`;
-      }
-    } else {
-      void `Story insights received for media ${mediaId} but story mention not found yet`;
+      await supabase.from('story_insights_snapshots').insert(snapshot);
     }
-  } catch (error) {
-    void ('Error handling story insights:', error);
-  }
+  } catch {}
 }

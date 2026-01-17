@@ -22,7 +22,6 @@ Deno.serve(async (req) => {
       .eq('organization_id', organizationId);
 
     if (tokenError) {
-      void ('Failed to delete organization tokens:', tokenError);
       throw new Error('Failed to disconnect Instagram tokens');
     }
 
@@ -47,11 +46,8 @@ Deno.serve(async (req) => {
       .eq('id', organizationId);
 
     if (updateError) {
-      void ('Failed to disconnect Instagram:', updateError);
       throw new Error('Failed to disconnect Instagram account');
     }
-
-    void ('Instagram account disconnected successfully for organization:', organizationId);
 
     return jsonResponse({
       success: true,

@@ -416,7 +416,6 @@ async function testWebhookDelivery(org: Organization) {
       app_id_used: creds[0].meta_app_id,
     };
   } catch (error) {
-    void ('Webhook test error:', error);
     return {
       test_sent: false,
       error: error.message,

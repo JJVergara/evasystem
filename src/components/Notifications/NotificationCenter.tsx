@@ -132,8 +132,7 @@ export function NotificationCenter() {
       ];
 
       setNotifications(mockNotifications);
-    } catch (error) {
-      void ('Error loading notifications:', error);
+    } catch {
       toast({
         title: 'Error',
         description: 'No se pudieron cargar las notificaciones',
@@ -183,9 +182,7 @@ export function NotificationCenter() {
         title: 'Notificación marcada como leída',
         description: 'La notificación ha sido marcada como leída',
       });
-    } catch (error) {
-      void ('Error marking notification as read:', error);
-    }
+    } catch {}
   };
 
   const markAllAsRead = async () => {
@@ -196,9 +193,7 @@ export function NotificationCenter() {
         title: 'Todas las notificaciones marcadas como leídas',
         description: 'Se han marcado todas las notificaciones como leídas',
       });
-    } catch (error) {
-      void ('Error marking all notifications as read:', error);
-    }
+    } catch {}
   };
 
   const deleteNotification = async (notificationId: string) => {
@@ -209,9 +204,7 @@ export function NotificationCenter() {
         title: 'Notificación eliminada',
         description: 'La notificación ha sido eliminada',
       });
-    } catch (error) {
-      void ('Error deleting notification:', error);
-    }
+    } catch {}
   };
 
   const getNotificationIcon = (type: string, priority: string) => {

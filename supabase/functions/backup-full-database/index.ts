@@ -29,8 +29,6 @@ Deno.serve(async (req) => {
     }
     const { user, supabase: supabaseClient } = authResult;
 
-    void ('Starting full database backup for user:', user.id);
-
     const backupData: BackupData = {
       timestamp: new Date().toISOString(),
       organizations: [],
@@ -133,26 +131,20 @@ Deno.serve(async (req) => {
     backupData.import_logs = importLogs || [];
 
     backupData.organizations = (backupData.organizations || []).map((o) => {
-      const { meta_token: _meta_token, token_expiry: _token_expiry, ...safe } = o as Record<string, unknown>;
+      const {
+        meta_token: _meta_token,
+        token_expiry: _token_expiry,
+        ...safe
+      } = o as Record<string, unknown>;
       return safe;
     });
     backupData.embassadors = (backupData.embassadors || []).map((a) => {
-      const { instagram_access_token: _instagram_access_token, token_expires_at: _token_expires_at, ...safe } = a as Record<string, unknown>;
+      const {
+        instagram_access_token: _instagram_access_token,
+        token_expires_at: _token_expires_at,
+        ...safe
+      } = a as Record<string, unknown>;
       return safe;
-    });
-
-    void ('Backup completed successfully. Data summary:', {
-      organizations: backupData.organizations.length,
-      embassadors: backupData.embassadors.length,
-      fiestas: backupData.fiestas.length,
-      events: backupData.events.length,
-      tasks: backupData.tasks.length,
-      leaderboards: backupData.leaderboards.length,
-      users: backupData.users.length,
-      organization_settings: backupData.organization_settings.length,
-      notifications: backupData.notifications.length,
-      import_logs: backupData.import_logs.length,
-      task_logs: backupData.task_logs.length,
     });
 
     return new Response(JSON.stringify(backupData), {
@@ -164,7 +156,6 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    void ('Error during backup:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error creating backup: ${errorMessage}`, 500);
   }

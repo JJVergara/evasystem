@@ -72,8 +72,7 @@ export default function ImportExportReal() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      void ('Error during import:', error);
+    } catch {
       toast.error('Error durante la importación');
     } finally {
       setIsProcessing(false);
@@ -128,8 +127,7 @@ export default function ImportExportReal() {
       URL.revokeObjectURL(url);
 
       toast.success(`Exportación completada: ${data.length} registros`);
-    } catch (error) {
-      void ('Error during export:', error);
+    } catch {
       toast.error('Error durante la exportación');
     } finally {
       setIsProcessing(false);

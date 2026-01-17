@@ -20,14 +20,11 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      void ('Auth state changed:', event, !!session);
-
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
       if (event === 'SIGNED_OUT') {
-        void ('User signed out - redirecting to auth');
         localStorage.clear();
         sessionStorage.clear();
         setTimeout(() => {
@@ -48,8 +45,6 @@ export function useAuth() {
 
   const ensureUserProfile = async (authUser: User) => {
     try {
-      void ('Ensuring user profile for:', authUser.id);
-
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('id, organization_id, name')
@@ -57,34 +52,21 @@ export function useAuth() {
         .maybeSingle();
 
       if (fetchError) {
-        void ('Error checking existing user:', fetchError);
         return;
       }
-
-      if (!existingUser) {
-        void ('User does not exist, will need to create profile after organization setup');
-      } else {
-        void ('User already exists:', existingUser);
-      }
-    } catch (error) {
-      void ('Error in ensureUserProfile:', error);
-    }
+    } catch {}
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      void ('Attempting to sign in:', email);
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        void ('Sign in error:', error);
         toast.error(error.message);
       } else {
-        void ('Sign in successful:', data);
         toast.success('¡Bienvenido de vuelta!');
         setTimeout(() => {
           navigate('/', { replace: true });
@@ -93,7 +75,6 @@ export function useAuth() {
 
       return { data, error };
     } catch (error) {
-      void ('Sign in error:', error);
       toast.error('Error al iniciar sesión');
       return { data: null, error: error as AuthError };
     }
@@ -101,8 +82,6 @@ export function useAuth() {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      void ('Attempting to sign up:', email);
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -115,16 +94,13 @@ export function useAuth() {
       });
 
       if (error) {
-        void ('Sign up error:', error);
         toast.error(error.message);
       } else {
-        void ('Sign up successful:', data);
         toast.success('¡Cuenta creada correctamente! Ahora puedes iniciar sesión.');
       }
 
       return { data, error };
     } catch (error) {
-      void ('Sign up error:', error);
       toast.error('Error al crear cuenta');
       return { data: null, error: error as AuthError };
     }
@@ -132,18 +108,14 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      void ('Attempting to sign out');
-
       setLoading(true);
 
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        void ('Sign out error:', error);
         toast.error('Error al cerrar sesión');
         setLoading(false);
       } else {
-        void ('Sign out successful');
         localStorage.clear();
         sessionStorage.clear();
 
@@ -158,7 +130,6 @@ export function useAuth() {
 
       return { error };
     } catch (error) {
-      void ('Sign out error:', error);
       toast.error('Error al cerrar sesión');
       setLoading(false);
       return { error };

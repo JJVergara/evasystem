@@ -2,14 +2,7 @@ import { errorResponse } from './responses.ts';
 import { InstagramApiError } from './instagram-api.ts';
 
 export function handleError(error: unknown): Response {
-  void ('Function error:', error);
-
   if (error instanceof InstagramApiError) {
-    void ('Instagram API error:', {
-      message: error.message,
-      statusCode: error.statusCode,
-      fbError: error.fbError,
-    });
     return errorResponse(error.message, error.statusCode || 500);
   }
 

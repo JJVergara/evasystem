@@ -90,9 +90,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
         instagramCompleted = expiryDate > new Date();
       }
     }
-  } catch (error) {
-    void ('Error checking Instagram status:', error);
-  }
+  } catch {}
 
   let fiestaCompleted = false;
   try {
@@ -103,9 +101,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
       .limit(1);
 
     fiestaCompleted = !error && (fiestas?.length || 0) > 0;
-  } catch (error) {
-    void ('Error checking fiestas:', error);
-  }
+  } catch {}
 
   let ambassadorsCompleted = false;
   try {
@@ -116,9 +112,7 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
       .limit(1);
 
     ambassadorsCompleted = !error && (ambassadors?.length || 0) > 0;
-  } catch (error) {
-    void ('Error checking ambassadors:', error);
-  }
+  } catch {}
 
   const steps: OnboardingStep[] = [
     {

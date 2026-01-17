@@ -62,8 +62,7 @@ export function InstagramSyncStatus() {
         weeklyMentions,
         isAutoSyncActive: true,
       });
-    } catch (error) {
-      void ('Error loading sync stats:', error);
+    } catch {
     } finally {
       setIsLoadingStats(false);
     }

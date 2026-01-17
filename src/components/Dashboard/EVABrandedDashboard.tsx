@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,10 @@ export function EVABrandedDashboard() {
   const navigate = useNavigate();
   const { steps, overallProgress } = useOnboardingStatus();
 
-  const pendingRecommendedSteps = steps.filter((step) => !step.required && !step.completed);
+  const pendingRecommendedSteps = useMemo(
+    () => steps.filter((step) => !step.required && !step.completed),
+    [steps]
+  );
 
   return (
     <div className="space-y-6">

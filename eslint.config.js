@@ -23,15 +23,13 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      // Prettier integration
       'prettier/prettier': 'warn',
-      // TypeScript rules
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
-      // General code quality
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'warn',
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   }
 );

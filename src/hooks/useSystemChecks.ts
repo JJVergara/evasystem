@@ -101,7 +101,6 @@ async function fetchSystemChecks(
       action: 'Sincronizar ahora',
     });
   } catch (error) {
-    void ('Error running system checks:', error);
     checks.push({
       name: 'Error del sistema',
       status: 'error',

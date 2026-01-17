@@ -80,7 +80,6 @@ export default function CreateEventModal({
         .single();
 
       if (userError || !userData) {
-        void ('Error getting user data:', userError);
         toast.error('Error al obtener datos del usuario');
         return;
       }
@@ -94,8 +93,6 @@ export default function CreateEventModal({
         organization_id: userData.organization_id,
       };
 
-      void ('Creando evento con datos:', eventData);
-
       const { error: eventError } = await supabase
         .from('events')
         .insert(eventData)
@@ -103,7 +100,6 @@ export default function CreateEventModal({
         .single();
 
       if (eventError) {
-        void ('Error creating event:', eventError);
         toast.error('Error al crear evento: ' + eventError.message);
         return;
       }
@@ -112,8 +108,7 @@ export default function CreateEventModal({
       resetForm();
       onClose();
       onEventCreated();
-    } catch (error) {
-      void ('Error creating event:', error);
+    } catch {
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);

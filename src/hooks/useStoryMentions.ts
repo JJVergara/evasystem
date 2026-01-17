@@ -52,7 +52,6 @@ async function fetchStoryMentionsData(organizationId: string): Promise<StoryMent
     .order('mentioned_at', { ascending: false });
 
   if (error) {
-    void ('Error fetching story mentions:', error);
     throw error;
   }
 
@@ -115,7 +114,6 @@ export function useStoryMentions() {
           filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
-          void ('New story mention received:', payload);
           if (payload.new.mention_type === 'story_referral') {
             queryClient.invalidateQueries({ queryKey });
             toast({
@@ -134,7 +132,6 @@ export function useStoryMentions() {
           filter: `organization_id=eq.${organization.id}`,
         },
         (payload) => {
-          void ('Story mention updated:', payload);
           if (payload.new.mention_type === 'story_referral') {
             queryClient.invalidateQueries({ queryKey });
           }
@@ -171,7 +168,6 @@ export function useStoryMentions() {
           description: 'La mención ha sido marcada como atendida',
         });
       } catch (error) {
-        void ('Error marking mention as processed:', error);
         toast({
           title: 'Error',
           description: 'No se pudo actualizar la mención',
@@ -219,7 +215,6 @@ export function useStoryMentions() {
           description: 'La historia ha sido marcada como borrada antes de 24h',
         });
       } catch (error) {
-        void ('Error flagging mention as early delete:', error);
         toast({
           title: 'Error',
           description: 'No se pudo marcar la mención',
@@ -237,24 +232,19 @@ export function useStoryMentions() {
         throw new Error('Organization not found');
       }
 
-      try {
-        const { data, error } = await supabase.functions.invoke('instagram-send-message', {
-          body: {
-            recipientId: mention.instagram_user_id,
-            message: message,
-            organizationId: organization.id,
-          },
-        });
+      const { data, error } = await supabase.functions.invoke('instagram-send-message', {
+        body: {
+          recipientId: mention.instagram_user_id,
+          message: message,
+          organizationId: organization.id,
+        },
+      });
 
-        if (error) throw error;
-        if (!data.success) throw new Error(data.error || 'Failed to send message');
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Failed to send message');
 
-        await markAsProcessed(mention.id);
-        return data;
-      } catch (error) {
-        void ('Error sending reply:', error);
-        throw error;
-      }
+      await markAsProcessed(mention.id);
+      return data;
     },
     [organization?.id, markAsProcessed]
   );

@@ -116,8 +116,7 @@ export function EditAmbassadorModal({
       toast.success('Embajador actualizado exitosamente');
       onAmbassadorUpdated();
       onClose();
-    } catch (error) {
-      void ('Error updating ambassador:', error);
+    } catch {
       toast.error('Error al actualizar embajador');
     } finally {
       setLoading(false);

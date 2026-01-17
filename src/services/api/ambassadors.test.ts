@@ -9,7 +9,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
-import { getAmbassadors, createAmbassador, updateAmbassador, deleteAmbassador } from './ambassadors';
+import {
+  getAmbassadors,
+  createAmbassador,
+  updateAmbassador,
+  deleteAmbassador,
+} from './ambassadors';
 
 const mockSupabase = vi.mocked(supabase);
 
@@ -209,9 +214,9 @@ describe('Ambassadors Service', () => {
 
       mockSupabase.from = vi.fn().mockReturnValue(mockChain);
 
-      await expect(
-        updateAmbassador({ id: 'amb-1', first_name: 'New' })
-      ).rejects.toThrow('Update failed');
+      await expect(updateAmbassador({ id: 'amb-1', first_name: 'New' })).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 

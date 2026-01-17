@@ -66,8 +66,7 @@ export function InstagramBusinessDashboard() {
       if (tagsData?.success && tagsData.tags) {
         setTags(tagsData.tags);
       }
-    } catch (error) {
-      void ('Error loading Instagram data:', error);
+    } catch {
       toast.error('Error al cargar datos de Instagram');
     } finally {
       setLoading(false);

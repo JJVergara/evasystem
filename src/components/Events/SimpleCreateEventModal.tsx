@@ -64,8 +64,7 @@ export function SimpleCreateEventModal({
       if (error) throw error;
       setOrganizations(data || []);
       setOrganizationsLoaded(true);
-    } catch (error) {
-      void ('Error loading organizations:', error);
+    } catch {
       toast.error('Error al cargar organizaciones');
     }
   };
@@ -101,8 +100,7 @@ export function SimpleCreateEventModal({
       resetForm();
       onClose();
       onEventCreated();
-    } catch (error) {
-      void ('Error creating event:', error);
+    } catch {
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);

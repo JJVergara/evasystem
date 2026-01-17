@@ -7,14 +7,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const {
-      email,
-      password,
-      name,
-      organizationName,
-      organizationDescription,
-      authUserId,
-    } = await req.json();
+    const { email, password, name, organizationName, organizationDescription, authUserId } =
+      await req.json();
 
     const supabase = createSupabaseClient();
 
@@ -98,10 +92,6 @@ Deno.serve(async (req) => {
         },
       });
 
-      if (memberError) {
-        void ('Membership may already exist:', memberError.message);
-      }
-
       const { data: updatedUserData, error: updateError } = await supabase
         .from('users')
         .update({
@@ -148,7 +138,6 @@ Deno.serve(async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    void ('Error in handle-user-registration:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return jsonResponse(

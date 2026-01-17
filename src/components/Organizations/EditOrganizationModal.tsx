@@ -58,8 +58,6 @@ export default function EditOrganizationModal({
         return;
       }
 
-      void ('Updating organization:', organization.id);
-
       const { error: updateError } = await supabase
         .from('organizations')
         .update({
@@ -69,18 +67,14 @@ export default function EditOrganizationModal({
         .eq('id', organization.id);
 
       if (updateError) {
-        void ('Error updating organization:', updateError);
         toast.error('Error al actualizar organización: ' + updateError.message);
         return;
       }
 
-      void ('Organization updated successfully');
-
       toast.success(`¡Organización "${formData.name}" actualizada exitosamente!`);
       onOrganizationUpdated();
       onClose();
-    } catch (error) {
-      void ('Error updating organization:', error);
+    } catch {
       toast.error('Error al actualizar organización');
     } finally {
       setIsLoading(false);

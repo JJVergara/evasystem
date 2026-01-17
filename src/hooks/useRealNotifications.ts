@@ -81,9 +81,7 @@ export function useRealNotifications() {
         queryClient.setQueryData<Notification[]>(queryKey, (old) =>
           old?.map((n) => (n.id === notificationId ? { ...n, read_status: true } : n))
         );
-      } catch (error) {
-        void ('Error marking notification as read:', error);
-      }
+      } catch {}
     },
     [queryClient, queryKey]
   );
@@ -103,9 +101,7 @@ export function useRealNotifications() {
       queryClient.setQueryData<Notification[]>(queryKey, (old) =>
         old?.map((n) => ({ ...n, read_status: true }))
       );
-    } catch (error) {
-      void ('Error marking all notifications as read:', error);
-    }
+    } catch {}
   }, [organization?.id, queryClient, queryKey]);
 
   const refreshNotifications = useCallback(() => {

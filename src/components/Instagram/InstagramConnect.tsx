@@ -57,18 +57,11 @@ export function InstagramConnect({
         body.ambassador_id = entityId;
       }
 
-      void ('Initiating Instagram connection', {
-        type,
-        orgId,
-        ambassador_id: body.ambassador_id,
-      });
-
       const { data, error } = await supabase.functions.invoke('meta-oauth?action=authorize', {
         body,
       });
 
       if (error) {
-        void ('Supabase function error:', error);
         let errorMessage = 'Error al conectar con Instagram';
 
         if (
@@ -89,17 +82,14 @@ export function InstagramConnect({
       }
 
       if (data?.authUrl) {
-        void ('Redirecting to Instagram OAuth:', data.authUrl);
         window.location.href = data.authUrl;
       } else {
-        void ('No authUrl in response:', data);
         const msg =
           data?.error_description ||
           'No se pudo generar la URL de autorización. Verifica la configuración de Meta.';
         throw new Error(msg);
       }
     } catch (err) {
-      void ('Error connecting Instagram:', err);
       const message = err instanceof Error ? err.message : 'Error al conectar con Instagram';
       toast.error(message);
       setIsConnecting(false);

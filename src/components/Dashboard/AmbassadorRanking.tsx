@@ -15,6 +15,32 @@ import { useAmbassadorRanking } from '@/hooks/useAmbassadorRanking';
 import { toast } from 'sonner';
 import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from 'lucide-react';
 
+const CATEGORY_STYLES: Record<string, string> = {
+  bronze: 'bg-amber-100 text-amber-800 border-amber-300',
+  silver: 'bg-gray-100 text-gray-800 border-gray-300',
+  gold: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  diamond: 'bg-purple-100 text-purple-800 border-purple-300',
+};
+
+const RANK_BADGES: Record<number, JSX.Element> = {
+  1: <span className="text-3xl">🥇</span>,
+  2: <span className="text-3xl">🥈</span>,
+  3: <span className="text-3xl">🥉</span>,
+};
+
+function getRankBadge(rank: number) {
+  return RANK_BADGES[rank] || <span className="text-muted-foreground font-medium">#{rank}</span>;
+}
+
+function formatNumber(num: number) {
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M`;
+  } else if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`;
+  }
+  return num.toString();
+}
+
 export function AmbassadorRanking() {
   const { ranking, loading, refreshRanking } = useAmbassadorRanking();
   const [refreshing, setRefreshing] = useState(false);
@@ -26,39 +52,13 @@ export function AmbassadorRanking() {
     toast.success('Ranking actualizado');
   };
 
-  const getRankBadge = (rank: number) => {
-    if (rank === 1) {
-      return <span className="text-3xl">🥇</span>;
-    } else if (rank === 2) {
-      return <span className="text-3xl">🥈</span>;
-    } else if (rank === 3) {
-      return <span className="text-3xl">🥉</span>;
-    }
-    return <span className="text-muted-foreground font-medium">#{rank}</span>;
-  };
-
   const getCategoryBadge = (category: string) => {
-    const styles = {
-      bronze: 'bg-amber-100 text-amber-800 border-amber-300',
-      silver: 'bg-gray-100 text-gray-800 border-gray-300',
-      gold: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      diamond: 'bg-purple-100 text-purple-800 border-purple-300',
-    };
-    const style = styles[category as keyof typeof styles] || styles.bronze;
+    const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.bronze;
     return (
       <Badge variant="outline" className={style}>
         {category.charAt(0).toUpperCase() + category.slice(1)}
       </Badge>
     );
-  };
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
   };
 
   return (

@@ -21,7 +21,6 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        void ('Error syncing Instagram data:', error);
         toast.error('Error al sincronizar datos de Instagram');
         return false;
       }
@@ -50,8 +49,7 @@ export function useInstagramSync() {
         toast.error('Error en la sincronización');
         return false;
       }
-    } catch (error) {
-      void ('Error syncing Instagram:', error);
+    } catch {
       toast.error('Error inesperado al sincronizar');
       return false;
     } finally {
@@ -76,14 +74,12 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        void ('Error getting Instagram profile:', error);
         toast.error('Error al obtener perfil de Instagram');
         return null;
       }
 
       return data;
-    } catch (error) {
-      void ('Error getting Instagram profile:', error);
+    } catch {
       toast.error('Error inesperado al obtener perfil');
       return null;
     } finally {
@@ -108,14 +104,12 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        void ('Error getting Instagram media:', error);
         toast.error('Error al obtener feed de Instagram');
         return null;
       }
 
       return data;
-    } catch (error) {
-      void ('Error getting Instagram media:', error);
+    } catch {
       toast.error('Error inesperado al obtener feed');
       return null;
     } finally {
@@ -140,14 +134,12 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        void ('Error getting Instagram tags:', error);
         toast.error('Error al obtener menciones de Instagram');
         return null;
       }
 
       return data;
-    } catch (error) {
-      void ('Error getting Instagram tags:', error);
+    } catch {
       toast.error('Error inesperado al obtener menciones');
       return null;
     } finally {
@@ -169,7 +161,6 @@ export function useInstagramSync() {
       });
 
       if (error) {
-        void ('Error refreshing token:', error);
         toast.error('Error al renovar token de Instagram');
         return false;
       }
@@ -181,8 +172,7 @@ export function useInstagramSync() {
         toast.error('Error al renovar token');
         return false;
       }
-    } catch (error) {
-      void ('Error refreshing token:', error);
+    } catch {
       toast.error('Error inesperado al renovar token');
       return false;
     } finally {

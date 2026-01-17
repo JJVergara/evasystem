@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -29,9 +29,12 @@ export function useFiestas() {
     gcTime: 30 * 60 * 1000,
   });
 
-  if (!selectedFiestaId && fiestas.length > 0) {
-    setTimeout(() => setSelectedFiestaId(fiestas[0].id), 0);
-  }
+  const firstFiestaId = fiestas[0]?.id;
+  useEffect(() => {
+    if (!selectedFiestaId && firstFiestaId) {
+      setSelectedFiestaId(firstFiestaId);
+    }
+  }, [firstFiestaId, selectedFiestaId]);
 
   const createFiestaMutation = useMutation({
     mutationFn: (data: CreateFiestaInput) => createFiestaApi(organizationId!, data),
