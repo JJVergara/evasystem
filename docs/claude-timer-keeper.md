@@ -1,69 +1,108 @@
 # Claude Code Timer Keeper
 
-Automated system to keep Claude Code's 5-hour usage reset timer always running, so it resets sooner rather than waiting for your first message of the day.
+Automated system to keep Claude Code's 5-hour usage reset timer always running, even when your Mac is sleeping with the lid closed.
 
 ---
 
 ## How It Works
 
-Claude Code's usage resets every 5 hours **after your first message**. If you don't send a message, the timer doesn't start. This system sends a minimal ping (`.`) every hour to keep the timer active.
+Claude Code's usage resets every 5 hours **after your first message**. If you don't send a message, the timer doesn't start. This system:
+
+1. Sends a minimal ping (`.`) every 30 minutes to keep the timer active
+2. Schedules the next wake 35 minutes ahead, so even with lid closed, the Mac wakes up
+3. After each ping, Mac naturally returns to sleep due to inactivity
+
+This creates a self-sustaining cycle that keeps your timer running 24/7.
 
 ---
 
-## Part 1: Hourly Ping (LaunchAgent)
+## Components
 
-A launchd job that runs every hour, sending a `.` to Claude Code.
+| Component | Purpose |
+|-----------|---------|
+| `scripts/claude-timer-wake.sh` | Pings Claude + schedules next wake |
+| `com.claude.timer-keeper.plist` | LaunchAgent running at :00 and :30 |
+| `pmset repeat 6am` | Daily fallback wake |
+| `/etc/sudoers.d/pmset-claude` | Passwordless sudo for pmset |
 
-### Files
+---
 
-| File | Purpose |
-|------|---------|
-| `~/Library/LaunchAgents/com.claude.timer-keeper.plist` | LaunchAgent config |
-| `/tmp/claude-timer-keeper.out` | Output log |
-| `/tmp/claude-timer-keeper.err` | Error log |
+## Daily Flow
 
-### Check Status
-
-```bash
-launchctl list | grep claude.timer-keeper
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SELF-SUSTAINING WAKE CYCLE                   │
+├─────────────────────────────────────────────────────────────────┤
+│ 11:00pm  You close laptop (Mac sleeps)                          │
+│    ↓                                                            │
+│ 11:30pm  Mac wakes → ping → schedules 12:05am → sleeps          │
+│ 12:05am  Mac wakes → ping → schedules 12:40am → sleeps          │
+│ 12:40am  Mac wakes → ping → schedules 1:15am  → sleeps          │
+│   ...    (continues every ~35 minutes all night)                │
+│    ↓                                                            │
+│ 8:00am   You open laptop - timer has been running all night!    │
+│ 8:30am   Regular ping (you're working)                          │
+│ 9:00am   Regular ping                                           │
+│   ...    (continues every 30 minutes)                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Output meaning:
-- `PID  0  com.claude.timer-keeper` → Running successfully (0 = last exit code)
-- `-    0  com.claude.timer-keeper` → Not currently running, last run succeeded
-- `-  126  com.claude.timer-keeper` → Error (126 = command not found)
+---
 
-### Check Last Run Time
+## Check Status
 
+### All Components
 ```bash
-stat -f "Last run: %Sm" /tmp/claude-timer-keeper.out
+echo "=== Ping Job ===" && \
+launchctl list | grep claude.timer-keeper && \
+echo "" && \
+echo "=== Wake Schedule ===" && \
+pmset -g sched && \
+echo "" && \
+echo "=== Recent Log ===" && \
+tail -10 ~/.claude-timer-keeper.log
 ```
 
-### Check Output
-
+### Just Scheduled Wakes
 ```bash
-cat /tmp/claude-timer-keeper.out
+pmset -g sched
 ```
 
-### Manually Trigger Now
+### Recent Activity Log
+```bash
+cat ~/.claude-timer-keeper.log
+```
 
+---
+
+## Manual Operations
+
+### Trigger Ping Now
 ```bash
 launchctl kickstart gui/$(id -u)/com.claude.timer-keeper
 ```
 
-### Start/Stop/Reload
-
+### Reload LaunchAgent
 ```bash
-launchctl load ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-
-launchctl unload ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-
 launchctl unload ~/Library/LaunchAgents/com.claude.timer-keeper.plist && \
 launchctl load ~/Library/LaunchAgents/com.claude.timer-keeper.plist
 ```
 
-### Reinstall From Scratch
+### Clear All Scheduled Wakes
+```bash
+sudo pmset schedule cancelall
+```
 
+---
+
+## Installation
+
+### 1. Passwordless sudo for pmset
+```bash
+echo "$(whoami) ALL=(ALL) NOPASSWD: /usr/bin/pmset" | sudo tee /etc/sudoers.d/pmset-claude
+```
+
+### 2. Install LaunchAgent
 ```bash
 cat > ~/Library/LaunchAgents/com.claude.timer-keeper.plist << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -74,14 +113,19 @@ cat > ~/Library/LaunchAgents/com.claude.timer-keeper.plist << 'EOF'
     <string>com.claude.timer-keeper</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/homebrew/bin/claude</string>
-        <string>-p</string>
-        <string>.</string>
-        <string>--max-turns</string>
-        <string>1</string>
+        <string>/Users/juanvergara/Desktop/Otros/otros/evasystem/scripts/claude-timer-wake.sh</string>
     </array>
-    <key>StartInterval</key>
-    <integer>3600</integer>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Minute</key>
+            <integer>30</integer>
+        </dict>
+    </array>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
@@ -95,192 +139,24 @@ EOF
 launchctl load ~/Library/LaunchAgents/com.claude.timer-keeper.plist
 ```
 
-### Uninstall
+### 3. Set 6am Daily Fallback Wake
+```bash
+sudo pmset repeat wakeorpoweron MTWRFSU 06:00:00
+```
+
+---
+
+## Uninstall
 
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.claude.timer-keeper.plist
 rm ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-```
 
----
-
-## Part 2: Overnight Wake & Sleep (pmset + LaunchAgent)
-
-Makes the Mac wake at 6:00am, run the ping, then sleep at 6:02am.
-
-### Components
-
-| Component | Purpose |
-|-----------|---------|
-| `pmset repeat wakeorpoweron` | Wakes Mac at 6:00am daily |
-| `com.claude.timer-sleep.plist` | Puts Mac to sleep at 6:02am |
-
-### Check Wake Schedule
-
-```bash
-pmset -g sched
-```
-
-Expected output:
-```
-Repeating power events:
-  wakepoweron at 6:00AM every day
-```
-
-### Check Sleep Job Status
-
-```bash
-launchctl list | grep claude.timer-sleep
-```
-
-### Change Wake Time
-
-```bash
-sudo pmset repeat wakeorpoweron MTWRFSU 04:00:00
-
-launchctl unload ~/Library/LaunchAgents/com.claude.timer-sleep.plist
-
-cat > ~/Library/LaunchAgents/com.claude.timer-sleep.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.claude.timer-sleep</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/bin/pmset</string>
-        <string>sleepnow</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>4</integer>
-        <key>Minute</key>
-        <integer>2</integer>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>/tmp/claude-timer-sleep.out</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/claude-timer-sleep.err</string>
-</dict>
-</plist>
-EOF
-
-launchctl load ~/Library/LaunchAgents/com.claude.timer-sleep.plist
-```
-
-### Reinstall Sleep Job (6:02am)
-
-```bash
-cat > ~/Library/LaunchAgents/com.claude.timer-sleep.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.claude.timer-sleep</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/bin/pmset</string>
-        <string>sleepnow</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>6</integer>
-        <key>Minute</key>
-        <integer>2</integer>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>/tmp/claude-timer-sleep.out</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/claude-timer-sleep.err</string>
-</dict>
-</plist>
-EOF
-
-launchctl load ~/Library/LaunchAgents/com.claude.timer-sleep.plist
-```
-
-### Uninstall Wake/Sleep
-
-```bash
 sudo pmset repeat cancel
+sudo pmset schedule cancelall
 
-launchctl unload ~/Library/LaunchAgents/com.claude.timer-sleep.plist
-rm ~/Library/LaunchAgents/com.claude.timer-sleep.plist
+sudo rm /etc/sudoers.d/pmset-claude
 ```
-
----
-
-## Quick Status Check (All Components)
-
-```bash
-echo "=== Hourly Ping Job ===" && \
-launchctl list | grep claude.timer-keeper && \
-echo "" && \
-echo "=== Sleep Job ===" && \
-launchctl list | grep claude.timer-sleep && \
-echo "" && \
-echo "=== Wake Schedule ===" && \
-pmset -g sched | grep -A1 "Repeating" && \
-echo "" && \
-echo "=== Last Ping ===" && \
-stat -f "%Sm" /tmp/claude-timer-keeper.out 2>/dev/null || echo "Never run"
-```
-
----
-
-## Daily Flow
-
-```
-┌─────────────────────────────────────────────┐
-│              YOUR DAILY TIMELINE            │
-├─────────────────────────────────────────────┤
-│ 11:00pm  You close laptop / sleep           │
-│    ↓                                        │
-│ 6:00am   Mac wakes automatically            │
-│ 6:00am   Claude ping runs (timer active)    │
-│ 6:02am   Mac goes back to sleep             │
-│    ↓                                        │
-│ 8:00am   You wake up, timer already running │
-│ 9:00am   Hourly ping                        │
-│ 10:00am  Hourly ping                        │
-│   ...    (continues every hour)             │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## Troubleshooting
-
-### Job not running
-
-```bash
-cat /tmp/claude-timer-keeper.err
-```
-
-### Claude path changed
-
-Find new path and update plist:
-```bash
-which claude
-
-launchctl unload ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-nano ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-launchctl load ~/Library/LaunchAgents/com.claude.timer-keeper.plist
-```
-
-### Mac not waking at scheduled time
-
-- Check if "Low Power Mode" is disabled
-- Check System Settings > Battery > Options > "Wake for network access"
-- Verify schedule: `pmset -g sched`
-
-### Sleep job running while using computer at 6am
-
-Change to an earlier time (e.g., 4am) using the "Change Wake Time" instructions above.
 
 ---
 
@@ -288,9 +164,37 @@ Change to an earlier time (e.g., 4am) using the "Change Wake Time" instructions 
 
 | Path | Description |
 |------|-------------|
-| `~/Library/LaunchAgents/com.claude.timer-keeper.plist` | Hourly ping job |
-| `~/Library/LaunchAgents/com.claude.timer-sleep.plist` | 6:02am sleep job |
-| `/tmp/claude-timer-keeper.out` | Ping output log |
-| `/tmp/claude-timer-keeper.err` | Ping error log |
-| `/tmp/claude-timer-sleep.out` | Sleep job output |
-| `/tmp/claude-timer-sleep.err` | Sleep job errors |
+| `scripts/claude-timer-wake.sh` | Main script (ping + schedule) |
+| `~/Library/LaunchAgents/com.claude.timer-keeper.plist` | LaunchAgent config |
+| `~/.claude-timer-keeper.log` | Activity log |
+| `/tmp/claude-timer-keeper.out` | stdout output |
+| `/tmp/claude-timer-keeper.err` | stderr output |
+| `/etc/sudoers.d/pmset-claude` | Passwordless sudo config |
+
+---
+
+## Troubleshooting
+
+### Wake not scheduling
+Check sudo is working:
+```bash
+sudo pmset schedule wake "$(date -v+1M '+%m/%d/%Y %H:%M:%S')"
+pmset -g sched
+```
+
+### Mac not waking from sleep
+- Ensure Mac is in **sleep mode**, not powered off
+- Check battery settings: System Settings > Battery > Options > "Wake for network access"
+- Verify schedule exists: `pmset -g sched`
+
+### LaunchAgent not running
+```bash
+launchctl list | grep claude.timer-keeper
+cat /tmp/claude-timer-keeper.err
+```
+
+### Claude path changed
+```bash
+which claude
+```
+Then update the path in `scripts/claude-timer-wake.sh`.

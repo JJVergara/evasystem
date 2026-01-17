@@ -125,9 +125,9 @@ export function InstagramSyncStatus() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Estado de Sync</CardTitle>
           {syncStats.isAutoSyncActive ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-success" />
           ) : (
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTriangle className="h-4 w-4 text-warning" />
           )}
         </CardHeader>
         <CardContent>

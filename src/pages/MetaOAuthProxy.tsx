@@ -144,7 +144,7 @@ const MetaOAuthProxy = () => {
   }, [searchParams, navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/20">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="text-center max-w-md mx-auto p-6">
         {status === 'loading' && (
           <>
@@ -156,9 +156,9 @@ const MetaOAuthProxy = () => {
 
         {status === 'success' && (
           <>
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-6 h-6 text-green-600"
+                className="w-6 h-6 text-success"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -171,16 +171,16 @@ const MetaOAuthProxy = () => {
                 />
               </svg>
             </div>
-            <p className="text-lg font-medium text-green-600 mb-2">¡Conexión exitosa!</p>
+            <p className="text-lg font-medium text-success mb-2">¡Conexión exitosa!</p>
             <p className="text-sm text-muted-foreground">Redirigiendo a configuraciones...</p>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-6 h-6 text-red-600"
+                className="w-6 h-6 text-destructive"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -193,7 +193,7 @@ const MetaOAuthProxy = () => {
                 />
               </svg>
             </div>
-            <p className="text-lg font-medium text-red-600 mb-2">Error en la conexión</p>
+            <p className="text-lg font-medium text-destructive mb-2">Error en la conexión</p>
             <p className="text-sm text-muted-foreground mb-4">{errorDetails}</p>
             <p className="text-xs text-muted-foreground">Redirigiendo a configuraciones...</p>
           </>

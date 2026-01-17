@@ -74,7 +74,7 @@ export default function MentionsOptimized() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4 bg-white/50 rounded-lg">
+                <div key={i} className="p-4 bg-card/50 rounded-lg">
                   <Skeleton className="h-16 w-full" />
                 </div>
               ))}
@@ -140,7 +140,7 @@ export default function MentionsOptimized() {
       <div className="space-y-6">
         <GlassPanel>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-primary/20 rounded-lg">
                   <Hash className="w-5 h-5 text-primary" />
@@ -152,7 +152,7 @@ export default function MentionsOptimized() {
               </div>
             </div>
 
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-success/20 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-success" />
@@ -168,7 +168,7 @@ export default function MentionsOptimized() {
               </div>
             </div>
 
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-warning/20 rounded-lg">
                   <MessageCircle className="w-5 h-5 text-warning" />
@@ -180,10 +180,10 @@ export default function MentionsOptimized() {
               </div>
             </div>
 
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Hash className="w-5 h-5 text-blue-500" />
+                <div className="p-2 bg-info/20 rounded-lg">
+                  <Hash className="w-5 h-5 text-info" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Sin Asignar</p>
@@ -202,12 +202,12 @@ export default function MentionsOptimized() {
                 placeholder="Buscar menciones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/50"
+                className="pl-10 bg-card/50"
               />
             </div>
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48 bg-white/50">
+              <SelectTrigger className="w-48 bg-card/50">
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -219,7 +219,7 @@ export default function MentionsOptimized() {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-white/50">
+              <SelectTrigger className="w-48 bg-card/50">
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
@@ -239,12 +239,12 @@ export default function MentionsOptimized() {
                 {mentions.map((mention) => (
                   <div
                     key={mention.id}
-                    className="p-4 bg-white/30 rounded-lg hover:bg-white/40 transition-colors"
+                    className="p-4 bg-card/30 rounded-lg hover:bg-card/40 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <span className="text-primary-foreground font-medium text-sm">
                             {mention.ambassador_name
                               ? mention.ambassador_name
                                   .split(' ')
@@ -283,7 +283,7 @@ export default function MentionsOptimized() {
                       </div>
                     </div>
 
-                    <p className="text-sm mb-3 bg-white/40 p-3 rounded-lg">
+                    <p className="text-sm mb-3 bg-card/40 p-3 rounded-lg">
                       {mention.content}
                       {mention.hashtag && (
                         <span className="text-primary font-medium"> #{mention.hashtag}</span>

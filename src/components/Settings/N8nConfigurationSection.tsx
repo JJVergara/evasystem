@@ -105,11 +105,7 @@ export function N8nConfigurationSection() {
 
     switch (connectionStatus) {
       case 'success':
-        return (
-          <Badge variant="default" className="bg-green-500">
-            Conectado
-          </Badge>
-        );
+        return <Badge variant="success">Conectado</Badge>;
       case 'error':
         return <Badge variant="destructive">Error</Badge>;
       default:
@@ -124,9 +120,9 @@ export function N8nConfigurationSection() {
 
     switch (connectionStatus) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-success" />;
       case 'error':
-        return <AlertTriangle className="w-5 h-5 text-red-500" />;
+        return <AlertTriangle className="w-5 h-5 text-destructive" />;
       default:
         return <Webhook className="w-5 h-5 text-muted-foreground" />;
     }
@@ -195,11 +191,9 @@ export function N8nConfigurationSection() {
           </div>
         )}
 
-        <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950">
-          <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-200">
-            Información Importante
-          </h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+        <div className="p-4 border rounded-lg bg-info/5 dark:bg-info/10">
+          <h4 className="font-medium mb-2 text-info">Información Importante</h4>
+          <ul className="text-sm text-info/80 space-y-1">
             <li>• Todas las llamadas a n8n pasan por el proxy seguro</li>
             <li>• Se incluye contexto de organización y usuario automáticamente</li>
             <li>• Los webhooks deben estar configurados en tu instancia de n8n</li>

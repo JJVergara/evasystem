@@ -12,9 +12,7 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            404
-          </h1>
+          <h1 className="text-6xl font-bold text-primary">404</h1>
           <h2 className="text-2xl font-semibold">Página no encontrada</h2>
           <p className="text-muted-foreground">La página que buscas no existe o ha sido movida</p>
         </div>

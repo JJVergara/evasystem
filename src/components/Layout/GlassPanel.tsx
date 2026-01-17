@@ -22,14 +22,14 @@ export function GlassPanel({
   };
 
   const variantClasses = {
-    glass: 'backdrop-blur-md bg-white/80 border-gray-200/50',
+    glass: 'backdrop-blur-md bg-card/80 border-border/50',
     solid: 'bg-background border-border',
   };
 
   return (
     <div
       className={cn(
-        'shadow-2xl animate-fade-in',
+        'shadow-elegant border animate-fade-in',
         sizeClasses[size],
         variantClasses[variant],
         className

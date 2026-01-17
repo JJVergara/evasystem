@@ -162,7 +162,7 @@ export function StoryMentionsList({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Instagram className="w-5 h-5 text-pink-600" />@{mention.instagram_username}
+                  <Instagram className="w-5 h-5 text-primary" />@{mention.instagram_username}
                   {mention.ambassador_name && (
                     <Badge variant="secondary" className="ml-2">
                       {mention.ambassador_name}

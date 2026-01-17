@@ -135,9 +135,9 @@ export function MetaAppCredentialsForm({
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 {hasCredentials ? (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-success" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                  <AlertCircle className="h-5 w-5 text-warning" />
                 )}
                 Estado de Configuración
               </CardTitle>

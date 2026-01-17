@@ -19,15 +19,15 @@ export function EVABrandedDashboard() {
   return (
     <div className="space-y-6">
       {pendingRecommendedSteps.length > 0 && (
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+        <Card className="border-info/30 bg-info/5 dark:bg-info/10">
           <CardHeader className="pb-3">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex-1">
-                <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-400">
+                <CardTitle className="flex items-center gap-2 text-info">
                   <AlertCircle className="h-5 w-5" />
                   Completa la configuración de tu sistema
                 </CardTitle>
-                <CardDescription className="text-blue-600 dark:text-blue-500">
+                <CardDescription className="text-info/80">
                   Tienes {pendingRecommendedSteps.length} paso
                   {pendingRecommendedSteps.length !== 1 ? 's' : ''} recomendado
                   {pendingRecommendedSteps.length !== 1 ? 's' : ''} pendiente
@@ -106,9 +106,9 @@ export function EVABrandedDashboard() {
                 {Math.round(overallProgress)}%
               </Badge>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-800">
+            <div className="w-full bg-muted rounded-full h-2">
               <div
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
@@ -117,15 +117,13 @@ export function EVABrandedDashboard() {
       )}
 
       {overallProgress === 100 && (
-        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+        <Card className="border-success/30 bg-success/5 dark:bg-success/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-success" />
               <div>
-                <p className="font-medium text-green-800 dark:text-green-400">
-                  ¡Configuración completa!
-                </p>
-                <p className="text-sm text-green-600 dark:text-green-500">
+                <p className="font-medium text-success">¡Configuración completa!</p>
+                <p className="text-sm text-success/80">
                   Tu sistema EVA está completamente configurado y listo para usar
                 </p>
               </div>

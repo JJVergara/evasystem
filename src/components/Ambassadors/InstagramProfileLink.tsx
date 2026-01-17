@@ -27,7 +27,7 @@ export function InstagramProfileLink({
         onClick={handleClick}
         className="flex items-center gap-2 h-auto p-2"
       >
-        <Instagram className="h-4 w-4 text-pink-600" />
+        <Instagram className="h-4 w-4 text-primary" />
         <div className="flex flex-col items-start">
           <span className="text-sm font-medium">@{username.replace('@', '')}</span>
           {followerCount && (

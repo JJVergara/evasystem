@@ -80,21 +80,21 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Instagram className="h-5 w-5 text-pink-600" />
+            <Instagram className="h-5 w-5 text-primary" />
             Guía: Configurar Instagram API con Instagram Login
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+          <Card className="border-warning/20 bg-warning/10">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
+              <CardTitle className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
                 Importante
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-amber-700 dark:text-amber-300">
+              <p className="text-warning/80">
                 Cada organización debe tener su propia aplicación en Meta Developers. No compartas
                 credenciales entre diferentes organizaciones o clientes.
               </p>
@@ -169,7 +169,7 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
                   <ul className="space-y-2">
                     {step.details.map((detail, detailIndex) => (
                       <li key={detailIndex} className="flex items-start gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                         <span className="text-sm">
                           {detail.startsWith('http') ? (
                             <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono break-all">
@@ -187,14 +187,12 @@ export function InstagramConfigGuide({ isOpen, onClose }: InstagramConfigGuidePr
             ))}
           </div>
 
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <Card className="border-info/20 bg-info/10">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-blue-800 dark:text-blue-400">
-                    ¿Ya configuraste tu Meta App?
-                  </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-500">
+                  <p className="font-medium text-info">¿Ya configuraste tu Meta App?</p>
+                  <p className="text-sm text-info/80">
                     Regresa al onboarding para ingresar tus credenciales y conectar Instagram
                   </p>
                 </div>

@@ -98,8 +98,8 @@ export function InstagramConnect({
 
   if (currentStatus.isConnected) {
     return (
-      <div className="flex items-center gap-2 p-3 border rounded-lg bg-green-50 dark:bg-green-900/20">
-        <CheckCircle className="w-4 h-4 text-green-600" />
+      <div className="flex items-center gap-2 p-3 border rounded-lg bg-success/5 dark:bg-success/10">
+        <CheckCircle className="w-4 h-4 text-success" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <Instagram className="w-4 h-4" />
@@ -129,7 +129,7 @@ export function InstagramConnect({
 
   return (
     <div className="flex items-center gap-2 p-3 border rounded-lg border-dashed">
-      <AlertCircle className="w-4 h-4 text-orange-500" />
+      <AlertCircle className="w-4 h-4 text-warning" />
       <div className="flex-1">
         <p className="font-medium">Instagram no conectado</p>
         <p className="text-sm text-muted-foreground">

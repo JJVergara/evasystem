@@ -79,13 +79,13 @@ export function AmbassadorRequestsTab() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
+        return 'bg-warning/10 text-warning border-warning/30';
       case 'approved':
-        return 'bg-green-500/10 text-green-700 border-green-200';
+        return 'bg-success/10 text-success border-success/30';
       case 'rejected':
-        return 'bg-red-500/10 text-red-700 border-red-200';
+        return 'bg-destructive/10 text-destructive border-destructive/30';
       default:
-        return 'bg-gray-500/10 text-gray-700 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 

@@ -286,9 +286,7 @@ export function NotificationCenter() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Centro de Notificaciones
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground">Centro de Notificaciones</h1>
           <p className="text-muted-foreground">
             Gestiona todas tus alertas y notificaciones
             {unreadCount > 0 && (
@@ -345,7 +343,7 @@ export function NotificationCenter() {
 
         <div className="space-y-4">
           {filteredNotifications.length === 0 ? (
-            <Card className="shadow-card">
+            <Card>
               <CardContent className="p-8 text-center">
                 <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No hay notificaciones</h3>
@@ -362,8 +360,8 @@ export function NotificationCenter() {
             filteredNotifications.map((notification) => (
               <Card
                 key={notification.id}
-                className={`shadow-card transition-all hover:shadow-elegant ${
-                  !notification.read_status ? 'border-primary/50 bg-gradient-card' : ''
+                className={`transition-all hover:shadow-card ${
+                  !notification.read_status ? 'border-primary/30 bg-primary/5' : ''
                 }`}
               >
                 <CardContent className="p-4">

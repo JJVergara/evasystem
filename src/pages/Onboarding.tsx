@@ -197,15 +197,13 @@ export default function Onboarding() {
           <GlassPanel size="lg" className="text-center">
             <div className="space-y-6">
               <div className="flex items-center justify-center">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-full">
-                  <Sparkles className="h-12 w-12 text-white" />
+                <div className="bg-primary p-4 rounded-full">
+                  <Sparkles className="h-12 w-12 text-primary-foreground" />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                  ¡Bienvenido a EVA System!
-                </h1>
+                <h1 className="text-4xl font-bold text-primary">¡Bienvenido a EVA System!</h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                   Tu plataforma inteligente para gestionar embajadores y eventos. Comencemos
                   configurando tu experiencia paso a paso.
@@ -225,7 +223,7 @@ export default function Onboarding() {
           </GlassPanel>
 
           {editingOrg && (
-            <GlassPanel className="border-purple-200 bg-purple-50/50">
+            <GlassPanel className="border-primary/20 bg-primary/5">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold flex items-center">
@@ -258,11 +256,7 @@ export default function Onboarding() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button
-                    onClick={handleSaveOrganization}
-                    disabled={savingOrg || !orgName.trim()}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
-                  >
+                  <Button onClick={handleSaveOrganization} disabled={savingOrg || !orgName.trim()}>
                     {savingOrg ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -290,15 +284,15 @@ export default function Onboarding() {
                 key={step.id}
                 className={`relative transition-all duration-300 hover:shadow-xl ${
                   step.completed
-                    ? 'border-green-200 bg-green-50/50'
+                    ? 'border-success/20 bg-success/5'
                     : index === currentStep
-                      ? 'border-purple-200 bg-purple-50/50 ring-2 ring-purple-100'
-                      : 'hover:border-purple-100'
+                      ? 'border-primary/20 bg-primary/5 ring-2 ring-primary/10'
+                      : 'hover:border-primary/10'
                 }`}
               >
                 {step.completed && (
                   <div className="absolute -top-2 -right-2">
-                    <div className="bg-green-500 text-white p-1 rounded-full">
+                    <div className="bg-success text-success-foreground p-1 rounded-full">
                       <CheckCircle className="h-4 w-4" />
                     </div>
                   </div>
@@ -308,9 +302,7 @@ export default function Onboarding() {
                   <div className="flex items-start space-x-4">
                     <div
                       className={`p-3 rounded-lg ${
-                        step.completed
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-600'
+                        step.completed ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
                       }`}
                     >
                       {step.icon}
@@ -332,7 +324,7 @@ export default function Onboarding() {
                     <Button
                       onClick={step.action}
                       disabled={step.id === 'instagram' && isConnecting}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="w-full shadow-lg hover:shadow-xl transition-all duration-300"
                     >
                       {step.id === 'instagram' && isConnecting ? (
                         <>
@@ -353,15 +345,15 @@ export default function Onboarding() {
           </div>
 
           {canAccessDashboard && (
-            <GlassPanel className="text-center border-green-200 bg-green-50/50">
+            <GlassPanel className="text-center border-success/20 bg-success/5">
               <div className="space-y-4">
-                <div className="bg-green-100 p-4 rounded-full w-fit mx-auto">
-                  <CheckCircle className="h-12 w-12 text-green-600" />
+                <div className="bg-success/10 p-4 rounded-full w-fit mx-auto">
+                  <CheckCircle className="h-12 w-12 text-success" />
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-green-800">¡Configuración Completada!</h3>
-                  <p className="text-green-700">
+                  <h3 className="text-2xl font-bold text-success">¡Configuración Completada!</h3>
+                  <p className="text-success/80">
                     Tu cuenta está lista. Ahora puedes comenzar a gestionar tus embajadores y
                     eventos.
                   </p>
@@ -370,7 +362,7 @@ export default function Onboarding() {
                 <Button
                   size="lg"
                   onClick={handleFinishOnboarding}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Explorar Dashboard
                 </Button>

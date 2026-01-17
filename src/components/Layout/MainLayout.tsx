@@ -20,7 +20,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="flex min-h-screen w-full relative">
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 shadow-sm">
+          <div className="border-b border-border/50 bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60 shadow-sm">
             <div className="flex h-12 sm:h-14 items-center justify-between px-3 sm:px-4 md:px-6 gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <Button

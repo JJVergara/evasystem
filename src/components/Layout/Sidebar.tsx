@@ -130,11 +130,11 @@ function SidebarContent({
         {!collapsed && <UserProfileDropdown />}
 
         {!collapsed && (
-          <div className="bg-gradient-card rounded-lg p-3 border border-primary/20">
+          <div className="bg-accent/50 rounded-lg p-3 border border-border">
             <div className="text-sm font-medium">Conectado a Instagram</div>
             <div className="text-xs text-muted-foreground mt-1">Token válido hasta: 30 días</div>
             <div className="w-full bg-secondary rounded-full h-2 mt-2">
-              <div className="bg-gradient-primary h-2 rounded-full w-4/5" />
+              <div className="bg-primary h-2 rounded-full w-4/5" />
             </div>
           </div>
         )}

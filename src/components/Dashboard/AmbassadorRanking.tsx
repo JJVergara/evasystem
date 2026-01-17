@@ -16,10 +16,10 @@ import { toast } from 'sonner';
 import { Trophy, RefreshCw, TrendingUp, MessageSquare, Award, Target } from 'lucide-react';
 
 const CATEGORY_STYLES: Record<string, string> = {
-  bronze: 'bg-amber-100 text-amber-800 border-amber-300',
-  silver: 'bg-gray-100 text-gray-800 border-gray-300',
-  gold: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  diamond: 'bg-purple-100 text-purple-800 border-purple-300',
+  bronze: 'bg-warning/10 text-warning border-warning/30',
+  silver: 'bg-muted text-muted-foreground border-border',
+  gold: 'bg-warning/20 text-warning border-warning/40',
+  diamond: 'bg-primary/10 text-primary border-primary/30',
 };
 
 const RANK_BADGES: Record<number, JSX.Element> = {
@@ -65,7 +65,7 @@ export function AmbassadorRanking() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
+          <Trophy className="h-5 w-5 text-warning" />
           <CardTitle>Ranking de Embajadores</CardTitle>
         </div>
         <Button
@@ -175,10 +175,10 @@ export function AmbassadorRanking() {
                         <span
                           className={
                             ambassador.completion_rate >= 80
-                              ? 'text-green-600 font-medium'
+                              ? 'text-success font-medium'
                               : ambassador.completion_rate >= 60
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
+                                ? 'text-warning'
+                                : 'text-destructive'
                           }
                         >
                           {ambassador.completion_rate}%

@@ -122,14 +122,14 @@ export function StoryInsightsDashboard() {
   const { summary, daily_metrics, metrics_by_hour, recent_snapshots, max_stories_per_hour } = data;
 
   const storyColors = [
-    '#8b5cf6', // Purple
-    '#10b981', // Green
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#3b82f6', // Blue
-    '#ec4899', // Pink
-    '#14b8a6', // Teal
-    '#f97316', // Orange
+    'hsl(210, 58%, 14%)',
+    'hsl(210, 45%, 45%)',
+    'hsl(180, 35%, 40%)',
+    'hsl(32, 55%, 50%)',
+    'hsl(210, 58%, 28%)',
+    'hsl(180, 35%, 52%)',
+    'hsl(32, 55%, 62%)',
+    'hsl(210, 45%, 58%)',
   ];
 
   return (
@@ -165,29 +165,26 @@ export function StoryInsightsDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-700 border-pink-200"
-            >
+            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
               <Instagram className="w-3 h-3 mr-1" />
               Instagram Stories API v24.0
             </Badge>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-200/50">
+            <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Stories</p>
-                    <p className="text-2xl font-bold text-violet-700">{summary.total_stories}</p>
+                    <p className="text-2xl font-bold text-primary">{summary.total_stories}</p>
                   </div>
-                  <BarChart3 className="w-8 h-8 text-violet-500/50" />
+                  <BarChart3 className="w-8 h-8 text-primary/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-200/50">
+            <Card className="bg-info/5 border-info/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -210,16 +207,16 @@ export function StoryInsightsDashboard() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-blue-700">
+                    <p className="text-2xl font-bold text-info">
                       {formatNumber(summary.total_reach)}
                     </p>
                   </div>
-                  <Eye className="w-8 h-8 text-blue-500/50" />
+                  <Eye className="w-8 h-8 text-info/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-200/50">
+            <Card className="bg-success/5 border-success/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -243,75 +240,75 @@ export function StoryInsightsDashboard() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-2xl font-bold text-emerald-700">
+                    <p className="text-2xl font-bold text-success">
                       {formatNumber(summary.total_views)}
                     </p>
                   </div>
-                  <Activity className="w-8 h-8 text-emerald-500/50" />
+                  <Activity className="w-8 h-8 text-success/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-200/50">
+            <Card className="bg-warning/5 border-warning/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
                       Visitas Perfil
                     </p>
-                    <p className="text-2xl font-bold text-orange-700">
+                    <p className="text-2xl font-bold text-warning">
                       {formatNumber(summary.total_profile_visits)}
                     </p>
                   </div>
-                  <Users className="w-8 h-8 text-orange-500/50" />
+                  <Users className="w-8 h-8 text-warning/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-200/50">
+            <Card className="bg-primary/5 border-primary/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
                       Interacciones
                     </p>
-                    <p className="text-2xl font-bold text-pink-700">
+                    <p className="text-2xl font-bold text-primary">
                       {formatNumber(summary.total_interactions)}
                     </p>
                   </div>
-                  <Sparkles className="w-8 h-8 text-pink-500/50" />
+                  <Sparkles className="w-8 h-8 text-primary/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border-indigo-200/50">
+            <Card className="bg-info/5 border-info/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
                       Compartidos
                     </p>
-                    <p className="text-2xl font-bold text-indigo-700">
+                    <p className="text-2xl font-bold text-info">
                       {formatNumber(summary.total_shares)}
                     </p>
                   </div>
-                  <Share2 className="w-8 h-8 text-indigo-500/50" />
+                  <Share2 className="w-8 h-8 text-info/50" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-cyan-500/10 to-sky-500/10 border-cyan-200/50">
+            <Card className="bg-muted/50 border-border">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
                       Respuestas
                     </p>
-                    <p className="text-2xl font-bold text-cyan-700">
+                    <p className="text-2xl font-bold text-foreground">
                       {formatNumber(summary.total_replies)}
                     </p>
                   </div>
-                  <MessageCircle className="w-8 h-8 text-cyan-500/50" />
+                  <MessageCircle className="w-8 h-8 text-muted-foreground/50" />
                 </div>
               </CardContent>
             </Card>
@@ -322,8 +319,8 @@ export function StoryInsightsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-violet-100">
-                  <Target className="w-6 h-6 text-violet-600" />
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Target className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Alcance promedio por Story</p>
@@ -335,8 +332,8 @@ export function StoryInsightsDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-emerald-100">
-                  <TrendingUp className="w-6 h-6 text-emerald-600" />
+                <div className="p-3 rounded-full bg-success/10">
+                  <TrendingUp className="w-6 h-6 text-success" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Vistas promedio por Story</p>
@@ -369,12 +366,12 @@ export function StoryInsightsDashboard() {
                     <AreaChart data={daily_metrics}>
                       <defs>
                         <linearGradient id="reachGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(210, 58%, 14%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(210, 58%, 14%)" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(180, 35%, 40%)" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(180, 35%, 40%)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -409,7 +406,7 @@ export function StoryInsightsDashboard() {
                       <Area
                         type="monotone"
                         dataKey="total_reach"
-                        stroke="#8b5cf6"
+                        stroke="hsl(210, 58%, 14%)"
                         strokeWidth={2}
                         fill="url(#reachGradient)"
                         name="Alcance"
@@ -417,7 +414,7 @@ export function StoryInsightsDashboard() {
                       <Area
                         type="monotone"
                         dataKey="total_views"
-                        stroke="#10b981"
+                        stroke="hsl(180, 35%, 40%)"
                         strokeWidth={2}
                         fill="url(#viewsGradient)"
                         name="Vistas"
@@ -425,7 +422,7 @@ export function StoryInsightsDashboard() {
                       <Line
                         type="monotone"
                         dataKey="total_profile_visits"
-                        stroke="#f59e0b"
+                        stroke="hsl(32, 55%, 50%)"
                         strokeWidth={2}
                         dot={false}
                         name="Visitas Perfil"
@@ -463,7 +460,7 @@ export function StoryInsightsDashboard() {
                       />
                       <Bar
                         dataKey="stories_count"
-                        fill="#8b5cf6"
+                        fill="hsl(210, 58%, 14%)"
                         radius={[4, 4, 0, 0]}
                         name="Stories"
                       />
@@ -495,7 +492,7 @@ export function StoryInsightsDashboard() {
                         <pattern id="avgPattern" patternUnits="userSpaceOnUse" width="4" height="4">
                           <path
                             d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
-                            stroke="#666"
+                            stroke="hsl(215, 20%, 46%)"
                             strokeWidth="0.5"
                           />
                         </pattern>
@@ -605,13 +602,13 @@ export function StoryInsightsDashboard() {
                             .reduce((sum, h) => sum + h.avg_reach, 0) /
                             Math.max(1, metrics_by_hour.filter((h) => h.avg_reach > 0).length)
                         )}
-                        stroke="#666"
+                        stroke="hsl(215, 20%, 46%)"
                         strokeDasharray="5 5"
                         label={{
                           value: 'Promedio global',
                           position: 'insideTopRight',
                           fontSize: 10,
-                          fill: '#666',
+                          fill: 'hsl(215, 20%, 46%)',
                         }}
                       />
                     </BarChart>
@@ -640,7 +637,7 @@ export function StoryInsightsDashboard() {
                     </div>
                   ))}
                   <div className="flex items-center gap-1.5">
-                    <div className="w-6 border-t-2 border-dashed border-gray-500" />
+                    <div className="w-6 border-t-2 border-dashed border-muted-foreground" />
                     <span className="text-muted-foreground">Promedio global</span>
                   </div>
                 </div>
@@ -662,8 +659,8 @@ export function StoryInsightsDashboard() {
                 </div>
 
                 {metrics_by_hour.filter((h) => h.stories_count > 1).length > 0 && (
-                  <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <h4 className="font-medium mb-2 text-amber-600">
+                  <div className="mt-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                    <h4 className="font-medium mb-2 text-warning">
                       📌 Horas con múltiples Stories
                     </h4>
                     <div className="space-y-3">
@@ -735,8 +732,8 @@ export function StoryInsightsDashboard() {
                           className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="p-2 rounded-full bg-gradient-to-br from-pink-500 to-purple-500">
-                              <Instagram className="w-4 h-4 text-white" />
+                            <div className="p-2 rounded-full bg-primary">
+                              <Instagram className="w-4 h-4 text-primary-foreground" />
                             </div>
                             <div>
                               <p className="font-medium text-sm">

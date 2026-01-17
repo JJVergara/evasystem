@@ -61,10 +61,10 @@ export function EnhancedInstagramSettings() {
   if (isLoadingTokenStatus) {
     return (
       <div className="space-y-6">
-        <Card className="border-pink-200 bg-gradient-to-br from-pink-50/30 to-purple-50/30">
+        <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Instagram className="h-5 w-5 text-pink-600" />
+              <Instagram className="h-5 w-5 text-primary" />
               Conexión de Instagram
             </CardTitle>
             <CardDescription>
@@ -82,7 +82,7 @@ export function EnhancedInstagramSettings() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-green-200 bg-green-50/30">
+        <Card className="border-success/20 bg-success/5">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <Skeleton className="h-5 w-5 rounded-full" />
@@ -164,10 +164,10 @@ export function EnhancedInstagramSettings() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-pink-200 bg-gradient-to-br from-pink-50/30 to-purple-50/30">
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Instagram className="h-5 w-5 text-pink-600" />
+            <Instagram className="h-5 w-5 text-primary" />
             Conexión de Instagram
           </CardTitle>
           <CardDescription>
@@ -184,7 +184,7 @@ export function EnhancedInstagramSettings() {
                   {statusInfo.status}
                 </Badge>
                 {instagramUsername && (
-                  <Badge variant="outline" className="flex items-center gap-1 bg-white">
+                  <Badge variant="outline" className="flex items-center gap-1 bg-card">
                     <Instagram className="h-3 w-3" />@{instagramUsername}
                   </Badge>
                 )}
@@ -229,7 +229,7 @@ export function EnhancedInstagramSettings() {
                 <Button
                   onClick={() => connectInstagram()}
                   disabled={isConnecting || orgLoading || !organization}
-                  className="flex items-center gap-2 w-full sm:w-auto bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                   size="lg"
                 >
                   <Instagram className="h-5 w-5" />
@@ -246,18 +246,18 @@ export function EnhancedInstagramSettings() {
           </div>
 
           {!isConnected && (
-            <div className="flex items-start gap-3 text-sm bg-blue-50 text-blue-700 p-4 rounded-lg">
+            <div className="flex items-start gap-3 text-sm bg-info/10 text-info p-4 rounded-lg">
               <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div className="space-y-2">
                 <p className="font-medium">¿Qué necesitas para conectar?</p>
-                <ul className="space-y-1 text-blue-600">
+                <ul className="space-y-1 text-info/80">
                   <li>• Una cuenta de Instagram Business o Creator</li>
                   <li>• Acceso a tu cuenta de Instagram profesional</li>
                 </ul>
                 <Button
                   variant="link"
                   size="sm"
-                  className="p-0 h-auto text-blue-700 hover:text-blue-800"
+                  className="p-0 h-auto text-info hover:text-info/80"
                   onClick={() =>
                     window.open('https://help.instagram.com/502981923235522', '_blank')
                   }
@@ -324,16 +324,13 @@ export function EnhancedInstagramSettings() {
                   {instagramUsername ? (
                     `@${instagramUsername}`
                   ) : (
-                    <span className="text-yellow-600">No detectado</span>
+                    <span className="text-warning">No detectado</span>
                   )}
                 </p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Estado del Token</p>
-                <Badge
-                  variant={isTokenExpired ? 'destructive' : 'default'}
-                  className={!isTokenExpired ? 'bg-green-600' : ''}
-                >
+                <Badge variant={isTokenExpired ? 'destructive' : 'success'}>
                   {isTokenExpired ? 'Expirado' : 'Activo'}
                 </Badge>
               </div>
@@ -346,10 +343,10 @@ export function EnhancedInstagramSettings() {
                   className={`font-medium ${
                     daysUntilExpiry !== null && daysUntilExpiry !== undefined
                       ? daysUntilExpiry <= 7
-                        ? 'text-red-600'
+                        ? 'text-destructive'
                         : daysUntilExpiry <= 14
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
+                          ? 'text-warning'
+                          : 'text-success'
                       : ''
                   }`}
                 >
@@ -362,9 +359,7 @@ export function EnhancedInstagramSettings() {
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Cuenta Business</p>
-                <p
-                  className={`font-medium ${businessAccountId ? 'text-green-600' : 'text-yellow-600'}`}
-                >
+                <p className={`font-medium ${businessAccountId ? 'text-success' : 'text-warning'}`}>
                   {businessAccountId ? '✓ Conectada' : 'No vinculada'}
                 </p>
               </div>
@@ -398,11 +393,11 @@ export function EnhancedInstagramSettings() {
 
             {!businessAccountId && (
               <div className="space-y-3">
-                <div className="flex items-start gap-3 text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg">
+                <div className="flex items-start gap-3 text-sm text-warning bg-warning/10 p-4 rounded-lg">
                   <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="font-medium mb-1">Información incompleta</p>
-                    <p className="text-yellow-600 mb-3">
+                    <p className="text-warning/80 mb-3">
                       Puede que los datos no se hayan cargado completamente. Intenta actualizar o
                       ejecutar un diagnóstico.
                     </p>
@@ -447,25 +442,25 @@ export function EnhancedInstagramSettings() {
 
                     {diagnosticResult && (
                       <div className="space-y-3">
-                        <div className="p-4 bg-green-50 rounded-lg">
+                        <div className="p-4 bg-success/10 rounded-lg">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-green-100 rounded-full">
-                                <Instagram className="h-5 w-5 text-green-600" />
+                              <div className="p-2 bg-success/20 rounded-full">
+                                <Instagram className="h-5 w-5 text-success" />
                               </div>
                               <div>
-                                <p className="font-medium text-green-800">
+                                <p className="font-medium text-success">
                                   @
                                   {diagnosticResult.instagram_account?.username ||
                                     'Usuario no disponible'}
                                 </p>
-                                <p className="text-sm text-green-600">
+                                <p className="text-sm text-success/80">
                                   {diagnosticResult.instagram_account?.account_type ||
                                     'Cuenta de Instagram'}
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="default" className="bg-green-600">
+                            <Badge variant="success">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Conectada
                             </Badge>
@@ -492,7 +487,7 @@ export function EnhancedInstagramSettings() {
                         </div>
 
                         {diagnosticResult.message && (
-                          <p className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                          <p className="text-sm text-success bg-success/10 p-2 rounded">
                             {diagnosticResult.message}
                           </p>
                         )}
@@ -513,13 +508,13 @@ export function EnhancedInstagramSettings() {
         </Card>
       )}
 
-      <Card className="border-green-200 bg-green-50/30">
+      <Card className="border-success/20 bg-success/5">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+            <Shield className="h-5 w-5 text-success mt-0.5" />
             <div className="space-y-1">
-              <p className="font-medium text-green-800">Tu privacidad está protegida</p>
-              <p className="text-sm text-green-700">
+              <p className="font-medium text-success">Tu privacidad está protegida</p>
+              <p className="text-sm text-success/80">
                 EVA System solo accede a la información necesaria para gestionar tus embajadores.
                 Puedes desconectar tu cuenta en cualquier momento y tus datos serán eliminados.
               </p>

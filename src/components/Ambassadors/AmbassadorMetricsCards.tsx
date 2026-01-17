@@ -38,20 +38,20 @@ interface AmbassadorMetricsCardsProps {
 export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps) {
   const getCategoryColor = (category: string) => {
     const colors = {
-      bronze: 'bg-amber-100 text-amber-800',
-      silver: 'bg-gray-100 text-gray-800',
-      gold: 'bg-yellow-100 text-yellow-800',
-      diamond: 'bg-purple-100 text-purple-800',
+      bronze: 'bg-warning/10 text-warning',
+      silver: 'bg-muted text-muted-foreground',
+      gold: 'bg-warning/20 text-warning',
+      diamond: 'bg-primary/10 text-primary',
     };
     return colors[category as keyof typeof colors] || colors.bronze;
   };
 
   const getPerformanceColor = (status: string) => {
     const colors = {
-      cumple: 'bg-green-100 text-green-800',
-      advertencia: 'bg-yellow-100 text-yellow-800',
-      no_cumple: 'bg-red-100 text-red-800',
-      exclusivo: 'bg-purple-100 text-purple-800',
+      cumple: 'bg-success/10 text-success',
+      advertencia: 'bg-warning/10 text-warning',
+      no_cumple: 'bg-destructive/10 text-destructive',
+      exclusivo: 'bg-primary/10 text-primary',
     };
     return colors[status as keyof typeof colors] || colors.cumple;
   };
@@ -165,16 +165,16 @@ export function AmbassadorMetricsCards({ metrics }: AmbassadorMetricsCardsProps)
         metrics.story_insights.total_stories > 0 &&
         !metrics.insights_error && (
           <div className="mt-6">
-            <Card className="border-pink-200 bg-gradient-to-br from-pink-50/50 to-purple-50/50">
+            <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    <Image className="w-5 h-5 text-pink-600" />
+                    <Image className="w-5 h-5 text-primary" />
                     Insights de Stories
                   </CardTitle>
                   <Badge
                     variant="outline"
-                    className="text-xs bg-pink-100 text-pink-700 border-pink-300"
+                    className="text-xs bg-primary/10 text-primary border-primary/20"
                   >
                     📊 Instagram Insights API
                   </Badge>

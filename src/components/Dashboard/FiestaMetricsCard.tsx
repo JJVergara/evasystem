@@ -38,7 +38,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+      <Card className="hover:shadow-card transition-all duration-200">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-3/4" />
@@ -57,14 +57,14 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
   const getStatusBadge = (status: string) => {
     const styles = {
       active: 'bg-success/10 text-success',
-      completed: 'bg-blue-100 text-blue-800',
-      draft: 'bg-gray-100 text-gray-800',
+      completed: 'bg-info/10 text-info',
+      draft: 'bg-muted text-muted-foreground',
     };
     return styles[status as keyof typeof styles] || styles.active;
   };
 
   return (
-    <Card className="shadow-card hover:shadow-elegant transition-all duration-300 group">
+    <Card className="hover:shadow-card transition-all duration-200 group">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -153,7 +153,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                         className="flex items-center justify-between p-3 rounded-lg border"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                             {index + 1}
                           </div>
                           <Avatar className="w-8 h-8">

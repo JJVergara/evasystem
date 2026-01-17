@@ -27,27 +27,19 @@ export function TokenExpiryWarning({
     <Alert
       className={
         isCritical
-          ? 'border-red-500/50 bg-red-50 dark:bg-red-950/20'
-          : 'border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20'
+          ? 'border-destructive/50 bg-destructive/5 dark:bg-destructive/10'
+          : 'border-warning/50 bg-warning/5 dark:bg-warning/10'
       }
     >
       {isCritical ? (
-        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+        <AlertTriangle className="h-4 w-4 text-destructive" />
       ) : (
-        <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+        <Clock className="h-4 w-4 text-warning" />
       )}
-      <AlertTitle
-        className={
-          isCritical ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'
-        }
-      >
+      <AlertTitle className={isCritical ? 'text-destructive' : 'text-warning'}>
         {isCritical ? 'Conexión próxima a expirar' : 'Token de Instagram expirando pronto'}
       </AlertTitle>
-      <AlertDescription
-        className={
-          isCritical ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
-        }
-      >
+      <AlertDescription className={isCritical ? 'text-destructive/80' : 'text-warning/80'}>
         <p className="mb-3">
           {daysUntilExpiry === 1
             ? 'Tu conexión con Instagram expira mañana.'
@@ -61,11 +53,7 @@ export function TokenExpiryWarning({
           size="sm"
           onClick={onRefresh}
           disabled={isRefreshingToken}
-          className={
-            !isCritical
-              ? 'border-yellow-500 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-950'
-              : ''
-          }
+          className={!isCritical ? 'border-warning text-warning hover:bg-warning/10' : ''}
         >
           {isRefreshingToken ? (
             <>

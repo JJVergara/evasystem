@@ -192,7 +192,7 @@ export default function ImportExportReal() {
               <h4 className="font-semibold">Importar Embajadores</h4>
             </div>
 
-            <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-white/20">
+            <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-card/20">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -260,7 +260,7 @@ export default function ImportExportReal() {
                       setExportConfig((prev) => ({ ...prev, entity: value, fields: [] }))
                     }
                   >
-                    <SelectTrigger className="bg-white/50">
+                    <SelectTrigger className="bg-card/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -278,7 +278,7 @@ export default function ImportExportReal() {
                       setExportConfig((prev) => ({ ...prev, format: value }))
                     }
                   >
-                    <SelectTrigger className="bg-white/50">
+                    <SelectTrigger className="bg-card/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -292,7 +292,7 @@ export default function ImportExportReal() {
 
               <div>
                 <Label>Campos a exportar (dejar vacío para todos)</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-white/30 rounded-lg p-3">
+                <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-card/30 rounded-lg p-3">
                   {exportFields[exportConfig.entity as keyof typeof exportFields]?.map((field) => (
                     <div key={field.key} className="flex items-center space-x-2">
                       <Checkbox

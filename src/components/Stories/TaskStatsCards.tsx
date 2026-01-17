@@ -16,9 +16,9 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-blue-600" />
+            <Clock className="w-5 h-5 text-info" />
             <div>
-              <div className="text-2xl font-bold text-blue-600">{stats.uploaded}</div>
+              <div className="text-2xl font-bold text-info">{stats.uploaded}</div>
               <p className="text-sm text-muted-foreground">Historias Subidas</p>
             </div>
           </div>
@@ -28,9 +28,9 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
+            <CheckCircle className="w-5 h-5 text-success" />
             <div>
-              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <div className="text-2xl font-bold text-success">{stats.completed}</div>
               <p className="text-sm text-muted-foreground">Completadas</p>
             </div>
           </div>
@@ -40,9 +40,9 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <AlertTriangle className="w-5 h-5 text-warning" />
             <div>
-              <div className="text-2xl font-bold text-orange-600">{stats.in_progress}</div>
+              <div className="text-2xl font-bold text-warning">{stats.in_progress}</div>
               <p className="text-sm text-muted-foreground">En Progreso</p>
             </div>
           </div>
@@ -52,9 +52,9 @@ export function TaskStatsCards({ stats }: TaskStatsCardsProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <XCircle className="w-5 h-5 text-red-600" />
+            <XCircle className="w-5 h-5 text-destructive" />
             <div>
-              <div className="text-2xl font-bold text-red-600">{stats.invalid}</div>
+              <div className="text-2xl font-bold text-destructive">{stats.invalid}</div>
               <p className="text-sm text-muted-foreground">Inválidas</p>
             </div>
           </div>

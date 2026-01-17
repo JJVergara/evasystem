@@ -52,9 +52,9 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-4">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 text-center">
+        <div className="bg-card rounded-lg shadow-lg border border-border p-8 text-center">
           {status === 'loading' && (
             <>
               <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
@@ -65,8 +65,8 @@ export default function AuthCallback() {
 
           {status === 'success' && (
             <>
-              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-              <h2 className="text-xl font-semibold mb-2 text-green-600">¡Éxito!</h2>
+              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+              <h2 className="text-xl font-semibold mb-2 text-success">¡Éxito!</h2>
               <p className="text-muted-foreground">{message}</p>
               <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>
@@ -74,8 +74,8 @@ export default function AuthCallback() {
 
           {status === 'error' && (
             <>
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-              <h2 className="text-xl font-semibold mb-2 text-red-600">Error</h2>
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+              <h2 className="text-xl font-semibold mb-2 text-destructive">Error</h2>
               <p className="text-muted-foreground">{message}</p>
               <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>

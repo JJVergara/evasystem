@@ -236,13 +236,13 @@ export default function BackupCenter() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
+        return <AlertCircle className="w-4 h-4 text-destructive" />;
       case 'partial':
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+        return <AlertCircle className="w-4 h-4 text-warning" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-600" />;
+        return <Clock className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -383,7 +383,7 @@ export default function BackupCenter() {
                   <Label className="text-sm font-medium">
                     Tablas a restaurar (dejar vacío para todas)
                   </Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-white/30 rounded-lg p-3">
+                  <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-card/30 rounded-lg p-3">
                     {availableTables.map((table) => (
                       <div key={table} className="flex items-center space-x-2">
                         <Checkbox
@@ -441,7 +441,7 @@ export default function BackupCenter() {
                 backupLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-center justify-between p-4 bg-white/30 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-card/30 rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       {getStatusIcon(log.status)}

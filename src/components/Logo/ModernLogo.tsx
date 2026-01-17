@@ -18,14 +18,14 @@ export const ModernLogo: React.FC<ModernLogoProps> = ({ size = 'md', className =
       <svg viewBox="0 0 100 120" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(269, 100%, 18%)" />
-            <stop offset="50%" stopColor="hsl(269, 100%, 25%)" />
-            <stop offset="100%" stopColor="hsl(269, 100%, 35%)" />
+            <stop offset="0%" stopColor="hsl(210, 58%, 10%)" />
+            <stop offset="50%" stopColor="hsl(210, 58%, 14%)" />
+            <stop offset="100%" stopColor="hsl(210, 58%, 20%)" />
           </linearGradient>
           <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(269, 100%, 35%)" />
-            <stop offset="50%" stopColor="hsl(269, 100%, 45%)" />
-            <stop offset="100%" stopColor="hsl(269, 100%, 55%)" />
+            <stop offset="0%" stopColor="hsl(210, 50%, 28%)" />
+            <stop offset="50%" stopColor="hsl(210, 45%, 38%)" />
+            <stop offset="100%" stopColor="hsl(210, 45%, 48%)" />
           </linearGradient>
         </defs>
 

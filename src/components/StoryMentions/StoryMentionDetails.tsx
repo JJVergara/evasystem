@@ -145,7 +145,7 @@ export function StoryMentionDetails({
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Instagram className="w-5 h-5 text-pink-600" />
+            <Instagram className="w-5 h-5 text-primary" />
             Mención de Historia - @{mention.instagram_username}
           </DialogTitle>
         </DialogHeader>

@@ -27,17 +27,17 @@ import { DeleteAmbassadorModal } from './DeleteAmbassadorModal';
 import { InstagramProfileLink } from './InstagramProfileLink';
 
 const CATEGORY_STYLES: Record<string, string> = {
-  bronze: 'bg-amber-100 text-amber-800',
-  silver: 'bg-gray-100 text-gray-800',
-  gold: 'bg-yellow-100 text-yellow-800',
-  diamond: 'bg-purple-100 text-purple-800',
+  bronze: 'bg-warning/10 text-warning',
+  silver: 'bg-muted text-muted-foreground',
+  gold: 'bg-warning/20 text-warning',
+  diamond: 'bg-primary/10 text-primary',
 };
 
 const PERFORMANCE_STYLES: Record<string, string> = {
-  cumple: 'bg-green-100 text-green-800',
-  advertencia: 'bg-yellow-100 text-yellow-800',
-  no_cumple: 'bg-red-100 text-red-800',
-  exclusivo: 'bg-purple-100 text-purple-800',
+  cumple: 'bg-success/10 text-success',
+  advertencia: 'bg-warning/10 text-warning',
+  no_cumple: 'bg-destructive/10 text-destructive',
+  exclusivo: 'bg-primary/10 text-primary',
 };
 
 function getCategoryBadge(category: string) {
