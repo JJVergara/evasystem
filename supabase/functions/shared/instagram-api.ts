@@ -191,6 +191,88 @@ export async function checkStoryExists(storyId: string, accessToken: string): Pr
   }
 }
 
+export type StoryVerificationResult =
+  | 'exists'
+  | 'deleted'
+  | 'private_or_no_permission'
+  | 'rate_limited'
+  | 'token_invalid'
+  | 'network_error';
+
+export interface VerifyStoryResult {
+  result: StoryVerificationResult;
+  debug?: {
+    status?: number;
+    errorCode?: number;
+    errorMessage?: string;
+  };
+}
+
+export async function verifyStoryExists(
+  storyId: string,
+  accessToken: string,
+  returnDebug = false
+): Promise<StoryVerificationResult | VerifyStoryResult> {
+  try {
+    const url = buildInstagramApiUrl(storyId, {
+      fields: 'id',
+      access_token: accessToken,
+    });
+
+    const response = await fetch(url);
+
+    if (response.ok) {
+      return returnDebug ? { result: 'exists' } : 'exists';
+    }
+
+    if (response.status === 429) {
+      return returnDebug ? { result: 'rate_limited', debug: { status: 429 } } : 'rate_limited';
+    }
+
+    const errorData = await response.json().catch(() => null);
+    const errorCode = errorData?.error?.code;
+    const errorMessage = (errorData?.error?.message || '').toLowerCase();
+    const debug = { status: response.status, errorCode, errorMessage };
+
+    if (errorCode === 190) {
+      return returnDebug ? { result: 'token_invalid', debug } : 'token_invalid';
+    }
+
+    if (errorCode === 100) {
+      if (errorMessage.includes('does not exist')) {
+        return returnDebug ? { result: 'deleted', debug } : 'deleted';
+      }
+      if (
+        errorMessage.includes('missing permissions') ||
+        errorMessage.includes('cannot be loaded') ||
+        errorMessage.includes('not authorized')
+      ) {
+        return returnDebug
+          ? { result: 'private_or_no_permission', debug }
+          : 'private_or_no_permission';
+      }
+      return returnDebug ? { result: 'deleted', debug } : 'deleted';
+    }
+
+    if (response.status === 404) {
+      return returnDebug ? { result: 'deleted', debug } : 'deleted';
+    }
+
+    if (response.status >= 500 || errorCode === 2) {
+      return returnDebug ? { result: 'deleted', debug } : 'deleted';
+    }
+
+    return returnDebug ? { result: 'network_error', debug } : 'network_error';
+  } catch (err) {
+    return returnDebug
+      ? {
+          result: 'network_error',
+          debug: { errorMessage: err instanceof Error ? err.message : String(err) },
+        }
+      : 'network_error';
+  }
+}
+
 export async function fetchAccountInfo(
   accountId: string,
   accessToken: string,

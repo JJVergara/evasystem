@@ -29,7 +29,9 @@ export const STORY_INSIGHTS_METRICS = [
   'views',
 ].join(',');
 
-export const VERIFICATION_INTERVALS = [60, 720, 1380] as const;
+export const VERIFICATION_INTERVALS = [240, 480, 720, 960, 1200, 1380] as const;
+
+export const MAX_VERIFICATION_CHECKS = VERIFICATION_INTERVALS.length;
 
 export const STORY_EXPIRATION_MS = 24 * 60 * 60 * 1000;
 

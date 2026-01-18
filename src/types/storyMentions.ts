@@ -1,3 +1,5 @@
+export type AccountVisibility = 'unknown' | 'public' | 'private';
+
 export interface StoryMention {
   id: string;
   instagram_username: string;
@@ -19,4 +21,7 @@ export interface StoryMention {
   last_check_at?: string;
   conversation_id?: string;
   inbox_link?: string;
+  account_visibility?: AccountVisibility;
+  permission_requested_at?: string;
+  matched_ambassador_id?: string;
 }

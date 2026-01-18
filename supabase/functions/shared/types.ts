@@ -26,6 +26,8 @@ export interface Ambassador {
   profile_picture_url?: string;
 }
 
+export type AccountVisibility = 'unknown' | 'public' | 'private';
+
 export interface SocialMention {
   id: string;
   organization_id: string;
@@ -45,6 +47,8 @@ export interface SocialMention {
   story_url?: string;
   conversation_id?: string;
   inbox_link?: string;
+  account_visibility?: AccountVisibility;
+  permission_requested_at?: string;
 }
 
 export interface StoryInsights {
@@ -144,6 +148,8 @@ export interface MentionUpdateData {
   state?: string;
   processed?: boolean;
   processed_at?: string;
+  account_visibility?: AccountVisibility;
+  permission_requested_at?: string;
 }
 
 export interface Notification {
