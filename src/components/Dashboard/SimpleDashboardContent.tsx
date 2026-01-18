@@ -1,96 +1,34 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Calendar, Users, Activity } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { AmbassadorRanking } from "./AmbassadorRanking";
-
-interface DashboardStats {
-  totalOrganizations: number;
-  totalEvents: number;
-  totalAmbassadors: number;
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { AmbassadorRanking } from './AmbassadorRanking';
+import { EMOJIS } from '@/constants';
 
 export function SimpleDashboardContent() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalOrganizations: 0,
-    totalEvents: 0,
-    totalAmbassadors: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const { stats, loading } = useDashboardStats();
 
-  const fetchDashboardStats = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Obtener organizaciones del usuario
-      const { data: organizations, error: orgError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('created_by', user!.id);
-
-      if (orgError) throw orgError;
-
-      const organizationIds = organizations?.map(org => org.id) || [];
-      
-      // Obtener eventos de las organizaciones del usuario
-      let totalEvents = 0;
-      let totalAmbassadors = 0;
-
-      if (organizationIds.length > 0) {
-        const { data: fiestas, error: fiestasError } = await supabase
-          .from('fiestas')
-          .select('id')
-          .in('organization_id', organizationIds);
-
-        if (fiestasError) throw fiestasError;
-        totalEvents = fiestas?.length || 0;
-
-        const { data: ambassadors, error: ambassadorsError } = await supabase
-          .from('embassadors')
-          .select('id')
-          .in('organization_id', organizationIds);
-
-        if (ambassadorsError) throw ambassadorsError;
-        totalAmbassadors = ambassadors?.length || 0;
-      }
-
-      setStats({
-        totalOrganizations: organizations?.length || 0,
-        totalEvents,
-        totalAmbassadors
-      });
-
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      toast.error('Error al cargar estadísticas del dashboard');
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchDashboardStats();
-    }
-  }, [user, fetchDashboardStats]);
-
-  const StatCard = ({ title, value, icon: Icon, description }: {
+  const StatCard = ({
+    title,
+    value,
+    emoji,
+    description,
+  }: {
     title: string;
     value: number;
-    icon: React.ComponentType<{ className?: string }>;
+    emoji: string;
     description: string;
   }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-lg">{emoji}</span>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{loading ? '...' : value}</div>
+        {loading ? (
+          <Skeleton className="h-8 w-16" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
         <p className="text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
@@ -99,35 +37,37 @@ export function SimpleDashboardContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          {EMOJIS.navigation.dashboard} Dashboard
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Resumen de tu actividad en el sistema EVA
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Organizaciones"
           value={stats.totalOrganizations}
-          icon={Building2}
+          emoji={EMOJIS.entities.organization}
           description="Productoras registradas"
         />
         <StatCard
           title="Eventos"
           value={stats.totalEvents}
-          icon={Calendar}
+          emoji={EMOJIS.navigation.events}
           description="Fiestas organizadas"
         />
         <StatCard
           title="Embajadores"
           value={stats.totalAmbassadors}
-          icon={Users}
+          emoji={EMOJIS.navigation.ambassadors}
           description="Personas registradas"
         />
         <StatCard
           title="Sistema"
           value={1}
-          icon={Activity}
+          emoji={EMOJIS.status.success}
           description="EVA funcionando"
         />
       </div>
@@ -136,7 +76,7 @@ export function SimpleDashboardContent() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <span className="text-5xl block mb-4">{EMOJIS.feedback.celebrate}</span>
               <h3 className="text-lg font-semibold mb-2">¡Bienvenido a EVA!</h3>
               <p className="text-muted-foreground mb-4">
                 Para comenzar, crea tu primera organización o productora de eventos.
@@ -146,9 +86,7 @@ export function SimpleDashboardContent() {
         </Card>
       )}
 
-      {stats.totalOrganizations > 0 && (
-        <AmbassadorRanking />
-      )}
+      {stats.totalOrganizations > 0 && <AmbassadorRanking />}
     </div>
   );
 }

@@ -1,22 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Calendar,
-  Users,
-  Trophy,
-  TrendingUp,
-  Eye,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Settings
-} from "lucide-react";
-import { useFiestaMetrics } from "@/hooks/useFiestaMetrics";
-import { MetricCard } from "./MetricCard";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFiestaMetrics } from '@/hooks/useFiestaMetrics';
+import { MetricCard } from './MetricCard';
+import { EMOJIS } from '@/constants';
 
 interface FiestaMetricsCardProps {
   fiesta: {
@@ -33,7 +29,7 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-card hover:shadow-elegant transition-all duration-300">
+      <Card className="hover:shadow-card transition-all duration-200">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-3/4" />
@@ -51,78 +47,101 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      'active': 'bg-success/10 text-success',
-      'completed': 'bg-blue-100 text-blue-800',
-      'draft': 'bg-gray-100 text-gray-800',
+      active: 'bg-success/10 text-success',
+      completed: 'bg-info/10 text-info',
+      draft: 'bg-muted text-muted-foreground',
     };
     return styles[status as keyof typeof styles] || styles.active;
   };
 
   return (
-    <Card className="shadow-card hover:shadow-elegant transition-all duration-300 group">
+    <Card className="hover:shadow-card transition-all duration-200 group">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg font-semibold">{fiesta.name}</CardTitle>
             <div className="flex items-center gap-2 mt-1">
               <Badge className={getStatusBadge(fiesta.status)}>
-                {fiesta.status === 'active' ? 'Activa' : 
-                 fiesta.status === 'completed' ? 'Completada' : 'Borrador'}
+                {fiesta.status === 'active'
+                  ? 'Activa'
+                  : fiesta.status === 'completed'
+                    ? 'Completada'
+                    : 'Borrador'}
               </Badge>
               {fiesta.event_date && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <span className="text-xs">{EMOJIS.entities.calendar}</span>
                   {new Date(fiesta.event_date).toLocaleDateString()}
                 </span>
               )}
             </div>
           </div>
-          
+
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <Eye className="w-4 h-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <span>{EMOJIS.actions.view}</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
-                <DialogTitle className="text-2xl">
+                <DialogTitle className="text-xl sm:text-2xl">
                   {fiesta.name} - Detalles Completos
                 </DialogTitle>
               </DialogHeader>
-              
+
               <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview">Resumen</TabsTrigger>
-                  <TabsTrigger value="ambassadors">Embajadores</TabsTrigger>
-                  <TabsTrigger value="events">Eventos</TabsTrigger>
-                  <TabsTrigger value="metrics">Métricas</TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto -mx-1 px-1">
+                  <TabsList className="inline-flex min-w-full sm:grid sm:w-full sm:grid-cols-4">
+                    <TabsTrigger
+                      value="overview"
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
+                    >
+                      Resumen
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="ambassadors"
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
+                    >
+                      Embajadores
+                    </TabsTrigger>
+                    <TabsTrigger value="events" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                      Eventos
+                    </TabsTrigger>
+                    <TabsTrigger value="metrics" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                      Métricas
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <TabsContent value="overview" className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                     <MetricCard
                       title="Embajadores"
                       value={metrics?.total_ambassadors || 0}
-                      icon={<Users className="w-4 h-4" />}
+                      icon={<span>{EMOJIS.entities.ambassador}</span>}
                     />
                     <MetricCard
                       title="Tareas Completadas"
                       value={metrics?.completed_tasks || 0}
-                      icon={<CheckCircle className="w-4 h-4" />}
+                      icon={<span>{EMOJIS.status.success}</span>}
                     />
                     <MetricCard
                       title="Alcance Total"
                       value={`${((metrics?.total_reach || 0) / 1000).toFixed(1)}K`}
-                      icon={<TrendingUp className="w-4 h-4" />}
+                      icon={<span>{EMOJIS.navigation.analytics}</span>}
                     />
                     <MetricCard
                       title="Tasa Completitud"
                       value={`${metrics?.completion_rate || 0}%`}
-                      icon={<Trophy className="w-4 h-4" />}
+                      icon={<span>{EMOJIS.feedback.trophy}</span>}
                     />
                   </div>
-                  
+
                   {fiesta.description && (
                     <Card>
                       <CardHeader>
@@ -138,13 +157,18 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                 <TabsContent value="ambassadors" className="space-y-4">
                   <div className="space-y-3">
                     {metrics?.top_ambassadors?.slice(0, 10).map((ambassador, index) => (
-                      <div key={ambassador.id} className="flex items-center justify-between p-3 rounded-lg border">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                      <div
+                        key={ambassador.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border"
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm shrink-0">
                             {index + 1}
                           </div>
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback>{ambassador.name.charAt(0)}</AvatarFallback>
+                          <Avatar className="w-6 h-6 sm:w-8 sm:h-8 shrink-0">
+                            <AvatarFallback className="text-xs sm:text-sm">
+                              {ambassador.name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium">{ambassador.name}</p>
@@ -153,8 +177,10 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-primary">{ambassador.points}</div>
+                        <div className="text-left sm:text-right">
+                          <div className="font-bold text-primary text-sm sm:text-base">
+                            {ambassador.points}
+                          </div>
                           <div className="text-xs text-muted-foreground">puntos</div>
                         </div>
                       </div>
@@ -164,13 +190,15 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
 
                 <TabsContent value="events" className="space-y-4">
                   <div className="text-center text-muted-foreground py-8">
-                    <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <span className="text-5xl block mb-2 opacity-50">
+                      {EMOJIS.entities.calendar}
+                    </span>
                     <p>Gestión de eventos en desarrollo</p>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="metrics" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Distribución de Tareas</CardTitle>
@@ -179,21 +207,21 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4 text-success" />
+                              <span className="text-success">{EMOJIS.status.success}</span>
                               Completadas
                             </span>
                             <span className="font-medium">{metrics?.completed_tasks || 0}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-warning" />
+                              <span className="text-warning">{EMOJIS.status.pending}</span>
                               Pendientes
                             </span>
                             <span className="font-medium">{metrics?.pending_tasks || 0}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="flex items-center gap-2">
-                              <XCircle className="w-4 h-4 text-destructive" />
+                              <span className="text-destructive">{EMOJIS.status.error}</span>
                               Inválidas
                             </span>
                             <span className="font-medium">{metrics?.invalid_tasks || 0}</span>
@@ -230,28 +258,28 @@ export function FiestaMetricsCard({ fiesta }: FiestaMetricsCardProps) {
           </Dialog>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 rounded-lg bg-accent/20">
             <div className="flex items-center justify-center mb-1">
-              <Users className="w-4 h-4 text-primary" />
+              <span className="text-primary">{EMOJIS.entities.ambassador}</span>
             </div>
             <div className="text-lg font-bold">{metrics?.total_ambassadors || 0}</div>
             <div className="text-xs text-muted-foreground">Embajadores</div>
           </div>
-          
+
           <div className="text-center p-3 rounded-lg bg-accent/20">
             <div className="flex items-center justify-center mb-1">
-              <CheckCircle className="w-4 h-4 text-success" />
+              <span className="text-success">{EMOJIS.status.success}</span>
             </div>
             <div className="text-lg font-bold">{metrics?.completed_tasks || 0}</div>
             <div className="text-xs text-muted-foreground">Completadas</div>
           </div>
-          
+
           <div className="text-center p-3 rounded-lg bg-accent/20">
             <div className="flex items-center justify-center mb-1">
-              <TrendingUp className="w-4 h-4 text-secondary" />
+              <span className="text-secondary">{EMOJIS.navigation.analytics}</span>
             </div>
             <div className="text-lg font-bold">
               {((metrics?.total_reach || 0) / 1000).toFixed(0)}K

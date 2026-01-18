@@ -1,137 +1,131 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsPreflightResponse, jsonResponse, errorResponse } from '../shared/responses.ts';
+import { authenticateRequest } from '../shared/auth.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+interface RestoreResults {
+  success: boolean;
+  restored: Record<string, number>;
+  errors: string[];
+  summary: string;
+}
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
     }
+    const { user, supabase: supabaseClient } = authResult;
 
     const { backupData, options } = await req.json();
     const { overwriteExisting = false, selectiveTables = [] } = options || {};
 
-    console.log('Starting data restoration for user:', user.id);
-    console.log('Restore options:', { overwriteExisting, selectiveTables });
-
-    const results = {
+    const results: RestoreResults = {
       success: true,
-      restored: {} as Record<string, number>,
-      errors: [] as string[],
-      summary: ''
+      restored: {},
+      errors: [],
+      summary: '',
     };
 
-// Helper function to restore table data with org-boundary enforcement and sanitization
-const restoreTable = async (tableName: string, data: any[], foreignKeyMap?: Record<string, string>) => {
-  if (!data || data.length === 0) return 0;
+    const restoreTable = async (
+      tableName: string,
+      data: Record<string, unknown>[],
+      foreignKeyMap?: Record<string, string>
+    ): Promise<number> => {
+      if (!data || data.length === 0) return 0;
 
-  try {
-    // Map foreign keys if needed
-    let processedData = data;
-    if (foreignKeyMap) {
-      processedData = data.map(item => {
-        const mappedItem = { ...item };
-        Object.entries(foreignKeyMap).forEach(([oldKey, newKey]) => {
-          if (mappedItem[oldKey]) {
-            mappedItem[newKey] = mappedItem[oldKey];
-            delete mappedItem[oldKey];
-          }
-        });
-        return mappedItem;
-      });
-    }
-
-    // Fetch user's organizations for boundary enforcement
-    const { data: userOrgs } = await supabaseClient
-      .from('organizations')
-      .select('id')
-      .eq('created_by', user.id);
-    const allowedOrgIds = new Set((userOrgs || []).map((o: any) => o.id));
-
-    // Table-specific sanitization and scoping
-    if (tableName === 'organizations') {
-      processedData = processedData.map((org: any) => {
-        const { meta_token, token_expiry, created_by, ...rest } = org;
-        return { ...rest, created_by: user.id };
-      });
-    } else if (tableName === 'users') {
-      processedData = processedData.map((u: any) => {
-        const { role, auth_user_id, ...rest } = u;
-        return { ...rest, auth_user_id: user.id };
-      });
-    } else {
-      // If the table has organization_id, enforce org boundary
-      if (processedData[0] && 'organization_id' in processedData[0]) {
-        processedData = processedData
-          .filter((row: any) => allowedOrgIds.has(row.organization_id))
-          .map((row: any) => {
-            // Remove secrets possibly present in child tables
-            const sanitized = { ...row };
-            if ('instagram_access_token' in sanitized) delete sanitized.instagram_access_token;
-            if ('token_expires_at' in sanitized) delete sanitized.token_expires_at;
-            return sanitized;
+      try {
+        let processedData = data;
+        if (foreignKeyMap) {
+          processedData = data.map((item) => {
+            const mappedItem = { ...item };
+            Object.entries(foreignKeyMap).forEach(([oldKey, newKey]) => {
+              if (mappedItem[oldKey]) {
+                mappedItem[newKey] = mappedItem[oldKey];
+                delete mappedItem[oldKey];
+              }
+            });
+            return mappedItem;
           });
-      }
-    }
+        }
 
-    if (processedData.length === 0) return 0;
+        const { data: userOrgs } = await supabaseClient
+          .from('organizations')
+          .select('id')
+          .eq('created_by', user.id);
+        const allowedOrgIds = new Set((userOrgs || []).map((o: { id: string }) => o.id));
 
-    if (overwriteExisting) {
-      // For organizations, delete only caller-owned records in payload
-      if (tableName === 'organizations') {
-        const orgIds = processedData.map((org: any) => org.id);
-        await supabaseClient.from(tableName).delete().in('id', orgIds).eq('created_by', user.id);
-      } else if (tableName === 'users') {
-        await supabaseClient.from(tableName).delete().eq('auth_user_id', user.id);
-      } else if (processedData[0] && 'organization_id' in processedData[0]) {
-        await supabaseClient
+        if (tableName === 'organizations') {
+          processedData = processedData.map((org) => {
+            const {
+              meta_token: _meta_token,
+              token_expiry: _token_expiry,
+              created_by: _created_by,
+              ...rest
+            } = org;
+            return { ...rest, created_by: user.id };
+          });
+        } else if (tableName === 'users') {
+          processedData = processedData.map((u) => {
+            const { role: _role, auth_user_id: _auth_user_id, ...rest } = u;
+            return { ...rest, auth_user_id: user.id };
+          });
+        } else {
+          if (processedData[0] && 'organization_id' in processedData[0]) {
+            processedData = processedData
+              .filter((row) => allowedOrgIds.has(row.organization_id as string))
+              .map((row) => {
+                const sanitized = { ...row };
+                if ('instagram_access_token' in sanitized) delete sanitized.instagram_access_token;
+                if ('token_expires_at' in sanitized) delete sanitized.token_expires_at;
+                return sanitized;
+              });
+          }
+        }
+
+        if (processedData.length === 0) return 0;
+
+        if (overwriteExisting) {
+          if (tableName === 'organizations') {
+            const orgIds = processedData.map((org) => org.id as string);
+            await supabaseClient
+              .from(tableName)
+              .delete()
+              .in('id', orgIds)
+              .eq('created_by', user.id);
+          } else if (tableName === 'users') {
+            await supabaseClient.from(tableName).delete().eq('auth_user_id', user.id);
+          } else if (processedData[0] && 'organization_id' in processedData[0]) {
+            await supabaseClient
+              .from(tableName)
+              .delete()
+              .in('organization_id', Array.from(allowedOrgIds));
+          }
+        }
+
+        const { data: insertedData, error } = await supabaseClient
           .from(tableName)
-          .delete()
-          .in('organization_id', Array.from(allowedOrgIds));
+          .insert(processedData)
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        return insertedData?.length || 0;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        results.errors.push(`Error restoring ${tableName}: ${errorMessage}`);
+        return 0;
       }
-    }
+    };
 
-    const { data: insertedData, error } = await supabaseClient
-      .from(tableName)
-      .insert(processedData)
-      .select();
-
-    if (error) {
-      throw error;
-    }
-
-    return insertedData?.length || 0;
-  } catch (error: any) {
-    results.errors.push(`Error restoring ${tableName}: ${error.message}`);
-    return 0;
-  }
-};
-
-    // Restore data in proper order (respecting foreign key dependencies)
     const restoreOrder = [
       'organizations',
-      'users', 
+      'users',
       'organization_settings',
       'fiestas',
       'events',
@@ -140,7 +134,7 @@ const restoreTable = async (tableName: string, data: any[], foreignKeyMap?: Reco
       'leaderboards',
       'notifications',
       'task_logs',
-      'import_logs'
+      'import_logs',
     ];
 
     for (const tableName of restoreOrder) {
@@ -149,53 +143,35 @@ const restoreTable = async (tableName: string, data: any[], foreignKeyMap?: Reco
       }
 
       if (backupData[tableName]) {
-        console.log(`Restoring ${tableName}...`);
         const restored = await restoreTable(tableName, backupData[tableName]);
         results.restored[tableName] = restored;
-        console.log(`Restored ${restored} records in ${tableName}`);
       }
     }
 
-    // Create restore log
-    await supabaseClient
-      .from('import_logs')
-      .insert({
-        user_id: user.id,
-        organization_id: backupData.organizations?.[0]?.id || null,
-        type: 'restore',
-        source: 'backup_file',
-        file_name: `restore-${new Date().toISOString()}`,
-        status: results.errors.length > 0 ? 'partial' : 'completed',
-        result_json: {
-          restored: results.restored,
-          errors: results.errors,
-          timestamp: new Date().toISOString()
-        }
-      });
+    await supabaseClient.from('import_logs').insert({
+      user_id: user.id,
+      organization_id: backupData.organizations?.[0]?.id || null,
+      type: 'restore',
+      source: 'backup_file',
+      file_name: `restore-${new Date().toISOString()}`,
+      status: results.errors.length > 0 ? 'partial' : 'completed',
+      result_json: {
+        restored: results.restored,
+        errors: results.errors,
+        timestamp: new Date().toISOString(),
+      },
+    });
 
     results.summary = `Restoration completed. ${Object.values(results.restored).reduce((a, b) => a + b, 0)} total records restored.`;
-    
+
     if (results.errors.length > 0) {
       results.success = false;
       results.summary += ` ${results.errors.length} errors occurred.`;
     }
 
-    console.log('Restoration completed:', results);
-
-    return new Response(
-      JSON.stringify(results),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return jsonResponse(results);
   } catch (error) {
-    console.error('Error during restoration:', error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Error restoring data', 
-        details: error.message 
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return errorResponse(`Error restoring data: ${errorMessage}`, 500);
   }
 });

@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Clock, Hash, DollarSign, Target, User, Instagram } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Calendar, MapPin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ interface EventFormData {
   end_time: string;
   main_hashtag: string;
   is_cyclic: boolean;
-  cyclic_type: "semanal" | "mensual" | "personalizado" | "";
+  cyclic_type: 'semanal' | 'mensual' | 'personalizado' | '';
   active: boolean;
   budget_estimate: string;
   objective: string;
@@ -34,24 +33,28 @@ interface EventFormData {
   instagram_account: string;
 }
 
-export default function CreateEventModal({ isOpen, onClose, onEventCreated }: CreateEventModalProps) {
+export default function CreateEventModal({
+  isOpen,
+  onClose,
+  onEventCreated,
+}: CreateEventModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<EventFormData>({
-    name: "",
-    description: "",
-    location: "",
-    event_date: "",
-    start_time: "",
-    end_time: "",
-    main_hashtag: "",
+    name: '',
+    description: '',
+    location: '',
+    event_date: '',
+    start_time: '',
+    end_time: '',
+    main_hashtag: '',
     is_cyclic: false,
-    cyclic_type: "",
+    cyclic_type: '',
     active: true,
-    budget_estimate: "",
-    objective: "",
-    client_name: "",
-    event_type: "",
-    instagram_account: ""
+    budget_estimate: '',
+    objective: '',
+    client_name: '',
+    event_type: '',
+    instagram_account: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,13 +62,11 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
     setLoading(true);
 
     try {
-      // Validaciones básicas
       if (!formData.name.trim() || !formData.event_date) {
         toast.error('El nombre del evento y la fecha son obligatorios');
         return;
       }
 
-      // Obtener el usuario actual y su organización
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
         toast.error('Usuario no autenticado');
@@ -79,32 +80,26 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
         .single();
 
       if (userError || !userData) {
-        console.error('Error getting user data:', userError);
         toast.error('Error al obtener datos del usuario');
         return;
       }
 
-      // Preparar datos del evento - solo los campos que existen en la tabla
       const eventData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         location: formData.location.trim() || null,
         event_date: formData.event_date,
         active: formData.active,
-        organization_id: userData.organization_id
+        organization_id: userData.organization_id,
       };
 
-      console.log('Creando evento con datos:', eventData);
-
-      // Crear el evento en Supabase
-      const { data: newEvent, error: eventError } = await supabase
+      const { error: eventError } = await supabase
         .from('events')
         .insert(eventData)
         .select()
         .single();
 
       if (eventError) {
-        console.error('Error creating event:', eventError);
         toast.error('Error al crear evento: ' + eventError.message);
         return;
       }
@@ -113,8 +108,7 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
       resetForm();
       onClose();
       onEventCreated();
-    } catch (error) {
-      console.error('Error creating event:', error);
+    } catch {
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);
@@ -123,21 +117,21 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      description: "",
-      location: "",
-      event_date: "",
-      start_time: "",
-      end_time: "",
-      main_hashtag: "",
+      name: '',
+      description: '',
+      location: '',
+      event_date: '',
+      start_time: '',
+      end_time: '',
+      main_hashtag: '',
       is_cyclic: false,
-      cyclic_type: "",
+      cyclic_type: '',
       active: true,
-      budget_estimate: "",
-      objective: "",
-      client_name: "",
-      event_type: "",
-      instagram_account: ""
+      budget_estimate: '',
+      objective: '',
+      client_name: '',
+      event_type: '',
+      instagram_account: '',
     });
   };
 
@@ -154,10 +148,9 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Información Básica */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Información Básica</h3>
-            
+
             <div>
               <Label htmlFor="name">Nombre del Evento *</Label>
               <Input
@@ -181,10 +174,9 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
             </div>
           </div>
 
-          {/* Fecha y Ubicación */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Fecha y Ubicación</h3>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="event_date">Fecha del Evento *</Label>
@@ -216,10 +208,9 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
             </div>
           </div>
 
-          {/* Configuración Avanzada */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Configuración</h3>
-            
+
             <div className="flex items-center space-x-2">
               <Switch
                 id="active"

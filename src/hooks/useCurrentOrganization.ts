@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
@@ -24,256 +25,211 @@ interface OrganizationMembership {
   };
 }
 
-export const useCurrentOrganization = () => {
-  const { user } = useAuth();
-  const [currentOrganization, setCurrentOrganization] = useState<OrganizationMembership | null>(null);
-  const [userOrganizations, setUserOrganizations] = useState<OrganizationMembership[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+async function fetchOrganizationsData(userId: string): Promise<{
+  currentOrganization: OrganizationMembership | null;
+  userOrganizations: OrganizationMembership[];
+}> {
+  const { data: userOrgs, error: orgsError } = await supabase.rpc('get_user_organizations', {
+    user_auth_id: userId,
+  });
 
-  const fetchOrganizations = useCallback(async () => {
-    if (!user?.id) return;
-    
-    setLoading(true);
-    setError(null);
-    
+  if (orgsError) {
+    throw orgsError;
+  }
+
+  if (!userOrgs || userOrgs.length === 0) {
+    const lockKey = `creating_org_${userId}`;
+    const existingLock = localStorage.getItem(lockKey);
+
+    if (existingLock) {
+      const lockTime = parseInt(existingLock);
+      const now = Date.now();
+      if (now - lockTime < 10000) {
+        return { currentOrganization: null, userOrganizations: [] };
+      }
+    }
+
+    localStorage.setItem(lockKey, Date.now().toString());
+
     try {
-      // Get user's accessible organizations
-      const { data: userOrgs, error: orgsError } = await supabase
-        .rpc('get_user_organizations', { user_auth_id: user.id });
-
-      if (orgsError) {
-        throw orgsError;
-      }
-
-      // If user has NO organizations at all, create one automatically
-      if (!userOrgs || userOrgs.length === 0) {
-        // Use localStorage as a global lock to prevent concurrent creation across tabs/instances
-        const lockKey = `creating_org_${user.id}`;
-        const existingLock = localStorage.getItem(lockKey);
-        
-        // If there's a recent lock (within last 10 seconds), skip
-        if (existingLock) {
-          const lockTime = parseInt(existingLock);
-          const now = Date.now();
-          if (now - lockTime < 10000) { // 10 second lock
-            console.log('⚠️ Organization creation in progress (locked), skipping...');
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Set the lock
-        localStorage.setItem(lockKey, Date.now().toString());
-        console.log('User has no organizations, creating default organization...');
-        
-        try {
-          // Get user profile for name
-          const { data: userProfile } = await supabase
-            .from('users')
-            .select('id, name, email, organization_id')
-            .eq('auth_user_id', user.id)
-            .single();
-
-          // Double-check: maybe another tab just created an org
-          if (userProfile?.organization_id) {
-            console.log('✅ Organization already exists, refreshing...');
-            localStorage.removeItem(lockKey);
-            // Retry fetching organizations
-            const { data: retryOrgs } = await supabase
-              .rpc('get_user_organizations', { user_auth_id: user.id });
-            if (retryOrgs && retryOrgs.length > 0) {
-              const membership = retryOrgs[0];
-              const { data: orgDetails } = await supabase
-                .rpc('get_organization_safe_info', { org_id: membership.organization_id });
-              
-              if (orgDetails && orgDetails.length > 0) {
-                setCurrentOrganization({
-                  ...membership,
-                  organization: orgDetails[0]
-                });
-                setUserOrganizations([{
-                  ...membership,
-                  organization: orgDetails[0]
-                }]);
-              }
-            }
-            setLoading(false);
-            return;
-          }
-
-          const userName = userProfile?.name || userProfile?.email || user.email || 'Usuario';
-
-          // Create organization
-          const { data: newOrg, error: createError } = await supabase
-            .from('organizations')
-            .insert({
-              name: 'Mi Organización',
-              description: `Organización de ${userName}`,
-              created_by: user.id,
-              timezone: 'America/Santiago',
-              plan_type: 'free'
-            })
-            .select()
-            .single();
-
-          if (createError) {
-            console.error('Error creating organization:', createError);
-            localStorage.removeItem(lockKey);
-            throw createError;
-          }
-
-          console.log('✅ Organization created:', newOrg.id);
-          
-          // Don't try to update organization_id - RLS policy prevents it
-          // The membership relationship is established through get_user_organizations RPC
-          
-          // Refresh to get the new organization
-          const { data: refreshedOrgs } = await supabase
-            .rpc('get_user_organizations', { user_auth_id: user.id });
-          
-          if (refreshedOrgs && refreshedOrgs.length > 0) {
-            const membership = refreshedOrgs[0];
-            const { data: orgDetails } = await supabase
-              .rpc('get_organization_safe_info', { org_id: membership.organization_id });
-            
-            if (orgDetails && orgDetails.length > 0) {
-              setCurrentOrganization({
-                ...membership,
-                organization: orgDetails[0]
-              });
-              setUserOrganizations([{
-                ...membership,
-                organization: orgDetails[0]
-              }]);
-              toast.success('¡Organización creada exitosamente!');
-            }
-          }
-          
-          // Clear lock after successful creation
-          localStorage.removeItem(lockKey);
-        } catch (error) {
-          localStorage.removeItem(lockKey);
-          throw error;
-        } finally {
-          setLoading(false);
-        }
-        
-        return;
-      }
-
-      // Get organizations with their details
-      const orgsWithDetails = await Promise.all(
-        (userOrgs || []).map(async (orgMembership) => {
-          const { data: orgDetails } = await supabase
-            .rpc('get_organization_safe_info', { 
-              org_id: orgMembership.organization_id 
-            });
-          
-          return {
-            ...orgMembership,
-            organization: orgDetails && orgDetails.length > 0 ? orgDetails[0] : null
-          };
-        })
-      );
-
-      setUserOrganizations(orgsWithDetails.filter(org => org.organization));
-
-      // Get user's current organization preference
-      const { data: userData } = await supabase
+      const { data: userProfile } = await supabase
         .from('users')
-        .select('organization_id')
-        .eq('auth_user_id', user.id)
+        .select('id, name, email, organization_id')
+        .eq('auth_user_id', userId)
         .single();
 
-      // Set current organization (prefer user's selected one, or first available)
-      const preferredOrgId = userData?.organization_id;
-      const currentOrg = orgsWithDetails.find(org => 
-        org.organization_id === preferredOrgId
-      ) || orgsWithDetails[0];
+      if (userProfile?.organization_id) {
+        localStorage.removeItem(lockKey);
+        const { data: retryOrgs } = await supabase.rpc('get_user_organizations', {
+          user_auth_id: userId,
+        });
+        if (retryOrgs && retryOrgs.length > 0) {
+          const membership = retryOrgs[0];
+          const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+            org_id: membership.organization_id,
+          });
 
-      setCurrentOrganization(currentOrg && currentOrg.organization ? currentOrg : null);
-      
+          if (orgDetails && orgDetails.length > 0) {
+            const org = { ...membership, organization: orgDetails[0] };
+            return { currentOrganization: org, userOrganizations: [org] };
+          }
+        }
+        return { currentOrganization: null, userOrganizations: [] };
+      }
+
+      const userName = userProfile?.name || userProfile?.email || 'Usuario';
+
+      const { data: newOrg, error: createError } = await supabase
+        .from('organizations')
+        .insert({
+          name: 'Mi Organización',
+          description: `Organización de ${userName}`,
+          created_by: userId,
+          timezone: 'America/Santiago',
+          plan_type: 'free',
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        localStorage.removeItem(lockKey);
+        throw createError;
+      }
+
+      const { data: refreshedOrgs } = await supabase.rpc('get_user_organizations', {
+        user_auth_id: userId,
+      });
+
+      if (refreshedOrgs && refreshedOrgs.length > 0) {
+        const membership = refreshedOrgs[0];
+        const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+          org_id: membership.organization_id,
+        });
+
+        if (orgDetails && orgDetails.length > 0) {
+          localStorage.removeItem(lockKey);
+          toast.success('¡Organización creada exitosamente!');
+          const org = { ...membership, organization: orgDetails[0] };
+          return { currentOrganization: org, userOrganizations: [org] };
+        }
+      }
+
+      localStorage.removeItem(lockKey);
+      return { currentOrganization: null, userOrganizations: [] };
     } catch (error) {
-      console.error('Error fetching organizations:', error);
-      setError(error as Error);
-    } finally {
-      setLoading(false);
+      localStorage.removeItem(lockKey);
+      throw error;
     }
-  }, [user?.id]);
+  }
 
-  const switchOrganization = async (organizationId: string) => {
-    if (!user?.id) return;
-    
-    try {
-      // Update user's current organization preference
+  const orgsWithDetails = await Promise.all(
+    (userOrgs || []).map(async (orgMembership) => {
+      const { data: orgDetails } = await supabase.rpc('get_organization_safe_info', {
+        org_id: orgMembership.organization_id,
+      });
+
+      return {
+        ...orgMembership,
+        organization: orgDetails && orgDetails.length > 0 ? orgDetails[0] : null,
+      };
+    })
+  );
+
+  const validOrgs = orgsWithDetails.filter((org) => org.organization) as OrganizationMembership[];
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('auth_user_id', userId)
+    .single();
+
+  const preferredOrgId = userData?.organization_id;
+  const currentOrg =
+    validOrgs.find((org) => org.organization_id === preferredOrgId) || validOrgs[0] || null;
+
+  return {
+    currentOrganization: currentOrg,
+    userOrganizations: validOrgs,
+  };
+}
+
+export const useCurrentOrganization = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const queryKey = ['currentOrganization', user?.id];
+
+  const { data, isLoading, refetch } = useQuery<{
+    currentOrganization: OrganizationMembership | null;
+    userOrganizations: OrganizationMembership[];
+  }>({
+    queryKey,
+    queryFn: () => fetchOrganizationsData(user!.id),
+    enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const currentOrganization = data?.currentOrganization || null;
+  const userOrganizations = data?.userOrganizations || [];
+
+  const switchOrganization = useCallback(
+    async (organizationId: string) => {
+      if (!user?.id) return;
+
       await supabase
         .from('users')
         .update({ organization_id: organizationId })
         .eq('auth_user_id', user.id);
 
-      // Update local state
-      const newCurrentOrg = userOrganizations.find(org => 
-        org.organization_id === organizationId
-      );
-      
-      if (newCurrentOrg) {
-        setCurrentOrganization(newCurrentOrg);
-      }
-      
-    } catch (error) {
-      console.error('Error switching organization:', error);
-      throw error;
-    }
-  };
+      await queryClient.invalidateQueries({ queryKey });
+    },
+    [user?.id, queryClient, queryKey]
+  );
 
-  // Provide legacy compatibility
   const organization = currentOrganization?.organization || null;
-  const updateOrganization = async (updates: Partial<any>) => {
-    if (!currentOrganization?.organization) return false;
-    
-    try {
-      const { error } = await supabase
-        .from('organizations')
-        .update(updates)
-        .eq('id', currentOrganization.organization.id);
 
-      if (error) {
-        console.error('Error updating organization:', error);
-        toast.error('Error al actualizar organización');
+  const fetchOrganizations = useCallback(() => {
+    return refetch();
+  }, [refetch]);
+
+  const updateOrganization = useCallback(
+    async (updates: { name?: string; description?: string; logo_url?: string }) => {
+      if (!organization?.id) {
+        toast.error('No se encontró la organización');
         return false;
       }
 
-      // Update local state
-      setCurrentOrganization({
-        ...currentOrganization,
-        organization: { ...currentOrganization.organization, ...updates }
-      });
-      
-      toast.success('Organización actualizada');
-      return true;
-    } catch (error) {
-      console.error('Error updating organization:', error);
-      toast.error('Error inesperado');
-      return false;
-    }
-  };
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update(updates)
+          .eq('id', organization.id);
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, [fetchOrganizations]);
+        if (error) {
+          toast.error('Error al actualizar la organización');
+          return false;
+        }
+
+        toast.success('Organización actualizada correctamente');
+        await queryClient.invalidateQueries({ queryKey });
+        return true;
+      } catch {
+        toast.error('Error al actualizar la organización');
+        return false;
+      }
+    },
+    [organization?.id, queryClient, queryKey]
+  );
 
   return {
-    // New multi-organization interface
     currentOrganization,
     userOrganizations,
-    loading,
-    error,
+    loading: isLoading,
     fetchOrganizations,
     switchOrganization,
-    // Legacy compatibility
     organization,
+    refreshOrganization: fetchOrganizations,
     updateOrganization,
-    refreshOrganization: fetchOrganizations
   };
 };

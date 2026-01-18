@@ -1,27 +1,15 @@
-import { useState, useEffect } from "react";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { 
-  Download, 
-  Upload, 
-  Database, 
-  Shield, 
-  History, 
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  FileArchive
-} from "lucide-react";
-import { toast } from "sonner";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BackupLog {
   id: string;
@@ -43,18 +31,18 @@ export default function BackupCenter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [restoreOptions, setRestoreOptions] = useState({
     overwriteExisting: false,
-    selectiveTables: [] as string[]
+    selectiveTables: [] as string[],
   });
 
   const availableTables = [
     'organizations',
-    'embassadors', 
+    'embassadors',
     'fiestas',
     'events',
     'tasks',
     'leaderboards',
     'organization_settings',
-    'notifications'
+    'notifications',
   ];
 
   useEffect(() => {
@@ -65,16 +53,16 @@ export default function BackupCenter() {
     try {
       const { data, error } = await supabase
         .from('import_logs')
-        .select('id, user_id, organization_id, type, source, file_name, status, result_json, created_at')
+        .select(
+          'id, user_id, organization_id, type, source, file_name, status, result_json, created_at'
+        )
         .in('type', ['backup', 'export', 'restore'])
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
       setBackupLogs(data || []);
-    } catch (error) {
-      console.error('Error fetching backup logs:', error);
-    }
+    } catch {}
   };
 
   const createFullBackup = async () => {
@@ -89,8 +77,8 @@ export default function BackupCenter() {
 
       const { data, error } = await supabase.functions.invoke('backup-full-database', {
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       setProgress(50);
@@ -99,7 +87,6 @@ export default function BackupCenter() {
 
       setProgress(80);
 
-      // Download the backup file
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -113,8 +100,7 @@ export default function BackupCenter() {
       setProgress(100);
       toast.success('Respaldo completo creado y descargado exitosamente');
       fetchBackupLogs();
-    } catch (error) {
-      console.error('Error creating backup:', error);
+    } catch {
       toast.error('Error al crear el respaldo');
     } finally {
       setIsProcessing(false);
@@ -136,11 +122,11 @@ export default function BackupCenter() {
         body: {
           organizationId: organization.id,
           format,
-          tables: 'all'
+          tables: 'all',
         },
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       setProgress(50);
@@ -149,9 +135,8 @@ export default function BackupCenter() {
 
       setProgress(80);
 
-      // The response should be the file content directly
-      const blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data, null, 2)], { 
-        type: format === 'csv' ? 'text/csv' : 'application/json' 
+      const blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data, null, 2)], {
+        type: format === 'csv' ? 'text/csv' : 'application/json',
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -165,8 +150,7 @@ export default function BackupCenter() {
       setProgress(100);
       toast.success(`Exportación ${format.toUpperCase()} completada exitosamente`);
       fetchBackupLogs();
-    } catch (error) {
-      console.error('Error exporting data:', error);
+    } catch {
       toast.error('Error al exportar los datos');
     } finally {
       setIsProcessing(false);
@@ -184,7 +168,6 @@ export default function BackupCenter() {
       setIsProcessing(true);
       setProgress(10);
 
-      // Read the backup file
       const fileContent = await selectedFile.text();
       const backupData = JSON.parse(fileContent);
 
@@ -193,11 +176,11 @@ export default function BackupCenter() {
       const { data, error } = await supabase.functions.invoke('restore-organization-data', {
         body: {
           backupData,
-          options: restoreOptions
+          options: restoreOptions,
         },
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       setProgress(80);
@@ -216,8 +199,7 @@ export default function BackupCenter() {
       }
 
       fetchBackupLogs();
-    } catch (error) {
-      console.error('Error restoring backup:', error);
+    } catch {
       toast.error('Error al restaurar el respaldo');
     } finally {
       setIsProcessing(false);
@@ -234,34 +216,34 @@ export default function BackupCenter() {
   };
 
   const toggleTable = (table: string, checked: boolean) => {
-    setRestoreOptions(prev => ({
+    setRestoreOptions((prev) => ({
       ...prev,
-      selectiveTables: checked 
+      selectiveTables: checked
         ? [...prev.selectiveTables, table]
-        : prev.selectiveTables.filter(t => t !== table)
+        : prev.selectiveTables.filter((t) => t !== table),
     }));
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <span className="text-success">{EMOJIS.status.success}</span>;
       case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
+        return <span className="text-destructive">{EMOJIS.status.error}</span>;
       case 'partial':
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+        return <span className="text-warning">{EMOJIS.status.warning}</span>;
       default:
-        return <Clock className="w-4 h-4 text-gray-600" />;
+        return <span className="text-muted-foreground">{EMOJIS.status.pending}</span>;
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      completed: "default",
-      failed: "destructive", 
-      partial: "outline"
+    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      completed: 'default',
+      failed: 'destructive',
+      partial: 'outline',
     };
-    return <Badge variant={variants[status] || "secondary"}>{status}</Badge>;
+    return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
   return (
@@ -270,11 +252,11 @@ export default function BackupCenter() {
         <h3 className="text-xl font-semibold">Centro de Respaldos</h3>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportOrganizationData('csv')}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
+            <span className="mr-2">{EMOJIS.actions.download}</span>
+            Exportar CSV
           </Button>
           <Button onClick={createFullBackup} disabled={isProcessing}>
-            <Database className="w-4 h-4 mr-2" />
+            <span className="mr-2">{EMOJIS.entities.database}</span>
             Respaldo Completo
           </Button>
         </div>
@@ -303,43 +285,44 @@ export default function BackupCenter() {
           <div className="grid gap-6 md:grid-cols-2">
             <GlassPanel size="sm">
               <div className="flex items-center gap-2 mb-4">
-                <Database className="w-5 h-5" />
+                <span>{EMOJIS.entities.database}</span>
                 <h4 className="font-semibold">Respaldo Completo</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Crea un respaldo completo de todos los datos de tu organización incluyendo embajadores, eventos, tareas y configuraciones.
+                Crea un respaldo completo de todos los datos de tu organización incluyendo
+                embajadores, eventos, tareas y configuraciones.
               </p>
               <Button onClick={createFullBackup} disabled={isProcessing} className="w-full">
-                <Database className="w-4 h-4 mr-2" />
+                <span className="mr-2">{EMOJIS.entities.database}</span>
                 Crear Respaldo Completo
               </Button>
             </GlassPanel>
 
             <GlassPanel size="sm">
               <div className="flex items-center gap-2 mb-4">
-                <FileArchive className="w-5 h-5" />
+                <span>{EMOJIS.entities.file}</span>
                 <h4 className="font-semibold">Exportación Selectiva</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 Exporta datos específicos de tu organización en diferentes formatos.
               </p>
               <div className="space-y-2">
-                <Button 
-                  onClick={() => exportOrganizationData('json')} 
-                  disabled={isProcessing} 
-                  variant="outline" 
+                <Button
+                  onClick={() => exportOrganizationData('json')}
+                  disabled={isProcessing}
+                  variant="outline"
                   className="w-full"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <span className="mr-2">{EMOJIS.actions.download}</span>
                   Exportar JSON
                 </Button>
-                <Button 
-                  onClick={() => exportOrganizationData('csv')} 
-                  disabled={isProcessing} 
-                  variant="outline" 
+                <Button
+                  onClick={() => exportOrganizationData('csv')}
+                  disabled={isProcessing}
+                  variant="outline"
                   className="w-full"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <span className="mr-2">{EMOJIS.actions.download}</span>
                   Exportar CSV
                 </Button>
               </div>
@@ -350,10 +333,10 @@ export default function BackupCenter() {
         <TabsContent value="restore" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Upload className="w-5 h-5" />
+              <span>{EMOJIS.actions.upload}</span>
               <h4 className="font-semibold">Restaurar desde Respaldo</h4>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <Label>Archivo de Respaldo</Label>
@@ -375,8 +358,11 @@ export default function BackupCenter() {
                   <Checkbox
                     id="overwrite"
                     checked={restoreOptions.overwriteExisting}
-                    onCheckedChange={(checked) => 
-                      setRestoreOptions(prev => ({ ...prev, overwriteExisting: checked as boolean }))
+                    onCheckedChange={(checked) =>
+                      setRestoreOptions((prev) => ({
+                        ...prev,
+                        overwriteExisting: checked as boolean,
+                      }))
                     }
                   />
                   <Label htmlFor="overwrite" className="text-sm">
@@ -385,8 +371,10 @@ export default function BackupCenter() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Tablas a restaurar (dejar vacío para todas)</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-white/30 rounded-lg p-3">
+                  <Label className="text-sm font-medium">
+                    Tablas a restaurar (dejar vacío para todas)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-card/30 rounded-lg p-3">
                     {availableTables.map((table) => (
                       <div key={table} className="flex items-center space-x-2">
                         <Checkbox
@@ -405,22 +393,23 @@ export default function BackupCenter() {
 
               <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                  <span className="mt-0.5">{EMOJIS.status.warning}</span>
                   <div>
                     <h4 className="font-medium">Advertencia</h4>
                     <p className="text-sm text-muted-foreground mt-1">
-                      La restauración puede sobrescribir datos existentes. Asegúrate de tener un respaldo actual antes de proceder.
+                      La restauración puede sobrescribir datos existentes. Asegúrate de tener un
+                      respaldo actual antes de proceder.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <Button 
-                onClick={restoreFromBackup} 
-                disabled={isProcessing || !selectedFile} 
+              <Button
+                onClick={restoreFromBackup}
+                disabled={isProcessing || !selectedFile}
                 className="w-full"
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <span className="mr-2">{EMOJIS.actions.upload}</span>
                 Restaurar Datos
               </Button>
             </div>
@@ -430,10 +419,10 @@ export default function BackupCenter() {
         <TabsContent value="history" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <History className="w-5 h-5" />
+              <span>{EMOJIS.entities.timer}</span>
               <h4 className="font-semibold">Historial de Operaciones</h4>
             </div>
-            
+
             <div className="space-y-4">
               {backupLogs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
@@ -441,7 +430,10 @@ export default function BackupCenter() {
                 </p>
               ) : (
                 backupLogs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between p-4 bg-card/30 rounded-lg"
+                  >
                     <div className="flex items-center gap-3">
                       {getStatusIcon(log.status)}
                       <div>
@@ -453,11 +445,15 @@ export default function BackupCenter() {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(log.status)}
-                      {log.result_json?.record_counts && typeof log.result_json.record_counts === 'object' && (
-                        <Badge variant="outline">
-                          {Object.values(log.result_json.record_counts as Record<string, number>).reduce((a: number, b: number) => a + b, 0)} registros
-                        </Badge>
-                      )}
+                      {log.result_json?.record_counts &&
+                        typeof log.result_json.record_counts === 'object' && (
+                          <Badge variant="outline">
+                            {Object.values(
+                              log.result_json.record_counts as Record<string, number>
+                            ).reduce((a: number, b: number) => a + b, 0)}{' '}
+                            registros
+                          </Badge>
+                        )}
                     </div>
                   </div>
                 ))

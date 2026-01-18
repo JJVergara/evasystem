@@ -1,16 +1,7 @@
-
-import { MainLayout } from "@/components/Layout/MainLayout";
-import FiestasManagement from "@/components/Fiestas/FiestasManagement";
-import { ProtectedRoute } from "@/components/Auth/ProtectedRoute";
+import FiestasManagement from '@/components/Fiestas/FiestasManagement';
 
 const Events = () => {
-  return (
-    <ProtectedRoute>
-      <MainLayout>
-        <FiestasManagement />
-      </MainLayout>
-    </ProtectedRoute>
-  );
+  return <FiestasManagement />;
 };
 
 export default Events;

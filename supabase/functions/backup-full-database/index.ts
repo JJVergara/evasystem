@@ -1,52 +1,34 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../shared/constants.ts';
+import { corsPreflightResponse, errorResponse } from '../shared/responses.ts';
+import { authenticateRequest } from '../shared/auth.ts';
 
 interface BackupData {
   timestamp: string;
-  organizations: Organization[];
-  embassadors: Ambassador[];
-  fiestas: Fiesta[];
-  events: Event[];
-  tasks: Task[];
-  leaderboards: Leaderboard[];
-  users: User[];
-  organization_settings: OrganizationSetting[];
-  notifications: Notification[];
-  import_logs: ImportLog[];
-  task_logs: TaskLog[];
+  organizations: Record<string, unknown>[];
+  embassadors: Record<string, unknown>[];
+  fiestas: Record<string, unknown>[];
+  events: Record<string, unknown>[];
+  tasks: Record<string, unknown>[];
+  leaderboards: Record<string, unknown>[];
+  users: Record<string, unknown>[];
+  organization_settings: Record<string, unknown>[];
+  notifications: Record<string, unknown>[];
+  import_logs: Record<string, unknown>[];
+  task_logs: Record<string, unknown>[];
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return corsPreflightResponse();
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
     }
+    const { user, supabase: supabaseClient } = authResult;
 
-    console.log('Starting full database backup for user:', user.id);
-
-    // Fetch all data from all tables
     const backupData: BackupData = {
       timestamp: new Date().toISOString(),
       organizations: [],
@@ -59,10 +41,9 @@ serve(async (req) => {
       organization_settings: [],
       notifications: [],
       import_logs: [],
-      task_logs: []
+      task_logs: [],
     };
 
-    // Fetch organizations (only user's own)
     const { data: organizations } = await supabaseClient
       .from('organizations')
       .select('*')
@@ -70,16 +51,14 @@ serve(async (req) => {
     backupData.organizations = organizations || [];
 
     if (organizations && organizations.length > 0) {
-      const orgIds = organizations.map(org => org.id);
+      const orgIds = organizations.map((org) => org.id);
 
-      // Fetch embassadors for user's organizations
       const { data: embassadors } = await supabaseClient
         .from('embassadors')
         .select('*')
         .in('organization_id', orgIds);
       backupData.embassadors = embassadors || [];
 
-      // Fetch fiestas for user's organizations
       const { data: fiestas } = await supabaseClient
         .from('fiestas')
         .select('*')
@@ -87,9 +66,8 @@ serve(async (req) => {
       backupData.fiestas = fiestas || [];
 
       if (fiestas && fiestas.length > 0) {
-        const fiestaIds = fiestas.map(f => f.id);
-        
-        // Fetch events for user's fiestas
+        const fiestaIds = fiestas.map((f) => f.id);
+
         const { data: events } = await supabaseClient
           .from('events')
           .select('*')
@@ -98,9 +76,8 @@ serve(async (req) => {
       }
 
       if (embassadors && embassadors.length > 0) {
-        const embassadorIds = embassadors.map(e => e.id);
-        
-        // Fetch tasks for user's embassadors
+        const embassadorIds = embassadors.map((e) => e.id);
+
         const { data: tasks } = await supabaseClient
           .from('tasks')
           .select('*')
@@ -108,9 +85,8 @@ serve(async (req) => {
         backupData.tasks = tasks || [];
 
         if (tasks && tasks.length > 0) {
-          const taskIds = tasks.map(t => t.id);
-          
-          // Fetch task logs
+          const taskIds = tasks.map((t) => t.id);
+
           const { data: taskLogs } = await supabaseClient
             .from('task_logs')
             .select('*')
@@ -120,9 +96,8 @@ serve(async (req) => {
       }
 
       if (backupData.events.length > 0) {
-        const eventIds = backupData.events.map(e => e.id);
-        
-        // Fetch leaderboards for user's events
+        const eventIds = backupData.events.map((e) => (e as { id: string }).id);
+
         const { data: leaderboards } = await supabaseClient
           .from('leaderboards')
           .select('*')
@@ -130,14 +105,12 @@ serve(async (req) => {
         backupData.leaderboards = leaderboards || [];
       }
 
-      // Fetch organization settings
       const { data: orgSettings } = await supabaseClient
         .from('organization_settings')
         .select('*')
         .in('organization_id', orgIds);
       backupData.organization_settings = orgSettings || [];
 
-      // Fetch notifications
       const { data: notifications } = await supabaseClient
         .from('notifications')
         .select('*')
@@ -145,60 +118,45 @@ serve(async (req) => {
       backupData.notifications = notifications || [];
     }
 
-    // Fetch user profile
     const { data: userProfile } = await supabaseClient
       .from('users')
       .select('*')
       .eq('auth_user_id', user.id);
     backupData.users = userProfile || [];
 
-    // Fetch import logs
     const { data: importLogs } = await supabaseClient
       .from('import_logs')
       .select('*')
       .eq('user_id', user.id);
     backupData.import_logs = importLogs || [];
 
-// Sanitize sensitive fields before returning
-backupData.organizations = (backupData.organizations || []).map((o: Organization) => {
-  const { meta_token, token_expiry, ...safe } = o; return safe;
-});
-backupData.embassadors = (backupData.embassadors || []).map((a: Ambassador) => {
-  const { instagram_access_token, token_expires_at, ...safe } = a; return safe;
-});
+    backupData.organizations = (backupData.organizations || []).map((o) => {
+      const {
+        meta_token: _meta_token,
+        token_expiry: _token_expiry,
+        ...safe
+      } = o as Record<string, unknown>;
+      return safe;
+    });
+    backupData.embassadors = (backupData.embassadors || []).map((a) => {
+      const {
+        instagram_access_token: _instagram_access_token,
+        token_expires_at: _token_expires_at,
+        ...safe
+      } = a as Record<string, unknown>;
+      return safe;
+    });
 
-console.log('Backup completed successfully. Data summary:', {
-  organizations: backupData.organizations.length,
-  embassadors: backupData.embassadors.length,
-  fiestas: backupData.fiestas.length,
-  events: backupData.events.length,
-  tasks: backupData.tasks.length,
-  leaderboards: backupData.leaderboards.length,
-  users: backupData.users.length,
-  organization_settings: backupData.organization_settings.length,
-  notifications: backupData.notifications.length,
-  import_logs: backupData.import_logs.length,
-  task_logs: backupData.task_logs.length
-});
-
-return new Response(
-  JSON.stringify(backupData),
-  { 
-    status: 200, 
-    headers: { 
-      ...corsHeaders, 
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="eva-backup-${new Date().toISOString().split('T')[0]}.json"`
-    } 
-  }
-);
-
+    return new Response(JSON.stringify(backupData), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="eva-backup-${new Date().toISOString().split('T')[0]}.json"`,
+      },
+    });
   } catch (error) {
-    console.error('Error during backup:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ error: 'Error creating backup', details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(`Error creating backup: ${errorMessage}`, 500);
   }
 });

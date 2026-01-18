@@ -1,30 +1,59 @@
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AmbassadorMetricsCards } from './AmbassadorMetricsCards';
+import { EMOJIS } from '@/constants';
+import { AmbassadorPerformanceChart } from './AmbassadorPerformanceChart';
+import { AmbassadorActivityTimeline } from './AmbassadorActivityTimeline';
+import { AmbassadorRequestsTab } from './AmbassadorRequestsTab';
+import { useAmbassadorMetrics } from '@/hooks/useAmbassadorMetrics';
+import { useAmbassadorRequests } from '@/hooks/useAmbassadorRequests';
+import AddAmbassadorModal from './AddAmbassadorModal';
+import { EditAmbassadorModal } from './EditAmbassadorModal';
+import { DeleteAmbassadorModal } from './DeleteAmbassadorModal';
+import { InstagramProfileLink } from './InstagramProfileLink';
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Eye, UserPlus, Upload, Download, Edit, Trash2, Clock } from "lucide-react";
-import { AmbassadorMetricsCards } from "./AmbassadorMetricsCards";
-import { AmbassadorPerformanceChart } from "./AmbassadorPerformanceChart";
-import { AmbassadorActivityTimeline } from "./AmbassadorActivityTimeline";
-import { AmbassadorRequestsTab } from "./AmbassadorRequestsTab";
-import { useAmbassadorMetrics } from "@/hooks/useAmbassadorMetrics";
-import { useAmbassadorRequests } from "@/hooks/useAmbassadorRequests";
-import AddAmbassadorModal from "./AddAmbassadorModal";
-import { EditAmbassadorModal } from "./EditAmbassadorModal";
-import { DeleteAmbassadorModal } from "./DeleteAmbassadorModal";
-import { InstagramProfileLink } from "./InstagramProfileLink";
+const CATEGORY_STYLES: Record<string, string> = {
+  bronze: 'bg-warning/10 text-warning',
+  silver: 'bg-muted text-muted-foreground',
+  gold: 'bg-warning/20 text-warning',
+  diamond: 'bg-primary/10 text-primary',
+};
+
+const PERFORMANCE_STYLES: Record<string, string> = {
+  cumple: 'bg-success/10 text-success',
+  advertencia: 'bg-warning/10 text-warning',
+  no_cumple: 'bg-destructive/10 text-destructive',
+  exclusivo: 'bg-primary/10 text-primary',
+};
+
+function getCategoryBadge(category: string) {
+  return CATEGORY_STYLES[category] || CATEGORY_STYLES.bronze;
+}
+
+function getPerformanceBadge(status: string) {
+  return PERFORMANCE_STYLES[status] || PERFORMANCE_STYLES.cumple;
+}
 
 interface Ambassador {
   id: string;
   first_name: string;
   last_name: string;
-  email?: string; // Optional - only available with manage_ambassadors permission
+  email?: string;
   instagram_user: string;
   organization_id: string;
   status: string;
@@ -36,9 +65,9 @@ interface Ambassador {
   follower_count: number;
   instagram_access_token?: string;
   last_instagram_sync?: string;
-  rut?: string; // Optional - only available with manage_ambassadors permission
-  date_of_birth?: string | null; // Optional - only available with manage_ambassadors permission
-  profile_picture_url?: string | null; // Optional - only available with manage_ambassadors permission
+  rut?: string;
+  date_of_birth?: string | null;
+  profile_picture_url?: string | null;
 }
 
 interface EnhancedAmbassadorDashboardProps {
@@ -46,70 +75,68 @@ interface EnhancedAmbassadorDashboardProps {
   onRefresh: () => void;
 }
 
-export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: EnhancedAmbassadorDashboardProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+export function EnhancedAmbassadorDashboard({
+  ambassadors,
+  onRefresh,
+}: EnhancedAmbassadorDashboardProps) {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedAmbassadorId, setSelectedAmbassadorId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAmbassador, setEditingAmbassador] = useState<Ambassador | null>(null);
   const [deletingAmbassador, setDeletingAmbassador] = useState<Ambassador | null>(null);
-  
-  const { metrics, loading: metricsLoading } = useAmbassadorMetrics(selectedAmbassadorId || undefined);
+
+  const { metrics, loading: metricsLoading } = useAmbassadorMetrics(
+    selectedAmbassadorId || undefined
+  );
   const { getPendingCount } = useAmbassadorRequests();
 
   const pendingRequestsCount = getPendingCount();
 
-  const filteredAmbassadors = ambassadors.filter(ambassador => {
-    const searchText = `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
-    return searchText.includes(searchTerm.toLowerCase());
-  });
-
-  const getCategoryBadge = (category: string) => {
-    const styles = {
-      'bronze': 'bg-amber-100 text-amber-800',
-      'silver': 'bg-gray-100 text-gray-800', 
-      'gold': 'bg-yellow-100 text-yellow-800',
-      'diamond': 'bg-purple-100 text-purple-800'
-    };
-    return styles[category as keyof typeof styles] || styles.bronze;
-  };
-
-  const getPerformanceBadge = (status: string) => {
-    const styles = {
-      'cumple': 'bg-green-100 text-green-800',
-      'advertencia': 'bg-yellow-100 text-yellow-800',
-      'no_cumple': 'bg-red-100 text-red-800',
-      'exclusivo': 'bg-purple-100 text-purple-800'
-    };
-    return styles[status as keyof typeof styles] || styles.cumple;
-  };
+  const searchTermLower = searchTerm.toLowerCase();
+  const filteredAmbassadors = useMemo(
+    () =>
+      ambassadors.filter((ambassador) => {
+        const searchText =
+          `${ambassador.first_name} ${ambassador.last_name} ${ambassador.email || ''} ${ambassador.instagram_user}`.toLowerCase();
+        return searchText.includes(searchTermLower);
+      }),
+    [ambassadors, searchTermLower]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard de Embajadores</h1>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard de Embajadores</h1>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none"
+            onClick={() => navigate('/import-export')}
+          >
+            <span className="mr-2">{EMOJIS.navigation.import}</span>
             Importar
           </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none"
+            onClick={() => navigate('/import-export')}
+          >
+            <span className="mr-2">{EMOJIS.navigation.export}</span>
             Exportar
           </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <UserPlus className="w-4 h-4 mr-2" />
+          <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
+            <span className="mr-2">{EMOJIS.actions.add}</span>
             Agregar Embajador
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="list" className="space-y-6">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 w-full sm:max-w-md">
           <TabsTrigger value="list">Embajadores</TabsTrigger>
           <TabsTrigger value="requests" className="relative">
-            <Clock className="h-4 w-4 mr-1" />
+            <span className="mr-1">{EMOJIS.status.pending}</span>
             Solicitudes
             {pendingRequestsCount > 0 && (
               <Badge variant="destructive" className="ml-1 px-1 min-w-[1.2rem] h-5 text-xs">
@@ -120,10 +147,11 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
         </TabsList>
 
         <TabsContent value="list" className="space-y-6">
-          {/* Search Bar */}
           <div className="flex gap-4 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <span className="absolute left-3 top-2.5 text-muted-foreground">
+                {EMOJIS.actions.search}
+              </span>
               <Input
                 placeholder="Buscar embajadores..."
                 value={searchTerm}
@@ -133,10 +161,9 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
             </div>
           </div>
 
-          {/* Ambassadors Table */}
           <Card>
-            <CardContent className="p-0">
-              <Table>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Embajador</TableHead>
@@ -155,14 +182,19 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                     <TableRow key={ambassador.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <Avatar>
+                          <Avatar className="shrink-0">
                             <AvatarFallback>
-                              {ambassador.first_name[0]}{ambassador.last_name[0]}
+                              {ambassador.first_name[0]}
+                              {ambassador.last_name[0]}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{ambassador.first_name} {ambassador.last_name}</p>
-                            <p className="text-sm text-muted-foreground">@{ambassador.instagram_user}</p>
+                            <p className="font-medium">
+                              {ambassador.first_name} {ambassador.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              @{ambassador.instagram_user}
+                            </p>
                           </div>
                         </div>
                       </TableCell>
@@ -173,9 +205,13 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                       </TableCell>
                       <TableCell>
                         <Badge className={getPerformanceBadge(ambassador.performance_status)}>
-                          {ambassador.performance_status === 'cumple' ? 'Cumple' :
-                           ambassador.performance_status === 'advertencia' ? 'Advertencia' :
-                           ambassador.performance_status === 'no_cumple' ? 'No Cumple' : 'Exclusivo'}
+                          {ambassador.performance_status === 'cumple'
+                            ? 'Cumple'
+                            : ambassador.performance_status === 'advertencia'
+                              ? 'Advertencia'
+                              : ambassador.performance_status === 'no_cumple'
+                                ? 'No Cumple'
+                                : 'Exclusivo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -185,33 +221,33 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
                       <TableCell>{ambassador.completed_tasks}</TableCell>
                       <TableCell>{ambassador.follower_count.toLocaleString()}</TableCell>
                       <TableCell>
-                        <InstagramProfileLink 
+                        <InstagramProfileLink
                           username={ambassador.instagram_user}
                           followerCount={ambassador.follower_count}
                         />
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setSelectedAmbassadorId(ambassador.id)}
                           >
-                            <Eye className="w-4 h-4" />
+                            <span>{EMOJIS.actions.view}</span>
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setEditingAmbassador(ambassador)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <span>{EMOJIS.actions.edit}</span>
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setDeletingAmbassador(ambassador)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <span>{EMOJIS.actions.delete}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -228,17 +264,17 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
         </TabsContent>
       </Tabs>
 
-      {/* Ambassador Detail Modal */}
-      <Dialog open={!!selectedAmbassadorId} onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <Dialog
+        open={!!selectedAmbassadorId}
+        onOpenChange={(open) => !open && setSelectedAmbassadorId(null)}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Dashboard del Embajador</DialogTitle>
           </DialogHeader>
-          
+
           {metricsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              Cargando métricas...
-            </div>
+            <div className="flex items-center justify-center py-8">Cargando métricas...</div>
           ) : metrics ? (
             <div className="space-y-6">
               <AmbassadorMetricsCards metrics={metrics} />
@@ -253,14 +289,12 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
         </DialogContent>
       </Dialog>
 
-      {/* Add Ambassador Modal */}
-      <AddAmbassadorModal 
+      <AddAmbassadorModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAmbassadorAdded={onRefresh}
       />
 
-      {/* Edit Ambassador Modal */}
       <EditAmbassadorModal
         isOpen={!!editingAmbassador}
         onClose={() => setEditingAmbassador(null)}
@@ -268,7 +302,6 @@ export function EnhancedAmbassadorDashboard({ ambassadors, onRefresh }: Enhanced
         onAmbassadorUpdated={onRefresh}
       />
 
-      {/* Delete Ambassador Modal */}
       <DeleteAmbassadorModal
         isOpen={!!deletingAmbassador}
         onClose={() => setDeletingAmbassador(null)}

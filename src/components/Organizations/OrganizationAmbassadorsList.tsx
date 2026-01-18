@@ -1,8 +1,7 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Award, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Users, Award, Target } from 'lucide-react';
 
 interface TopAmbassador {
   id: string;
@@ -20,10 +19,10 @@ interface OrganizationAmbassadorsListProps {
 export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassadorsListProps) {
   const getPerformanceBadge = (status: string) => {
     const styles = {
-      'cumple': { variant: "default" as const, label: 'Cumple' },
-      'advertencia': { variant: "secondary" as const, label: 'Advertencia' },
-      'no_cumple': { variant: "destructive" as const, label: 'No Cumple' },
-      'exclusivo': { variant: "outline" as const, label: 'Exclusivo' }
+      cumple: { variant: 'default' as const, label: 'Cumple' },
+      advertencia: { variant: 'secondary' as const, label: 'Advertencia' },
+      no_cumple: { variant: 'destructive' as const, label: 'No Cumple' },
+      exclusivo: { variant: 'outline' as const, label: 'Exclusivo' },
     };
     return styles[status as keyof typeof styles] || styles.cumple;
   };
@@ -51,31 +50,36 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
           <div className="space-y-4">
             {ambassadors.map((ambassador, index) => {
               const performanceBadge = getPerformanceBadge(ambassador.performance_status);
-              
+
               return (
-                <div key={ambassador.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={ambassador.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex items-center gap-3">
-                    {/* Ranking Badge */}
-                    <div className="flex items-center justify-center w-8 h-8 text-lg">
+                    <div className="flex items-center justify-center w-8 h-8 shrink-0 text-lg">
                       {getRankIcon(index)}
                     </div>
 
-                    {/* Avatar and Info */}
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarFallback>
-                          {ambassador.name.split(' ').map(n => n[0]).join('')}
+                          {ambassador.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="font-medium">{ambassador.name}</h3>
-                        <p className="text-sm text-muted-foreground">@{ambassador.instagram_user}</p>
+                        <p className="text-sm text-muted-foreground">
+                          @{ambassador.instagram_user}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {/* Points */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Award className="w-3 h-3" />
@@ -84,7 +88,6 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                       <p className="text-xs text-muted-foreground">puntos</p>
                     </div>
 
-                    {/* Tasks Completed */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Target className="w-3 h-3" />
@@ -93,7 +96,6 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                       <p className="text-xs text-muted-foreground">tareas</p>
                     </div>
 
-                    {/* Performance Status */}
                     <Badge variant={performanceBadge.variant} className="text-xs">
                       {performanceBadge.label}
                     </Badge>

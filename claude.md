@@ -18,7 +18,7 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 | **Edge Functions** | Deno runtime |
 | **External APIs** | Instagram Graph API v24.0, Meta OAuth |
 | **Automation** | N8n workflows |
-| **i18n** | i18next |
+| **Code Quality** | ESLint 9, Prettier 3, Vitest 4 |
 
 ---
 
@@ -27,24 +27,26 @@ EvaSystem is an **Instagram Ambassador Management & Analytics Platform** that en
 ```
 evasystem/
 ├── src/
-│   ├── components/               # React components (138 total)
-│   │   ├── ui/                   # shadcn/ui components (51)
+│   ├── components/               # React components (113 total)
+│   │   ├── ui/                   # shadcn/ui primitives (48)
 │   │   ├── Auth/                 # Authentication UI
 │   │   ├── Dashboard/            # Dashboard widgets
 │   │   ├── Layout/               # MainLayout, Sidebar, Header
 │   │   ├── Ambassadors/          # Ambassador management
 │   │   ├── Events/               # Event management
-│   │   ├── Fiestas/              # Party/fiesta components
+│   │   ├── Fiestas/              # Fiesta components
 │   │   ├── Analytics/            # Charts and reports
 │   │   ├── Instagram/            # Instagram connection UI
-│   │   ├── Mentions/             # Social mention tracking
 │   │   ├── Stories/              # Story management
 │   │   ├── StoryMentions/        # Story mention components
 │   │   ├── Organizations/        # Org management
 │   │   ├── Settings/             # App settings
-│   │   └── ...
+│   │   ├── ErrorBoundary/        # Error handling
+│   │   ├── ImportExport/         # Data import/export
+│   │   ├── Notifications/        # Notification center
+│   │   └── Profile/              # User profile
 │   │
-│   ├── pages/                    # Route pages (20)
+│   ├── pages/                    # Route pages (18)
 │   │   ├── Index.tsx             # Dashboard
 │   │   ├── Ambassadors.tsx
 │   │   ├── Events.tsx
@@ -52,15 +54,32 @@ evasystem/
 │   │   ├── Settings.tsx
 │   │   └── ...
 │   │
-│   ├── hooks/                    # Custom hooks (31)
+│   ├── hooks/                    # Custom hooks (26)
 │   │   ├── useAuth.ts
 │   │   ├── useCurrentOrganization.ts
+│   │   ├── useAmbassadors.ts     # Uses @/services/api
+│   │   ├── useFiestas.ts         # Uses @/services/api
 │   │   ├── useInstagramConnection.ts
-│   │   ├── useInstagramSync.ts
-│   │   ├── useFiestas.ts
-│   │   ├── useAmbassadorMetrics.ts
-│   │   ├── useRealNotifications.ts
 │   │   └── ...
+│   │
+│   ├── constants/                # Centralized constants (~170 lines)
+│   │   ├── queryKeys.ts          # React Query key factories
+│   │   ├── ambassadorStatus.ts   # Status const objects & types
+│   │   ├── categories.ts         # Category const & type
+│   │   ├── entityStatus.ts       # Entity status const & types
+│   │   └── index.ts              # Re-exports
+│   │
+│   ├── services/api/             # API abstraction (~220 lines)
+│   │   ├── ambassadors.ts        # get, create, update, delete
+│   │   ├── fiestas.ts            # get, create, update
+│   │   └── index.ts              # Re-exports
+│   │
+│   ├── types/                    # Shared TypeScript types (~560 lines)
+│   │   ├── ambassador.ts         # Ambassador, Request, Ranking types
+│   │   ├── organization.ts       # Organization, Member types
+│   │   ├── event.ts              # Event, Fiesta, Task types
+│   │   ├── storyMentions.ts      # Story mention types
+│   │   └── index.ts              # Re-exports
 │   │
 │   ├── integrations/
 │   │   └── supabase/
@@ -68,12 +87,7 @@ evasystem/
 │   │       └── types.ts          # Generated DB types
 │   │
 │   ├── lib/
-│   │   └── utils.ts              # Utility functions (cn, etc.)
-│   │
-│   ├── types/                    # TypeScript type definitions
-│   │
-│   ├── i18n/                     # Internationalization
-│   │   └── locales/
+│   │   └── utils.ts              # cn() utility
 │   │
 │   ├── assets/                   # Static assets
 │   │
@@ -392,8 +406,8 @@ The `refresh-instagram-tokens` edge function runs daily at 3 AM UTC via pg_cron:
 
 ### Key Constants (`/supabase/functions/shared/constants.ts`)
 ```typescript
-TOKEN_REFRESH_THRESHOLD_DAYS = 7    // Refresh tokens this many days before expiry
-DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000  // 60 days in milliseconds
+TOKEN_REFRESH_THRESHOLD_DAYS = 7
+DEFAULT_TOKEN_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000
 ```
 
 ### Frontend Token Status
@@ -423,16 +437,12 @@ The following cron jobs are configured in the database:
 
 ### Managing Cron Jobs
 ```sql
--- View all cron jobs
 SELECT * FROM cron.job;
 
--- View job execution history
 SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
 
--- Create a new cron job
 SELECT cron.schedule('job-name', '0 * * * *', $$ SELECT ... $$);
 
--- Delete a cron job
 SELECT cron.unschedule('job-name');
 ```
 
@@ -462,10 +472,25 @@ CRON_SECRET=xxx
 
 ### Commands
 ```bash
+# Development
 npm run dev          # Start Vite dev server
-npm run build        # Production build
-npm run lint         # Run ESLint
 npm run preview      # Preview production build
+
+# Build
+npm run build        # Production build
+npm run build:dev    # Development build
+
+# Code Quality
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+npm run format       # Format with Prettier
+npm run format:check # Check formatting
+npm run typecheck    # TypeScript type checking
+
+# Testing
+npm run test         # Run tests in watch mode
+npm run test:run     # Run tests once
+npm run test:coverage # Run tests with coverage
 ```
 
 ### Supabase CLI
@@ -480,14 +505,105 @@ supabase gen types          # Generate TypeScript types
 
 ## Key Patterns
 
-### React Query Usage
-All data fetching uses React Query with consistent patterns:
+### React Query Configuration
+Global configuration in `App.tsx`:
 ```typescript
-const { data, isLoading, error } = useQuery({
-  queryKey: ['entity', id],
-  queryFn: () => supabase.from('table').select('*'),
-  staleTime: 10 * 60 * 1000, // 10 minutes
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      retry: (failureCount, error) => {
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return failureCount < 1;
+      },
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: false,
+      networkMode: 'online',
+    },
+    mutations: { retry: false },
+  },
 });
+```
+
+### Query Key Factories
+Use `QUERY_KEYS` from `@/constants` instead of hardcoded arrays:
+```typescript
+import { QUERY_KEYS } from '@/constants';
+
+const ambassadorsKey = QUERY_KEYS.ambassadors(organizationId);
+const fiestasKey = QUERY_KEYS.fiestas(organizationId);
+const tasksKey = QUERY_KEYS.tasks(organizationId);
+const dashboardStatsKey = QUERY_KEYS.dashboardStats(userId);
+```
+
+### Service Layer Pattern
+Use `@/services/api` for Supabase operations instead of direct calls:
+```typescript
+import { getAmbassadors, createAmbassador } from '@/services/api';
+
+const { data } = useQuery({
+  queryKey: QUERY_KEYS.ambassadors(orgId),
+  queryFn: () => getAmbassadors(orgId),
+});
+```
+
+### Hook Structure Pattern
+All data hooks follow this consistent structure:
+```typescript
+import { QUERY_KEYS } from '@/constants';
+import { getEntities, createEntity } from '@/services/api';
+import type { Entity, CreateEntityInput } from '@/types';
+
+export function useEntities() {
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+
+  const organizationId = organization?.id;
+  const queryKey = QUERY_KEYS.entities(organizationId || '');
+
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => getEntities(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateEntityInput) => createEntity(organizationId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Created successfully');
+    },
+    onError: () => toast.error('Error creating'),
+  });
+
+  const loading = orgLoading || (!!organizationId && isLoading);
+
+  return { data, loading, error, create: createMutation.mutateAsync };
+}
+```
+
+### Real-time Subscriptions Pattern
+```typescript
+useEffect(() => {
+  if (!organization) return;
+
+  const channel = supabase
+    .channel(`entity_${organization.id}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'entity_table',
+      filter: `organization_id=eq.${organization.id}`
+    }, (payload) => {
+      onNewItem?.(payload.new);
+    })
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [organization]);
 ```
 
 ### Supabase Client Access
@@ -503,6 +619,7 @@ const { data, error } = await supabase.functions.invoke('function-name', {
 ```
 
 ### Path Aliases
+Configured in `vite.config.ts` and `tsconfig.json`:
 ```typescript
 import { Component } from '@/components/Component';
 import { useHook } from '@/hooks/useHook';
@@ -517,6 +634,81 @@ import { useHook } from '@/hooks/useHook';
 - **Pages**: PascalCase (`Ambassadors.tsx`)
 - **Utilities**: camelCase (`utils.ts`)
 - **Edge Functions**: kebab-case directories (`meta-oauth/`)
+
+---
+
+## Coding Standards
+
+### No Comments Policy
+
+**This codebase follows a strict no-comments policy.** All code must be self-explanatory through:
+- Clear, descriptive variable and function names
+- Small, focused functions with single responsibilities
+- Well-structured code that reveals intent
+- Meaningful type definitions
+
+**Rules:**
+- Do NOT add inline comments (`//`)
+- Do NOT add block comments (`/* */`)
+- Do NOT add JSDoc comments (`/** */`)
+- Do NOT add TODO comments
+- Do NOT add commented-out code
+
+**Exceptions:**
+- Test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`) may contain comments for test documentation
+- Type definitions may include brief JSDoc for IDE intellisense when absolutely necessary for complex types
+
+**Why no comments?**
+- Comments become outdated and misleading
+- Good code is self-documenting
+- Comments often explain "what" instead of the code showing "how"
+- Forces developers to write clearer code
+- Reduces noise and improves readability
+
+**Instead of comments, use:**
+```typescript
+// BAD: Comment explaining what code does
+// Check if user is admin
+if (user.role === 'admin') { ... }
+
+// GOOD: Self-explanatory code
+const isAdmin = user.role === 'admin';
+if (isAdmin) { ... }
+
+// BAD: Comment explaining complex logic
+// Calculate days until token expires
+const days = Math.floor((expiry - now) / 86400000);
+
+// GOOD: Extract to well-named function
+const daysUntilExpiry = calculateDaysUntilExpiry(tokenExpiry);
+```
+
+---
+
+## Code Quality Tools
+
+### Prettier
+Code formatting is enforced using Prettier with the following configuration (`.prettierrc`):
+- Semi-colons: enabled
+- Single quotes: enabled
+- Tab width: 2 spaces
+- Trailing commas: ES5
+- Print width: 100 characters
+
+**Automatic Formatting:**
+- **On save (VS Code)**: The `.vscode/` settings configure format-on-save, so pressing `Cmd+S` automatically runs Prettier on the current file
+- **On commit**: A pre-commit hook runs Prettier on staged files before each commit, ensuring all committed code is properly formatted
+
+Run `npm run format` to format all files, or `npm run format:check` to verify formatting.
+
+### ESLint
+ESLint is configured with:
+- TypeScript support via `typescript-eslint`
+- React Hooks rules
+- Prettier integration (formatting errors as warnings)
+- `@typescript-eslint/no-explicit-any`: warn
+- `@typescript-eslint/consistent-type-imports`: prefer type imports
+- `no-console`: warn (except `console.warn` and `console.error`)
 
 ---
 
@@ -629,8 +821,8 @@ const { data: membership } = await supabase
 
 **Implementation**: `/supabase/functions/shared/crypto.ts`
 ```typescript
-encryptToken(token: string): Promise<string>   // Store this
-safeDecryptToken(encrypted: string): Promise<string>  // Use when calling Instagram API
+encryptToken(token: string): Promise<string>
+safeDecryptToken(encrypted: string): Promise<string>
 ```
 
 ### ADR-004: Cron Jobs via pg_cron
@@ -647,10 +839,8 @@ safeDecryptToken(encrypted: string): Promise<string>  // Use when calling Instag
 
 **Pattern**:
 ```typescript
-// Server state (data from API)
 const { data, isLoading } = useQuery({ queryKey: ['key'], queryFn: fetchData });
 
-// UI state (local only)
 const [isOpen, setIsOpen] = useState(false);
 ```
 
@@ -662,14 +852,63 @@ const [isOpen, setIsOpen] = useState(false);
 **Configuration**:
 ```toml
 [functions.meta-oauth]
-verify_jwt = true  # Requires user authentication
+verify_jwt = true
 
 [functions.instagram-webhook]
-verify_jwt = false  # Called by Instagram, uses verify_token instead
+verify_jwt = false
 
 [functions.refresh-instagram-tokens]
-verify_jwt = false  # Called by cron, uses CRON_SECRET
+verify_jwt = false
 ```
+
+### ADR-007: React Query for Server State
+**Decision**: Use TanStack React Query for all server state management.
+
+**Context**: Server state (data from API) has different characteristics than UI state and benefits from caching, deduplication, and background refetching.
+
+**Configuration**:
+- 10-minute stale time prevents unnecessary refetches
+- 30-minute garbage collection keeps inactive data available
+- No retry on 4xx errors (client errors)
+- Single retry on network errors
+- Disabled refetch on window focus (explicit user action preferred)
+
+**Pattern**: All hooks use `useQuery` for reads and `useMutation` for writes with automatic cache invalidation.
+
+### ADR-008: Feature-Based Component Organization
+**Decision**: Organize components by feature/domain rather than by type (atomic design).
+
+**Context**: Feature-based organization makes it easier to understand domain boundaries and keeps related code together.
+
+**Structure**:
+```
+components/
+├── Ambassadors/     # All ambassador-related UI
+├── Events/          # Event management UI
+├── Fiestas/         # Fiesta/party UI
+├── Instagram/       # Instagram integration UI
+├── Settings/        # Settings page components
+└── ui/              # Shared primitive components (shadcn/ui)
+```
+
+**Consequence**: Components in a feature folder should only be used within that feature. Cross-feature components belong in `ui/` or root `components/`.
+
+### ADR-009: Organization-Scoped Data Access
+**Decision**: All data queries are scoped to the current organization.
+
+**Context**: Multi-tenant architecture requires data isolation between organizations.
+
+**Pattern**:
+```typescript
+const { organization } = useCurrentOrganization();
+const { data } = useQuery({
+  queryKey: ['entity', organization?.id],
+  queryFn: () => fetchData(organization!.id),
+  enabled: !!organization?.id,
+});
+```
+
+**Consequence**: Every data hook must depend on `useCurrentOrganization` and include organization ID in query keys for proper cache separation.
 
 ---
 
@@ -719,7 +958,6 @@ verify_jwt = false  # Called by cron, uses CRON_SECRET
 
 ### Missing Token Data
 ```sql
--- Check token status for all organizations
 SELECT
   o.name,
   o.instagram_username,

@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Target, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Target, TrendingUp } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -28,11 +27,11 @@ export function OrganizationEventsList({ events }: OrganizationEventsListProps) 
   };
 
   const getCompletionBadgeVariant = (completed: number, total: number) => {
-    if (total === 0) return "secondary";
+    if (total === 0) return 'secondary';
     const rate = (completed / total) * 100;
-    if (rate >= 80) return "default";
-    if (rate >= 60) return "secondary";
-    return "destructive";
+    if (rate >= 80) return 'default';
+    if (rate >= 60) return 'secondary';
+    return 'destructive';
   };
 
   return (
@@ -52,39 +51,46 @@ export function OrganizationEventsList({ events }: OrganizationEventsListProps) 
         ) : (
           <div className="space-y-4">
             {events.map((event) => {
-              const completionRate = event.total_tasks > 0 
-                ? Math.round((event.completed_tasks / event.total_tasks) * 100)
-                : 0;
+              const completionRate =
+                event.total_tasks > 0
+                  ? Math.round((event.completed_tasks / event.total_tasks) * 100)
+                  : 0;
 
               return (
-                <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex-1">
                     <h3 className="font-medium">{event.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {new Date(event.event_date).toLocaleDateString('es-ES', {
                         day: 'numeric',
                         month: 'short',
-                        year: 'numeric'
+                        year: 'numeric',
                       })}
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
-                    {/* Tareas */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <Target className="w-3 h-3" />
-                        <span className="font-medium">{event.completed_tasks}/{event.total_tasks}</span>
+                        <span className="font-medium">
+                          {event.completed_tasks}/{event.total_tasks}
+                        </span>
                       </div>
-                      <Badge 
-                        variant={getCompletionBadgeVariant(event.completed_tasks, event.total_tasks)}
+                      <Badge
+                        variant={getCompletionBadgeVariant(
+                          event.completed_tasks,
+                          event.total_tasks
+                        )}
                         className="text-xs mt-1"
                       >
                         {completionRate}% completado
                       </Badge>
                     </div>
 
-                    {/* Alcance */}
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-sm">
                         <TrendingUp className="w-3 h-3" />

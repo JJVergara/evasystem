@@ -67,3 +67,9 @@ Thumbs.db
 # yarn.lock
 # pnpm-lock.yaml
 # bun.lockb
+
+# Generated files
+repomix-output.xml
+
+# Claude
+.claude/

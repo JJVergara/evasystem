@@ -1,0 +1,101 @@
+import { useCallback } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import { useCurrentOrganization } from './useCurrentOrganization';
+import { QUERY_KEYS } from '@/constants';
+import {
+  getAmbassadors,
+  createAmbassador as createAmbassadorApi,
+  updateAmbassador as updateAmbassadorApi,
+  deleteAmbassador as deleteAmbassadorApi,
+} from '@/services/api';
+import type { Ambassador, CreateAmbassadorInput, UpdateAmbassadorInput } from '@/types';
+
+export type { Ambassador };
+
+export function useAmbassadors() {
+  const { organization, loading: orgLoading } = useCurrentOrganization();
+  const queryClient = useQueryClient();
+
+  const organizationId = organization?.id;
+  const queryKey = QUERY_KEYS.ambassadors(organizationId || '');
+
+  const {
+    data: ambassadors = [],
+    isLoading: ambassadorsLoading,
+    error,
+  } = useQuery({
+    queryKey,
+    queryFn: () => getAmbassadors(organizationId!),
+    enabled: !!organizationId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+  });
+
+  const createAmbassadorMutation = useMutation({
+    mutationFn: (data: CreateAmbassadorInput) => createAmbassadorApi(organizationId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Embajador creado exitosamente');
+    },
+    onError: () => {
+      toast.error('Error al crear embajador');
+    },
+  });
+
+  const updateAmbassadorMutation = useMutation({
+    mutationFn: (data: UpdateAmbassadorInput) => updateAmbassadorApi(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Embajador actualizado');
+    },
+    onError: () => {
+      toast.error('Error al actualizar embajador');
+    },
+  });
+
+  const deleteAmbassadorMutation = useMutation({
+    mutationFn: (ambassadorId: string) => deleteAmbassadorApi(ambassadorId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.success('Embajador eliminado');
+    },
+    onError: () => {
+      toast.error('Error al eliminar embajador');
+    },
+  });
+
+  const createAmbassador = useCallback(
+    (data: CreateAmbassadorInput) => createAmbassadorMutation.mutateAsync(data),
+    [createAmbassadorMutation]
+  );
+
+  const updateAmbassador = useCallback(
+    (id: string, updates: Partial<Ambassador>) =>
+      updateAmbassadorMutation.mutateAsync({ id, ...updates }),
+    [updateAmbassadorMutation]
+  );
+
+  const deleteAmbassador = useCallback(
+    (ambassadorId: string) => deleteAmbassadorMutation.mutateAsync(ambassadorId),
+    [deleteAmbassadorMutation]
+  );
+
+  const refreshAmbassadors = useCallback(
+    () => queryClient.invalidateQueries({ queryKey }),
+    [queryClient, queryKey]
+  );
+
+  const loading = orgLoading || (!!organizationId && ambassadorsLoading);
+
+  return {
+    ambassadors,
+    loading,
+    error: error ? 'Error al cargar embajadores' : null,
+    createAmbassador,
+    updateAmbassador,
+    deleteAmbassador,
+    refreshAmbassadors,
+  };
+}

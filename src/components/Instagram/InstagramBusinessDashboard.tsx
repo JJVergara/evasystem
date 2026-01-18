@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Instagram, Users, Image, Tag, RefreshCw, ExternalLink } from "lucide-react";
-import { useInstagramSync } from "@/hooks/useInstagramSync";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Instagram, Image, Tag, RefreshCw, ExternalLink } from 'lucide-react';
+import { useInstagramSync } from '@/hooks/useInstagramSync';
+import { toast } from 'sonner';
 
 interface InstagramProfile {
   user_id: string;
@@ -41,7 +41,8 @@ interface InstagramTag {
 }
 
 export function InstagramBusinessDashboard() {
-  const { isSyncing, getInstagramProfile, getInstagramMedia, getInstagramTags } = useInstagramSync();
+  const { isSyncing, getInstagramProfile, getInstagramMedia, getInstagramTags } =
+    useInstagramSync();
   const [profile, setProfile] = useState<InstagramProfile | null>(null);
   const [media, setMedia] = useState<InstagramMedia[]>([]);
   const [tags, setTags] = useState<InstagramTag[]>([]);
@@ -50,26 +51,22 @@ export function InstagramBusinessDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Cargar perfil
+
       const profileData = await getInstagramProfile();
       if (profileData?.success && profileData.profile) {
         setProfile(profileData.profile);
       }
 
-      // Cargar media
       const mediaData = await getInstagramMedia();
       if (mediaData?.success && mediaData.media) {
         setMedia(mediaData.media);
       }
 
-      // Cargar tags/menciones
       const tagsData = await getInstagramTags();
       if (tagsData?.success && tagsData.tags) {
         setTags(tagsData.tags);
       }
-    } catch (error) {
-      console.error('Error loading Instagram data:', error);
+    } catch {
       toast.error('Error al cargar datos de Instagram');
     } finally {
       setLoading(false);
@@ -95,7 +92,6 @@ export function InstagramBusinessDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header con perfil */}
       {profile && (
         <Card>
           <CardHeader>
@@ -104,12 +100,11 @@ export function InstagramBusinessDashboard() {
                 <img
                   src={profile.profile_picture_url}
                   alt={profile.username}
-                  className="w-16 h-16 rounded-full"
+                  className="w-16 h-16 shrink-0 rounded-full"
                 />
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Instagram className="w-5 h-5" />
-                    @{profile.username}
+                    <Instagram className="w-5 h-5" />@{profile.username}
                   </CardTitle>
                   <CardDescription>{profile.name}</CardDescription>
                   <Badge variant="outline" className="mt-1">
@@ -142,7 +137,6 @@ export function InstagramBusinessDashboard() {
         </Card>
       )}
 
-      {/* Tabs para contenido */}
       <Tabs defaultValue="media" className="space-y-4">
         <TabsList>
           <TabsTrigger value="media" className="flex items-center gap-2">

@@ -1,73 +1,106 @@
-# Welcome to your Lovable project
+# EvaSystem
 
-## Project info
+Plataforma de gestión de embajadores de marca e integración con Instagram desarrollada para **Evaconcept**.
 
-**URL**: https://lovable.dev/projects/683863ee-ecdb-43b3-915c-426116657c73
+## Descripción
 
-## How can I edit this code?
+EvaSystem permite a organizaciones:
 
-There are several ways of editing your application.
+- **Gestionar embajadores de marca**: registro, seguimiento y análisis de rendimiento
+- **Integración con Instagram**: conexión OAuth, sincronización de stories y detección automática de menciones
+- **Analíticas**: métricas de engagement, alcance e impresiones de stories
+- **Gestión de eventos y fiestas**: organización de eventos con asignación de tareas a embajadores
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/683863ee-ecdb-43b3-915c-426116657c73) and start prompting.
+| Capa | Tecnologías |
+|------|-------------|
+| Frontend | React 18, Vite, TypeScript |
+| Estilos | Tailwind CSS, shadcn/ui |
+| Estado | TanStack React Query |
+| Backend | Supabase (PostgreSQL + Edge Functions + Auth) |
+| APIs externas | Instagram Graph API v24.0, Meta OAuth |
 
-Changes made via Lovable will be committed automatically to this repo.
+## Requisitos previos
 
-**Use your preferred IDE**
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- Cuenta de Supabase con proyecto configurado
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Instalación
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+# Clonar el repositorio
+git clone <URL_DEL_REPOSITORIO>
+cd evasystem
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Instalar dependencias
+pnpm install
 ```
 
-**Edit a file directly in GitHub**
+## Variables de entorno
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Crear un archivo `.env` en la raíz del proyecto:
 
-**Use GitHub Codespaces**
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-anon-key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Desarrollo
 
-## What technologies are used for this project?
+```bash
+# Iniciar servidor de desarrollo
+pnpm run dev
 
-This project is built with:
+# El servidor estará disponible en http://localhost:5173
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Scripts disponibles
 
-## How can I deploy this project?
+| Comando | Descripción |
+|---------|-------------|
+| `pnpm run dev` | Inicia el servidor de desarrollo |
+| `pnpm run build` | Genera build de producción |
+| `pnpm run preview` | Previsualiza el build de producción |
+| `pnpm run lint` | Ejecuta ESLint |
+| `pnpm run lint:fix` | Corrige errores de ESLint automáticamente |
+| `pnpm run format` | Formatea el código con Prettier |
+| `pnpm run typecheck` | Verifica tipos de TypeScript |
+| `pnpm run test` | Ejecuta tests en modo watch |
+| `pnpm run test:run` | Ejecuta tests una vez |
 
-Simply open [Lovable](https://lovable.dev/projects/683863ee-ecdb-43b3-915c-426116657c73) and click on Share -> Publish.
+## Supabase (Edge Functions)
 
-## Can I connect a custom domain to my Lovable project?
+Para desarrollo local de Edge Functions:
 
-Yes, you can!
+```bash
+# Iniciar Supabase localmente
+supabase start
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# Servir funciones en modo desarrollo
+supabase functions serve
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# Aplicar migraciones
+supabase db push
+
+# Regenerar tipos de TypeScript
+supabase gen types typescript --local > src/integrations/supabase/types.ts
+```
+
+## Estructura del proyecto
+
+```
+evasystem/
+├── src/
+│   ├── components/     # Componentes React
+│   ├── pages/          # Páginas de la aplicación
+│   ├── hooks/          # Custom hooks
+│   ├── services/       # Capa de servicios API
+│   ├── types/          # Tipos TypeScript
+│   └── constants/      # Constantes centralizadas
+├── supabase/
+│   ├── functions/      # Edge Functions (Deno)
+│   └── migrations/     # Migraciones SQL
+└── n8n-workflows/      # Workflows de automatización
+```

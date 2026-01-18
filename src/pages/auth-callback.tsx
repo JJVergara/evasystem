@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -17,7 +17,9 @@ export default function AuthCallback() {
         const error = urlParams.get('error');
 
         if (error) {
-          throw new Error(urlParams.get('error_description') || 'Error de autorización de Instagram');
+          throw new Error(
+            urlParams.get('error_description') || 'Error de autorización de Instagram'
+          );
         }
 
         if (!code || !state) {
@@ -26,26 +28,20 @@ export default function AuthCallback() {
 
         setMessage('Procesando autorización de Instagram...');
 
-        // Here we would normally process the callback
-        // For now, we'll just show success and redirect
         setTimeout(() => {
           setStatus('success');
           setMessage('¡Instagram conectado exitosamente!');
           toast.success('Instagram conectado exitosamente');
-          
-          // Redirect to ambassadors page after a short delay
+
           setTimeout(() => {
             navigate('/ambassadors');
           }, 2000);
         }, 1500);
-
       } catch (error) {
-        console.error('Error processing Instagram callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error procesando autorización');
         toast.error('Error conectando Instagram');
-        
-        // Redirect to ambassadors page after error
+
         setTimeout(() => {
           navigate('/ambassadors');
         }, 3000);
@@ -56,9 +52,9 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-4">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 text-center">
+        <div className="bg-card rounded-lg shadow-lg border border-border p-8 text-center">
           {status === 'loading' && (
             <>
               <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
@@ -66,26 +62,22 @@ export default function AuthCallback() {
               <p className="text-muted-foreground">{message}</p>
             </>
           )}
-          
+
           {status === 'success' && (
             <>
-              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-              <h2 className="text-xl font-semibold mb-2 text-green-600">¡Éxito!</h2>
+              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+              <h2 className="text-xl font-semibold mb-2 text-success">¡Éxito!</h2>
               <p className="text-muted-foreground">{message}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Redirigiendo en unos segundos...
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>
           )}
-          
+
           {status === 'error' && (
             <>
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-              <h2 className="text-xl font-semibold mb-2 text-red-600">Error</h2>
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+              <h2 className="text-xl font-semibold mb-2 text-destructive">Error</h2>
               <p className="text-muted-foreground">{message}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Redirigiendo en unos segundos...
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">Redirigiendo en unos segundos...</p>
             </>
           )}
         </div>

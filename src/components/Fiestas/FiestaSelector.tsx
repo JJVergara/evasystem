@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -9,14 +9,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useFiestas } from "@/hooks/useFiestas";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useFiestas } from '@/hooks/useFiestas';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
 interface FiestaSelectorProps {
   className?: string;
@@ -29,7 +25,7 @@ export function FiestaSelector({ className }: FiestaSelectorProps) {
 
   if (loading) {
     return (
-      <div className={cn("flex items-center space-x-2", className)}>
+      <div className={cn('flex items-center space-x-2', className)}>
         <div className="h-9 w-full animate-pulse rounded-md bg-muted"></div>
       </div>
     );
@@ -37,7 +33,7 @@ export function FiestaSelector({ className }: FiestaSelectorProps) {
 
   if (!organization) {
     return (
-      <div className={cn("flex items-center space-x-2", className)}>
+      <div className={cn('flex items-center space-x-2', className)}>
         <span className="text-sm text-muted-foreground">Sin organización</span>
       </div>
     );
@@ -45,7 +41,7 @@ export function FiestaSelector({ className }: FiestaSelectorProps) {
 
   if (fiestas.length === 0) {
     return (
-      <div className={cn("flex items-center space-x-2", className)}>
+      <div className={cn('flex items-center space-x-2', className)}>
         <span className="text-sm text-muted-foreground">Sin fiestas</span>
         <Button size="sm" variant="outline">
           <Plus className="h-4 w-4 mr-2" />
@@ -62,17 +58,17 @@ export function FiestaSelector({ className }: FiestaSelectorProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("justify-between", className)}
+          className={cn('justify-between', className)}
         >
           <div className="flex items-center space-x-2 truncate">
             <span className="truncate">
-              {selectedFiesta ? selectedFiesta.name : "Seleccionar fiesta..."}
+              {selectedFiesta ? selectedFiesta.name : 'Seleccionar fiesta...'}
             </span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-[90vw] sm:w-80 p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar fiesta..." />
           <CommandList>
@@ -89,16 +85,14 @@ export function FiestaSelector({ className }: FiestaSelectorProps) {
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedFiesta?.id === fiesta.id ? "opacity-100" : "opacity-0"
+                      'mr-2 h-4 w-4',
+                      selectedFiesta?.id === fiesta.id ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium">{fiesta.name}</span>
                     {fiesta.description && (
-                      <span className="text-xs text-muted-foreground">
-                        {fiesta.description}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{fiesta.description}</span>
                     )}
                     {fiesta.event_date && (
                       <span className="text-xs text-muted-foreground">

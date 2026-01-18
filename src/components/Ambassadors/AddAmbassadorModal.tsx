@@ -1,14 +1,18 @@
-
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Instagram, Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { InstagramConnect } from "@/components/Instagram/InstagramConnect";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
 
 interface AddAmbassadorModalProps {
   isOpen: boolean;
@@ -29,13 +33,17 @@ interface Organization {
   name: string;
 }
 
-export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded }: AddAmbassadorModalProps) {
+export default function AddAmbassadorModal({
+  isOpen,
+  onClose,
+  onAmbassadorAdded,
+}: AddAmbassadorModalProps) {
   const [formData, setFormData] = useState<AmbassadorFormData>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    instagram_user: "",
-    organization_id: ""
+    first_name: '',
+    last_name: '',
+    email: '',
+    instagram_user: '',
+    organization_id: '',
   });
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -49,20 +57,15 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
 
   const fetchOrganizations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .order('name');
+      const { data, error } = await supabase.from('organizations').select('id, name').order('name');
 
       if (error) {
-        console.error('Error fetching organizations:', error);
         toast.error('Error al cargar organizaciones');
         return;
       }
-      
+
       setOrganizations(data || []);
-    } catch (error) {
-      console.error('Error al obtener organizaciones:', error);
+    } catch {
       setOrganizations([]);
     }
   };
@@ -73,7 +76,13 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
 
     try {
       // Validaciones básicas
-      if (!formData.first_name || !formData.last_name || !formData.email || !formData.instagram_user || !formData.organization_id) {
+      if (
+        !formData.first_name ||
+        !formData.last_name ||
+        !formData.email ||
+        !formData.instagram_user ||
+        !formData.organization_id
+      ) {
         toast.error('Todos los campos obligatorios deben estar completos');
         return;
       }
@@ -86,8 +95,8 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
       }
 
       // Validar que el usuario de Instagram no comience con @
-      const instagramUser = formData.instagram_user.startsWith('@') 
-        ? formData.instagram_user.slice(1) 
+      const instagramUser = formData.instagram_user.startsWith('@')
+        ? formData.instagram_user.slice(1)
         : formData.instagram_user;
 
       // Crear el embajador directamente en Supabase
@@ -97,19 +106,16 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
         email: formData.email,
         instagram_user: instagramUser,
         organization_id: formData.organization_id,
-        status: 'active'
+        status: 'active',
       };
 
-      console.log('Creando embajador con datos:', ambassadorData);
-
-      const { data: newAmbassador, error: ambassadorError } = await supabase
+      const { error: ambassadorError } = await supabase
         .from('embassadors')
         .insert(ambassadorData)
         .select()
         .single();
 
       if (ambassadorError) {
-        console.error('Error creating ambassador:', ambassadorError);
         toast.error('Error al crear embajador: ' + ambassadorError.message);
         return;
       }
@@ -118,8 +124,7 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
       resetForm();
       onClose();
       onAmbassadorAdded();
-    } catch (error) {
-      console.error('Error creating ambassador:', error);
+    } catch {
       toast.error('Error al crear embajador');
     } finally {
       setLoading(false);
@@ -128,11 +133,11 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
 
   const resetForm = () => {
     setFormData({
-      first_name: "",
-      last_name: "",
-      email: "",
-      instagram_user: "",
-      organization_id: ""
+      first_name: '',
+      last_name: '',
+      email: '',
+      instagram_user: '',
+      organization_id: '',
     });
   };
 
@@ -153,14 +158,14 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
           {/* Selección de Organización */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
+              <span>{EMOJIS.entities.organization}</span>
               Organización
             </h3>
-            
+
             <div>
               <Label htmlFor="organization_id">Seleccionar Organización/Fiesta *</Label>
-              <Select 
-                value={formData.organization_id} 
+              <Select
+                value={formData.organization_id}
                 onValueChange={(value) => setFormData({ ...formData, organization_id: value })}
                 required
               >
@@ -181,12 +186,14 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
           {/* Información Personal */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Información Personal</h3>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="first_name">Nombre *</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
+                    {EMOJIS.entities.user}
+                  </span>
                   <Input
                     id="first_name"
                     value={formData.first_name}
@@ -212,7 +219,9 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
             <div>
               <Label htmlFor="email">Email *</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-2.5 text-muted-foreground">
+                  {EMOJIS.ui.email}
+                </span>
                 <Input
                   id="email"
                   type="email"
@@ -228,8 +237,12 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
             <div>
               <Label htmlFor="instagram_user">Usuario de Instagram *</Label>
               <div className="relative">
-                <Instagram className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <div className="absolute left-8 top-3 text-muted-foreground">@</div>
+                <img
+                  src="/instagram-icon.webp"
+                  alt="Instagram"
+                  className="absolute left-3 top-2.5 w-4 h-4"
+                />
+                <div className="absolute left-8 top-2.5 text-muted-foreground">@</div>
                 <Input
                   id="instagram_user"
                   value={formData.instagram_user}
@@ -245,7 +258,8 @@ export default function AddAmbassadorModal({ isOpen, onClose, onAmbassadorAdded 
             <div>
               <Label>Conexión Instagram (Opcional)</Label>
               <p className="text-sm text-muted-foreground">
-                Podrás conectar la cuenta de Instagram del embajador después de crearlo, desde el dashboard.
+                Podrás conectar la cuenta de Instagram del embajador después de crearlo, desde el
+                dashboard.
               </p>
             </div>
           </div>

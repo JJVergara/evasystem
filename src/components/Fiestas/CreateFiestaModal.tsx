@@ -1,11 +1,17 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { CalendarDays, Loader2 } from "lucide-react";
-import { useFiestas } from "@/hooks/useFiestas";
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { CalendarDays, Loader2 } from 'lucide-react';
+import { useFiestas } from '@/hooks/useFiestas';
 
 interface CreateFiestaModalProps {
   isOpen: boolean;
@@ -31,37 +37,40 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
     event_date: '',
     location: '',
     main_hashtag: '',
-    secondary_hashtags: ''
+    secondary_hashtags: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     const fiestaData = {
       name: formData.name.trim(),
       description: formData.description.trim() || null,
       event_date: formData.event_date || null,
       location: formData.location.trim() || null,
       main_hashtag: formData.main_hashtag.trim() || null,
-      secondary_hashtags: formData.secondary_hashtags.trim() ? 
-        formData.secondary_hashtags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) : 
-        null,
-      status: 'active'
+      secondary_hashtags: formData.secondary_hashtags.trim()
+        ? formData.secondary_hashtags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0)
+        : null,
+      status: 'active',
     };
 
     const result = await createFiesta(fiestaData);
-    
+
     if (result) {
       resetForm();
       onFiestaCreated();
     }
-    
+
     setIsLoading(false);
   };
 
@@ -72,7 +81,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
       event_date: '',
       location: '',
       main_hashtag: '',
-      secondary_hashtags: ''
+      secondary_hashtags: '',
     });
   };
 
@@ -93,7 +102,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
             Crea una nueva fiesta para gestionar eventos y embajadores.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre de la Fiesta *</Label>
@@ -101,7 +110,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
               id="name"
               placeholder="Ej: Fiesta de Año Nuevo 2024"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               required
             />
           </div>
@@ -112,7 +121,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
               id="description"
               placeholder="Describe la fiesta..."
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               rows={3}
             />
           </div>
@@ -124,7 +133,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
                 id="event_date"
                 type="date"
                 value={formData.event_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, event_date: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, event_date: e.target.value }))}
               />
             </div>
 
@@ -134,7 +143,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
                 id="location"
                 placeholder="Ej: Santiago, Chile"
                 value={formData.location}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
               />
             </div>
           </div>
@@ -145,7 +154,7 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
               id="main_hashtag"
               placeholder="Ej: #FiestaAñoNuevo2024"
               value={formData.main_hashtag}
-              onChange={(e) => setFormData(prev => ({ ...prev, main_hashtag: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, main_hashtag: e.target.value }))}
             />
           </div>
 
@@ -155,7 +164,9 @@ export function CreateFiestaModal({ isOpen, onClose, onFiestaCreated }: CreateFi
               id="secondary_hashtags"
               placeholder="Ej: #fiesta, #celebracion, #2024 (separados por comas)"
               value={formData.secondary_hashtags}
-              onChange={(e) => setFormData(prev => ({ ...prev, secondary_hashtags: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, secondary_hashtags: e.target.value }))
+              }
             />
           </div>
 

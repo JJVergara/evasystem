@@ -2,156 +2,123 @@
 @tailwind components;
 @tailwind utilities;
 
-/* EVA System Design System - Instagram-inspired SaaS for ambassador management */
-
 @layer base {
   :root {
-    /* Base colors */
-    --background: 0 0% 100%;
-    --foreground: 269 100% 18%;
+    --background: 210 33% 98%;
+    --foreground: 210 58% 14%;
 
-    /* Brand colors - Clean white background with strategic purple */
-    --primary: 269 100% 18%; /* #2e005e */
+    --primary: 210 58% 14%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 269 100% 25%;
-    
-    --secondary: 220 13% 96%; /* Light gray instead of purple */
+
+    --secondary: 214 32% 96%;
     --secondary-foreground: 215 25% 27%;
 
-    --accent: 220 13% 95%; /* Clean light gray for active states */
+    --accent: 214 32% 95%;
     --accent-foreground: 215 25% 27%;
 
-    --muted: 220 13% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 20% 46%;
 
-    /* Instagram gradient colors */
-    --ig-orange: 25 95% 53%; /* #F58529 */
-    --ig-pink: 333 69% 61%; /* #DD2A7B */
-    --ig-purple: 264 52% 47%; /* #8134AF */
-    --ig-blue: 229 64% 56%; /* #515BD4 */
+    --destructive: 0 50% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 269 25% 90%;
-    --input: 269 25% 90%;
-    --ring: 269 100% 18%;
-
-    /* Card and popover backgrounds */
-    --card: 0 0% 100%;
-    --card-foreground: 269 100% 18%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 269 100% 18%;
-
-    /* Special colors for EVA System */
-    --success: 142 76% 36%;
+    --success: 180 35% 40%;
     --success-foreground: 0 0% 100%;
-    
-    --warning: 38 92% 50%;
+
+    --warning: 32 55% 50%;
     --warning-foreground: 0 0% 100%;
-    
-    --info: 221 83% 53%;
+
+    --info: 210 45% 45%;
     --info-foreground: 0 0% 100%;
 
-    /* Brand gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(269 100% 18%) 0%, hsl(269 100% 25%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(269 100% 18% / 0.05) 0%, hsl(269 100% 25% / 0.05) 100%);
-    --gradient-border: linear-gradient(135deg, hsl(269 100% 18% / 0.2) 0%, hsl(269 100% 25% / 0.2) 100%);
-    
-    /* Instagram gradient */
-    --gradient-instagram: linear-gradient(135deg, 
-      hsl(var(--ig-orange)) 0%, 
-      hsl(var(--ig-pink)) 25%, 
-      hsl(var(--ig-purple)) 50%, 
-      hsl(var(--ig-blue)) 100%);
-    
-    /* Shadows and effects */
-    --shadow-elegant: 0 10px 30px -10px hsl(269 100% 18% / 0.15);
-    --shadow-glow: 0 0 40px hsl(269 100% 18% / 0.2);
-    --shadow-card: 0 2px 20px hsl(269 100% 18% / 0.08);
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 210 58% 14%;
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --card: 0 0% 100%;
+    --card-foreground: 210 58% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 58% 14%;
 
-    --radius: 12px;
+    --gradient-primary: linear-gradient(180deg, hsl(210 50% 23%) 0%, hsl(210 58% 14%) 100%);
 
-    --sidebar-background: 0 0% 98%;
+    --shadow-xs: 0 1px 2px rgba(15, 36, 57, 0.05);
+    --shadow-sm: 0 2px 4px rgba(15, 36, 57, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 36, 57, 0.08);
+    --shadow-lg: 0 8px 24px rgba(15, 36, 57, 0.1);
+    --shadow-xl: 0 16px 48px rgba(15, 36, 57, 0.12);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --shadow-elegant: 0 8px 24px rgba(15, 36, 57, 0.1);
+    --shadow-card: 0 2px 8px rgba(15, 36, 57, 0.06);
 
-    --sidebar-primary: 240 5.9% 10%;
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --radius: 16px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 210 33% 98%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 210 58% 14%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 95%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 210 58% 14%;
   }
 
   .dark {
-    --background: 269 100% 18%;
-    --foreground: 0 0% 100%;
+    --background: 210 58% 8%;
+    --foreground: 210 33% 98%;
 
-    /* Brand dark mode */
-    --primary: 269 100% 25%;
+    --primary: 210 50% 30%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 269 100% 30%;
-    
-    --secondary: 240 4% 16%; /* Dark gray instead of purple */
-    --secondary-foreground: 0 0% 100%;
 
-    --accent: 240 4% 20%; /* Dark gray for active states */
-    --accent-foreground: 0 0% 100%;
+    --secondary: 210 30% 15%;
+    --secondary-foreground: 210 33% 98%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 84%;
+    --accent: 210 30% 18%;
+    --accent-foreground: 210 33% 98%;
 
-    --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 210 40% 98%;
+    --muted: 210 30% 15%;
+    --muted-foreground: 214 20% 65%;
 
-    --border: 269 30% 25%;
-    --input: 269 30% 25%;
-    --ring: 269 100% 25%;
+    --destructive: 0 50% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Dark mode card and popover backgrounds */
-    --card: 240 4% 16%;
-    --card-foreground: 0 0% 100%;
-    --popover: 240 4% 16%;
-    --popover-foreground: 0 0% 100%;
-
-    /* Dark mode colors */
-    --success: 142 76% 46%;
+    --success: 180 40% 48%;
     --success-foreground: 0 0% 100%;
-    
-    --warning: 38 92% 60%;
+
+    --warning: 32 60% 55%;
     --warning-foreground: 0 0% 100%;
-    
-    --info: 221 83% 63%;
+
+    --info: 210 50% 55%;
     --info-foreground: 0 0% 100%;
 
-    /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(269 100% 25%) 0%, hsl(269 100% 30%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(269 100% 25% / 0.1) 0%, hsl(269 100% 30% / 0.1) 100%);
-    --gradient-border: linear-gradient(135deg, hsl(269 100% 25% / 0.3) 0%, hsl(269 100% 30% / 0.3) 100%);
-    
-    /* Dark mode shadows */
-    --shadow-elegant: 0 10px 30px -10px hsl(269 100% 25% / 0.25);
-    --shadow-glow: 0 0 40px hsl(269 100% 25% / 0.3);
-    --shadow-card: 0 2px 20px hsl(269 100% 25% / 0.15);
+    --border: 210 30% 20%;
+    --input: 210 30% 20%;
+    --ring: 210 50% 30%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 315 75% 65%;
-    --sidebar-primary-foreground: 222.2 84% 4.9%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 315 75% 65%;
+    --card: 210 30% 12%;
+    --card-foreground: 210 33% 98%;
+    --popover: 210 30% 12%;
+    --popover-foreground: 210 33% 98%;
+
+    --gradient-primary: linear-gradient(180deg, hsl(210 45% 35%) 0%, hsl(210 50% 25%) 100%);
+
+    --shadow-elegant: 0 8px 24px rgba(0, 0, 0, 0.25);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    --sidebar-background: 210 58% 8%;
+    --sidebar-foreground: 210 33% 98%;
+    --sidebar-primary: 210 50% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 30% 18%;
+    --sidebar-accent-foreground: 210 33% 98%;
+    --sidebar-border: 210 30% 20%;
+    --sidebar-ring: 210 50% 30%;
   }
 }
 
@@ -170,10 +137,9 @@
 }
 
 @layer components {
-  /* Custom scrollbar */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+    scrollbar-color: hsl(var(--primary) / 0.2) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -185,74 +151,31 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.2);
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.5);
+    background: hsl(var(--primary) / 0.35);
   }
 
-  /* Glass effect */
-  .glass {
-    backdrop-filter: blur(16px) saturate(180%);
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  /* Gradient text animation */
-  .animate-gradient {
-    background-size: 400% 400%;
-    animation: gradient 3s ease infinite;
-  }
-
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  /* Pulse glow effect */
-  .pulse-glow {
-    animation: pulse-glow 2s infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-    }
-    50% {
-      box-shadow: 0 0 40px hsl(var(--primary) / 0.6);
-    }
-  }
-
-  /* Instagram gradient utilities */
-  .ig-gradient-btn {
-    background: var(--gradient-instagram);
-    color: white;
+  .btn-primary-gradient {
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
     border: none;
     transition: var(--transition-smooth);
   }
 
-  .ig-gradient-btn:hover {
+  .btn-primary-gradient:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-glow);
+    box-shadow: var(--shadow-md);
   }
 
-  .ig-gradient-text {
-    background: var(--gradient-instagram);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .btn-primary-gradient:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
   }
 
-  /* Clean sidebar active state */
   .sidebar-item-active {
     background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
@@ -263,5 +186,23 @@
   .sidebar-item-hover {
     background-color: hsl(var(--accent) / 0.5);
     transition: var(--transition-smooth);
+  }
+
+  .card-bordered {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+  }
+
+  .input-filled {
+    background-color: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+    transition: var(--transition-smooth);
+  }
+
+  .input-filled:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
   }
 }

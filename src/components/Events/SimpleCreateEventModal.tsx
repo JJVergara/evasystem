@@ -1,16 +1,27 @@
-
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Calendar, MapPin, Building2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from 'react';
 
 interface SimpleCreateEventModalProps {
   isOpen: boolean;
@@ -23,14 +34,18 @@ interface Organization {
   name: string;
 }
 
-export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: SimpleCreateEventModalProps) {
+export function SimpleCreateEventModal({
+  isOpen,
+  onClose,
+  onEventCreated,
+}: SimpleCreateEventModalProps) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    event_date: "",
-    location: "",
-    organization_id: ""
+    name: '',
+    description: '',
+    event_date: '',
+    location: '',
+    organization_id: '',
   });
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,8 +64,7 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
       if (error) throw error;
       setOrganizations(data || []);
       setOrganizationsLoaded(true);
-    } catch (error) {
-      console.error('Error loading organizations:', error);
+    } catch {
       toast.error('Error al cargar organizaciones');
     }
   };
@@ -65,16 +79,18 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
         return;
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('events')
-        .insert([{
-          name: formData.name,
-          description: formData.description || null,
-          event_date: formData.event_date,
-          location: formData.location || null,
-          organization_id: formData.organization_id,
-          active: true
-        }])
+        .insert([
+          {
+            name: formData.name,
+            description: formData.description || null,
+            event_date: formData.event_date,
+            location: formData.location || null,
+            organization_id: formData.organization_id,
+            active: true,
+          },
+        ])
         .select()
         .single();
 
@@ -84,8 +100,7 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
       resetForm();
       onClose();
       onEventCreated();
-    } catch (error) {
-      console.error('Error creating event:', error);
+    } catch {
       toast.error('Error al crear evento');
     } finally {
       setLoading(false);
@@ -94,15 +109,14 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      description: "",
-      event_date: "",
-      location: "",
-      organization_id: ""
+      name: '',
+      description: '',
+      event_date: '',
+      location: '',
+      organization_id: '',
     });
   };
 
-  // Cargar organizaciones cuando se abre el modal
   useEffect(() => {
     if (isOpen && user) {
       loadOrganizations();
@@ -125,11 +139,11 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
               <Building2 className="w-5 h-5" />
               Organización
             </h3>
-            
+
             <div>
               <Label htmlFor="organization_id">Seleccionar Organización/Productora *</Label>
-              <Select 
-                value={formData.organization_id} 
+              <Select
+                value={formData.organization_id}
                 onValueChange={(value) => setFormData({ ...formData, organization_id: value })}
                 required
               >
@@ -149,7 +163,7 @@ export function SimpleCreateEventModal({ isOpen, onClose, onEventCreated }: Simp
 
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Información del Evento</h3>
-            
+
             <div>
               <Label htmlFor="name">Nombre del Evento *</Label>
               <div className="relative">

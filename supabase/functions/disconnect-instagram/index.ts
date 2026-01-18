@@ -1,6 +1,5 @@
-import { corsHeaders } from '../shared/constants.ts';
 import { corsPreflightResponse, jsonResponse } from '../shared/responses.ts';
-import { authenticateRequest, getUserOrganization, createSupabaseClient } from '../shared/auth.ts';
+import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 import { handleError, assert } from '../shared/error-handler.ts';
 
 Deno.serve(async (req) => {
@@ -9,39 +8,32 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(req);
     if (authResult instanceof Response) return authResult;
-    
+
     const { user, supabase: supabaseClient } = authResult;
 
-    // Get user's organization
     const organizationId = await getUserOrganization(supabaseClient, user.id);
     assert(organizationId, 'Organization not found', 404);
 
-    // Delete tokens from secure table
     const { error: tokenError } = await supabaseClient
       .from('organization_instagram_tokens')
       .delete()
       .eq('organization_id', organizationId);
 
     if (tokenError) {
-      console.error('Failed to delete organization tokens:', tokenError);
       throw new Error('Failed to disconnect Instagram tokens');
     }
 
-    // Verify user has access to this organization
-    const { data: hasAccess } = await supabaseClient
-      .rpc('is_organization_member', {
-        user_auth_id: user.id,
-        org_id: organizationId
-      });
+    const { data: hasAccess } = await supabaseClient.rpc('is_organization_member', {
+      user_auth_id: user.id,
+      org_id: organizationId,
+    });
 
     if (!hasAccess) {
       throw new Error('No access to this organization');
     }
 
-    // Clear Instagram-related fields from organizations table
     const { error: updateError } = await supabaseClient
       .from('organizations')
       .update({
@@ -49,22 +41,18 @@ Deno.serve(async (req) => {
         instagram_username: null,
         facebook_page_id: null,
         instagram_business_account_id: null,
-        last_instagram_sync: null
+        last_instagram_sync: null,
       })
       .eq('id', organizationId);
 
     if (updateError) {
-      console.error('Failed to disconnect Instagram:', updateError);
       throw new Error('Failed to disconnect Instagram account');
     }
 
-    console.log('Instagram account disconnected successfully for organization:', organizationId);
-
     return jsonResponse({
       success: true,
-      message: 'Instagram account disconnected successfully'
+      message: 'Instagram account disconnected successfully',
     });
-
   } catch (error) {
     return handleError(error);
   }

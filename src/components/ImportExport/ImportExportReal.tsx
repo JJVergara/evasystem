@@ -1,46 +1,49 @@
-import { useState, useRef } from "react";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, Download, FileSpreadsheet, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
+import { useState, useRef } from 'react';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/integrations/supabase/client';
+import { EMOJIS } from '@/constants';
+import { toast } from 'sonner';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 
-interface ImportExportRealProps {}
-
-export default function ImportExportReal({}: ImportExportRealProps) {
+export default function ImportExportReal() {
   const { organization } = useCurrentOrganization();
-  const [activeTab, setActiveTab] = useState("import");
+  const [activeTab, setActiveTab] = useState('import');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [exportConfig, setExportConfig] = useState({
-    entity: "ambassadors",
-    format: "excel",
-    fields: [] as string[]
+    entity: 'ambassadors',
+    format: 'excel',
+    fields: [] as string[],
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportFields = {
     ambassadors: [
-      { key: "first_name", label: "Nombre" },
-      { key: "last_name", label: "Apellido" },
-      { key: "email", label: "Email" },
-      { key: "instagram_user", label: "Usuario Instagram" },
-      { key: "status", label: "Estado" }
+      { key: 'first_name', label: 'Nombre' },
+      { key: 'last_name', label: 'Apellido' },
+      { key: 'email', label: 'Email' },
+      { key: 'instagram_user', label: 'Usuario Instagram' },
+      { key: 'status', label: 'Estado' },
     ],
     events: [
-      { key: "name", label: "Nombre" },
-      { key: "description", label: "Descripción" },
-      { key: "event_date", label: "Fecha" },
-      { key: "location", label: "Ubicación" },
-      { key: "active", label: "Activo" }
-    ]
+      { key: 'name', label: 'Nombre' },
+      { key: 'description', label: 'Descripción' },
+      { key: 'event_date', label: 'Fecha' },
+      { key: 'location', label: 'Ubicación' },
+      { key: 'active', label: 'Activo' },
+    ],
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,8 +62,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
     try {
       setIsProcessing(true);
 
-      // Simulamos el proceso de importación
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuario no autenticado');
@@ -70,8 +72,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      console.error('Error during import:', error);
+    } catch {
       toast.error('Error durante la importación');
     } finally {
       setIsProcessing(false);
@@ -90,18 +91,16 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuario no autenticado');
 
-      // Simulamos exportación sin consultas complejas de Supabase por ahora
-      const data: any[] = [];
+      const data: Record<string, unknown>[] = [];
 
       if (exportConfig.entity === 'ambassadors') {
-        // Datos simulados para evitar tipos complejos de Supabase
         data.push({
           id: '1',
           first_name: 'Juan',
           last_name: 'Pérez',
           email: 'juan@ejemplo.com',
           instagram_user: 'juan_p',
-          status: 'active'
+          status: 'active',
         });
       } else if (exportConfig.entity === 'events') {
         data.push({
@@ -110,13 +109,12 @@ export default function ImportExportReal({}: ImportExportRealProps) {
           description: 'Descripción del evento',
           event_date: '2024-12-01',
           location: 'Santiago',
-          active: true
+          active: true,
         });
       } else {
         throw new Error('Tipo de entidad no soportado');
       }
 
-      // Simular descarga del archivo
       const jsonData = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -129,8 +127,7 @@ export default function ImportExportReal({}: ImportExportRealProps) {
       URL.revokeObjectURL(url);
 
       toast.success(`Exportación completada: ${data.length} registros`);
-    } catch (error) {
-      console.error('Error during export:', error);
+    } catch {
       toast.error('Error durante la exportación');
     } finally {
       setIsProcessing(false);
@@ -138,28 +135,25 @@ export default function ImportExportReal({}: ImportExportRealProps) {
   };
 
   const handleFieldToggle = (field: string, checked: boolean) => {
-    setExportConfig(prev => ({
+    setExportConfig((prev) => ({
       ...prev,
-      fields: checked 
-        ? [...prev.fields, field]
-        : prev.fields.filter(f => f !== field)
+      fields: checked ? [...prev.fields, field] : prev.fields.filter((f) => f !== field),
     }));
   };
 
   const downloadTemplate = () => {
-    // Crear plantilla de ejemplo para embajadores
     const template = [
       {
-        first_name: "María",
-        last_name: "González",
-        email: "maria@ejemplo.com",
-        instagram_user: "maria_g"
-      }
+        first_name: 'María',
+        last_name: 'González',
+        email: 'maria@ejemplo.com',
+        instagram_user: 'maria_g',
+      },
     ];
 
     const csv = [
       Object.keys(template[0]).join(','),
-      ...template.map(row => Object.values(row).join(','))
+      ...template.map((row) => Object.values(row).join(',')),
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -177,11 +171,12 @@ export default function ImportExportReal({}: ImportExportRealProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Importación y Exportación</h3>
-        <Button variant="outline" onClick={downloadTemplate}>
-          <Download className="w-4 h-4 mr-2" />
-          Descargar Plantilla
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h3 className="text-lg sm:text-xl font-semibold">Importación y Exportación</h3>
+        <Button variant="outline" onClick={downloadTemplate} className="w-full sm:w-auto">
+          <span className="mr-2">{EMOJIS.actions.download}</span>
+          <span className="hidden sm:inline">Descargar Plantilla</span>
+          <span className="sm:hidden">Plantilla</span>
         </Button>
       </div>
 
@@ -194,11 +189,11 @@ export default function ImportExportReal({}: ImportExportRealProps) {
         <TabsContent value="import" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Upload className="w-5 h-5" />
+              <span>{EMOJIS.actions.upload}</span>
               <h4 className="font-semibold">Importar Embajadores</h4>
             </div>
-            
-            <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-white/20">
+
+            <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center bg-card/20">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -206,19 +201,16 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              
+
               {importFile ? (
                 <div className="space-y-2">
-                  <FileSpreadsheet className="w-12 h-12 text-primary mx-auto" />
+                  <span className="text-5xl block mx-auto">{EMOJIS.entities.file}</span>
                   <p className="font-medium">{importFile.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {(importFile.size / 1024).toFixed(1)} KB
                   </p>
                   <div className="flex gap-2 justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                       Cambiar archivo
                     </Button>
                     <Button onClick={processImport} disabled={isProcessing}>
@@ -228,21 +220,21 @@ export default function ImportExportReal({}: ImportExportRealProps) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+                  <span className="text-5xl block mx-auto text-muted-foreground">
+                    {EMOJIS.actions.upload}
+                  </span>
                   <p className="text-lg font-medium">Arrastra tu archivo aquí</p>
                   <p className="text-sm text-muted-foreground">
                     Soporta archivos Excel (.xlsx, .xls) y CSV
                   </p>
-                  <Button onClick={() => fileInputRef.current?.click()}>
-                    Seleccionar archivo
-                  </Button>
+                  <Button onClick={() => fileInputRef.current?.click()}>Seleccionar archivo</Button>
                 </div>
               )}
             </div>
 
-            <div className="bg-info/10 border border-info/20 rounded-lg p-4">
+            <div className="bg-info/10 border border-info/20 rounded-lg p-4 mt-4">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-info mt-0.5" />
+                <span className="mt-0.5">{EMOJIS.status.info}</span>
                 <div>
                   <h4 className="font-medium">Campos requeridos</h4>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -257,19 +249,21 @@ export default function ImportExportReal({}: ImportExportRealProps) {
         <TabsContent value="export" className="space-y-6">
           <GlassPanel>
             <div className="flex items-center gap-2 mb-6">
-              <Download className="w-5 h-5" />
+              <span>{EMOJIS.actions.download}</span>
               <h4 className="font-semibold">Configurar Exportación</h4>
             </div>
-            
+
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de datos</Label>
-                  <Select 
-                    value={exportConfig.entity} 
-                    onValueChange={(value) => setExportConfig(prev => ({ ...prev, entity: value, fields: [] }))}
+                  <Select
+                    value={exportConfig.entity}
+                    onValueChange={(value) =>
+                      setExportConfig((prev) => ({ ...prev, entity: value, fields: [] }))
+                    }
                   >
-                    <SelectTrigger className="bg-white/50">
+                    <SelectTrigger className="bg-card/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -281,11 +275,13 @@ export default function ImportExportReal({}: ImportExportRealProps) {
 
                 <div>
                   <Label>Formato</Label>
-                  <Select 
-                    value={exportConfig.format} 
-                    onValueChange={(value) => setExportConfig(prev => ({ ...prev, format: value }))}
+                  <Select
+                    value={exportConfig.format}
+                    onValueChange={(value) =>
+                      setExportConfig((prev) => ({ ...prev, format: value }))
+                    }
                   >
-                    <SelectTrigger className="bg-white/50">
+                    <SelectTrigger className="bg-card/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -299,13 +295,15 @@ export default function ImportExportReal({}: ImportExportRealProps) {
 
               <div>
                 <Label>Campos a exportar (dejar vacío para todos)</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-white/30 rounded-lg p-3">
+                <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto bg-card/30 rounded-lg p-3">
                   {exportFields[exportConfig.entity as keyof typeof exportFields]?.map((field) => (
                     <div key={field.key} className="flex items-center space-x-2">
                       <Checkbox
                         id={field.key}
                         checked={exportConfig.fields.includes(field.key)}
-                        onCheckedChange={(checked) => handleFieldToggle(field.key, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleFieldToggle(field.key, checked as boolean)
+                        }
                       />
                       <Label htmlFor={field.key} className="text-sm font-normal">
                         {field.label}

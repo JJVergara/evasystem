@@ -1,64 +1,54 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  corsPreflightResponse,
+  jsonResponse,
+  errorResponse,
+  badRequestResponse,
+} from '../shared/responses.ts';
+import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return corsPreflightResponse();
   }
 
   try {
-    const { ambassadorData } = await req.json()
-    
-    // Get auth header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Authorization header required')
+    const authResult = await authenticateRequest(req, { requireAuth: true });
+    if (authResult instanceof Response) {
+      return authResult;
+    }
+    const { user, supabase } = authResult;
+
+    const { ambassadorData } = await req.json();
+    if (!ambassadorData) {
+      return badRequestResponse('Ambassador data is required');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader }
-      }
-    })
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Invalid authentication')
+    const organizationId = await getUserOrganization(supabase, user.id);
+    if (!organizationId) {
+      return errorResponse('User has no organization', 400);
     }
 
-    // Get user record
     const { data: userData, error: userDataError } = await supabase
       .from('users')
-      .select('id, organization_id')
+      .select('id')
       .eq('auth_user_id', user.id)
-      .single()
+      .single();
 
-    if (userDataError) {
-      throw new Error('User not found')
+    if (userDataError || !userData) {
+      return errorResponse('User record not found', 404);
     }
 
-    // Check for existing ambassador with same email or RUT
     const { data: existingAmbassador } = await supabase
       .from('embassadors')
       .select('id, email, rut')
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', organizationId)
       .or(`email.eq.${ambassadorData.email},rut.eq.${ambassadorData.rut}`)
-      .single()
+      .single();
 
     if (existingAmbassador) {
-      throw new Error('Ya existe un embajador con ese email o RUT')
+      return badRequestResponse('Ya existe un embajador con ese email o RUT');
     }
 
-    // Create ambassador
     const { data: ambassadorResult, error: ambassadorError } = await supabase
       .from('embassadors')
       .insert({
@@ -69,7 +59,7 @@ serve(async (req) => {
         date_of_birth: ambassadorData.date_of_birth,
         instagram_user: ambassadorData.instagram_user,
         follower_count: ambassadorData.follower_count || 0,
-        organization_id: userData.organization_id,
+        organization_id: organizationId,
         created_by_user_id: userData.id,
         status: 'pending',
         global_category: 'bronze',
@@ -78,24 +68,22 @@ serve(async (req) => {
         global_points: 0,
         events_participated: 0,
         completed_tasks: 0,
-        failed_tasks: 0
+        failed_tasks: 0,
       })
       .select()
-      .single()
+      .single();
 
     if (ambassadorError) {
-      throw new Error(`Error creating ambassador: ${ambassadorError.message}`)
+      return errorResponse(`Error creating ambassador: ${ambassadorError.message}`, 400);
     }
 
-    // Create success feedback card
     await supabase.rpc('create_feedback_card', {
       p_user_id: userData.id,
       p_event_id: null,
       p_type: 'success',
-      p_message: `Embajador "${ambassadorData.first_name} ${ambassadorData.last_name}" creado exitosamente. Estado: Pendiente de aprobación.`
-    })
+      p_message: `Embajador "${ambassadorData.first_name} ${ambassadorData.last_name}" creado exitosamente. Estado: Pendiente de aprobación.`,
+    });
 
-    // Create ambassador log
     await supabase.rpc('create_event_log', {
       p_user_id: userData.id,
       p_event_id: null,
@@ -104,36 +92,28 @@ serve(async (req) => {
         ambassador_name: `${ambassadorData.first_name} ${ambassadorData.last_name}`,
         instagram_user: ambassadorData.instagram_user,
         email: ambassadorData.email,
-        created_timestamp: new Date().toISOString()
-      }
-    })
+        created_timestamp: new Date().toISOString(),
+      },
+    });
 
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      {
         success: true,
         message: 'Embajador creado exitosamente',
-        data: ambassadorResult
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 201
-      }
-    )
-
+        data: ambassadorResult,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Error in create-ambassador:', error)
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    return new Response(
-      JSON.stringify({
+
+    return jsonResponse(
+      {
         success: false,
         message: 'Error al crear embajador',
-        error: errorMessage
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
-    )
+        error: errorMessage,
+      },
+      { status: 400 }
+    );
   }
-})
+});

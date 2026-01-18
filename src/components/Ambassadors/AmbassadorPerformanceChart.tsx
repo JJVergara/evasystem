@@ -1,6 +1,15 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 interface AmbassadorPerformanceChartProps {
   monthlyData: Array<{
@@ -25,16 +34,16 @@ export function AmbassadorPerformanceChart({ monthlyData }: AmbassadorPerformanc
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [value, 'Puntos']}
                 labelFormatter={(label) => `Mes: ${label}`}
               />
-              <Line 
-                type="monotone" 
-                dataKey="points" 
-                stroke="hsl(var(--primary))" 
+              <Line
+                type="monotone"
+                dataKey="points"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -52,11 +61,8 @@ export function AmbassadorPerformanceChart({ monthlyData }: AmbassadorPerformanc
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip 
-                formatter={(value, name) => [
-                  value, 
-                  name === 'tasks' ? 'Tareas' : 'Alcance'
-                ]}
+              <Tooltip
+                formatter={(value, name) => [value, name === 'tasks' ? 'Tareas' : 'Alcance']}
                 labelFormatter={(label) => `Mes: ${label}`}
               />
               <Bar dataKey="tasks" fill="hsl(var(--primary))" name="tasks" />

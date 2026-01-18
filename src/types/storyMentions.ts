@@ -1,3 +1,4 @@
+export type AccountVisibility = 'unknown' | 'public' | 'private';
 
 export interface StoryMention {
   id: string;
@@ -12,15 +13,15 @@ export interface StoryMention {
   external_event_id?: string;
   story_url?: string;
   instagram_story_id?: string;
-  // Nuevos campos para la detección de historias
   mentioned_at: string;
   expires_at?: string;
   state: 'new' | 'flagged_early_delete' | 'completed' | 'expired_unknown';
   deep_link?: string;
-  // Campos para seguimiento de verificaciones
   checks_count?: number;
   last_check_at?: string;
-  // Campos para bandeja de entrada
   conversation_id?: string;
   inbox_link?: string;
+  account_visibility?: AccountVisibility;
+  permission_requested_at?: string;
+  matched_ambassador_id?: string;
 }

@@ -1,42 +1,56 @@
-import { useState, useMemo } from "react";
-import { MainLayout } from "@/components/Layout/MainLayout";
-import { PageHeader } from "@/components/Layout/PageHeader";
-import { GlassPanel } from "@/components/Layout/GlassPanel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Hash, Search, Filter, Calendar, TrendingUp, MessageCircle, ExternalLink } from "lucide-react";
-import { useMentionsOptimized } from "@/hooks/useMentionsOptimized";
-import { useCurrentOrganization } from "@/hooks/useCurrentOrganization";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from 'react';
+import { PageHeader } from '@/components/Layout/PageHeader';
+import { GlassPanel } from '@/components/Layout/GlassPanel';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ExternalLink } from 'lucide-react';
+import { useMentionsOptimized } from '@/hooks/useMentionsOptimized';
+import { EMOJIS } from '@/constants';
+import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MentionsOptimized() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const { mentions, stats, loading, error } = useMentionsOptimized(
     searchTerm,
-    typeFilter, 
+    typeFilter,
     statusFilter
   );
 
-  const getMentionTypeColor = (type: string): "default" | "secondary" | "outline" => {
+  const getMentionTypeColor = (type: string): 'default' | 'secondary' | 'outline' => {
     switch (type) {
-      case 'hashtag': return 'default';
-      case 'mention': return 'secondary';
-      case 'story': return 'outline';
-      default: return 'secondary';
+      case 'hashtag':
+        return 'default';
+      case 'mention':
+        return 'secondary';
+      case 'story':
+        return 'outline';
+      default:
+        return 'secondary';
     }
   };
 
   const getMentionTypeLabel = (type: string) => {
     switch (type) {
-      case 'hashtag': return 'Hashtag';
-      case 'mention': return 'Mención';
-      case 'story': return 'Historia';
-      default: return type;
+      case 'hashtag':
+        return 'Hashtag';
+      case 'mention':
+        return 'Mención';
+      case 'story':
+        return 'Historia';
+      default:
+        return type;
     }
   };
 
@@ -44,32 +58,34 @@ export default function MentionsOptimized() {
 
   if (loading) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4 bg-white/50 rounded-lg">
+                <div key={i} className="p-4 bg-card/50 rounded-lg">
                   <Skeleton className="h-16 w-full" />
                 </div>
               ))}
             </div>
           </div>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   if (!organization) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel className="flex items-center justify-center min-h-64">
           <div className="text-center">
@@ -79,53 +95,54 @@ export default function MentionsOptimized() {
             </p>
           </div>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   if (error) {
     return (
-      <MainLayout>
-        <PageHeader 
-          title="Menciones" 
+      <>
+        <PageHeader
+          title="Menciones"
           description="Monitorea las menciones y hashtags de tu organización"
+          emoji={EMOJIS.navigation.mentions}
         />
         <GlassPanel className="text-center py-12">
           <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>
-            Reintentar
-          </Button>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
         </GlassPanel>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
-      <PageHeader 
-        title="Menciones" 
+    <>
+      <PageHeader
+        title="Menciones"
         description={`Monitorea las menciones y hashtags de ${organization?.name}`}
+        emoji={EMOJIS.navigation.mentions}
       >
-        <div className="flex items-center space-x-3 flex-wrap gap-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros Avanzados
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.actions.filter}</span>
+            <span className="hidden sm:inline">Filtros Avanzados</span>
+            <span className="sm:hidden">Filtros</span>
           </Button>
-          <Button size="sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            Programar Reporte
+          <Button size="sm" className="flex-1 sm:flex-none">
+            <span className="mr-2">{EMOJIS.entities.calendar}</span>
+            <span className="hidden sm:inline">Programar Reporte</span>
+            <span className="sm:hidden">Reporte</span>
           </Button>
         </div>
       </PageHeader>
 
       <div className="space-y-6">
-        {/* Metrics */}
         <GlassPanel>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <Hash className="w-5 h-5 text-primary" />
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-primary/20 rounded-full shrink-0">
+                  <span className="text-xl">{EMOJIS.navigation.mentions}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Menciones</p>
@@ -133,28 +150,27 @@ export default function MentionsOptimized() {
                 </div>
               </div>
             </div>
-            
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-success/20 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-success" />
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-success/20 rounded-full shrink-0">
+                  <span className="text-xl">{EMOJIS.social.reach}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Alcance Total</p>
                   <p className="text-2xl font-bold">
-                    {stats.reach > 1000 ? 
-                      `${(stats.reach / 1000).toFixed(1)}K` : 
-                      stats.reach.toLocaleString()
-                    }
+                    {stats.reach > 1000
+                      ? `${(stats.reach / 1000).toFixed(1)}K`
+                      : stats.reach.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
-            
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-warning/20 rounded-lg">
-                  <MessageCircle className="w-5 h-5 text-warning" />
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-warning/20 rounded-full shrink-0">
+                  <span className="text-xl">{EMOJIS.entities.message}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Engagement</p>
@@ -162,11 +178,11 @@ export default function MentionsOptimized() {
                 </div>
               </div>
             </div>
-            
-            <div className="p-4 bg-white/30 rounded-lg backdrop-blur-sm">
+
+            <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Hash className="w-5 h-5 text-blue-500" />
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-info/20 rounded-full shrink-0">
+                  <span className="text-xl">{EMOJIS.status.pending}</span>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Sin Asignar</p>
@@ -177,73 +193,84 @@ export default function MentionsOptimized() {
           </div>
         </GlassPanel>
 
-        {/* Search and Filters */}
         <GlassPanel>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                {EMOJIS.actions.search}
+              </span>
               <Input
                 placeholder="Buscar menciones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/50"
+                className="pl-10 bg-card/50"
               />
             </div>
-            
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48 bg-white/50">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="hashtag">Hashtags</SelectItem>
-                <SelectItem value="mention">Menciones</SelectItem>
-                <SelectItem value="story">Historias</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-white/50">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="assigned">Asignadas</SelectItem>
-                <SelectItem value="unassigned">Sin asignar</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 sm:gap-3">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="flex-1 sm:w-40 md:w-48 bg-card/50">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="hashtag">Hashtags</SelectItem>
+                  <SelectItem value="mention">Menciones</SelectItem>
+                  <SelectItem value="story">Historias</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="flex-1 sm:w-40 md:w-48 bg-card/50">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="assigned">Asignadas</SelectItem>
+                  <SelectItem value="unassigned">Sin asignar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </GlassPanel>
 
-        {/* Mentions List - Optimized with height constraint */}
         <GlassPanel>
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Menciones Recientes</h3>
             {mentions.length > 0 ? (
               <div className="max-h-[600px] overflow-y-auto space-y-4 pr-2">
                 {mentions.map((mention) => (
-                  <div key={mention.id} className="p-4 bg-white/30 rounded-lg hover:bg-white/40 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
-                            {mention.ambassador_name ? 
-                              mention.ambassador_name.split(' ').map(n => n[0]).join('') :
-                              mention.instagram_username.substring(0, 2).toUpperCase()
-                            }
+                  <div
+                    key={mention.id}
+                    className="p-4 bg-card/30 rounded-lg hover:bg-card/40 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-primary-foreground font-medium text-sm">
+                            {mention.ambassador_name
+                              ? mention.ambassador_name
+                                  .split(' ')
+                                  .map((n) => n[0])
+                                  .join('')
+                              : mention.instagram_username.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                          <h4 className="font-medium">
+                        <div className="min-w-0">
+                          <h4 className="font-medium truncate">
                             {mention.ambassador_name || `@${mention.instagram_username}`}
-                          </h4>  
-                          <p className="text-sm text-muted-foreground">@{mention.instagram_username}</p>
+                          </h4>
+                          <p className="text-sm text-muted-foreground truncate">
+                            @{mention.instagram_username}
+                          </p>
                           {mention.fiesta_name && (
-                            <p className="text-xs text-muted-foreground">{mention.fiesta_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {mention.fiesta_name}
+                            </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={getMentionTypeColor(mention.mention_type)}>
                           {getMentionTypeLabel(mention.mention_type)}
                         </Badge>
@@ -260,14 +287,14 @@ export default function MentionsOptimized() {
                         )}
                       </div>
                     </div>
-                    
-                    <p className="text-sm mb-3 bg-white/40 p-3 rounded-lg">
+
+                    <p className="text-sm mb-3 bg-card/40 p-3 rounded-lg">
                       {mention.content}
                       {mention.hashtag && (
                         <span className="text-primary font-medium"> #{mention.hashtag}</span>
                       )}
                     </p>
-                    
+
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center space-x-4">
                         <span>Alcance: {mention.reach_count.toLocaleString()}</span>
@@ -283,12 +310,12 @@ export default function MentionsOptimized() {
                 {searchTerm || typeFilter !== 'all' || statusFilter !== 'all' ? (
                   <>
                     <p className="mb-4">No se encontraron menciones con los filtros aplicados</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
-                        setSearchTerm("");
-                        setTypeFilter("all");
-                        setStatusFilter("all");
+                        setSearchTerm('');
+                        setTypeFilter('all');
+                        setStatusFilter('all');
                       }}
                     >
                       Limpiar Filtros
@@ -297,7 +324,9 @@ export default function MentionsOptimized() {
                 ) : (
                   <>
                     <p className="mb-4">No hay menciones registradas aún</p>
-                    <p className="text-sm">Las menciones aparecerán cuando los embajadores completen sus tareas</p>
+                    <p className="text-sm">
+                      Las menciones aparecerán cuando los embajadores completen sus tareas
+                    </p>
                   </>
                 )}
               </div>
@@ -305,6 +334,6 @@ export default function MentionsOptimized() {
           </div>
         </GlassPanel>
       </div>
-    </MainLayout>
+    </>
   );
 }

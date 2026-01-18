@@ -1,7 +1,15 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 interface MonthlyData {
   month: string;
@@ -18,31 +26,25 @@ interface OrganizationPerformanceChartProps {
 export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerformanceChartProps) {
   const chartConfig = {
     events: {
-      label: "Eventos",
-      color: "hsl(var(--primary))",
+      label: 'Eventos',
+      color: 'hsl(var(--primary))',
     },
     tasks: {
-      label: "Tareas",
-      color: "hsl(var(--secondary))",
+      label: 'Tareas',
+      color: 'hsl(var(--secondary))',
     },
     reach: {
-      label: "Alcance",
-      color: "hsl(var(--accent))",
+      label: 'Alcance',
+      color: 'hsl(var(--accent))',
     },
     ambassadors: {
-      label: "Embajadores",
-      color: "hsl(var(--muted-foreground))",
+      label: 'Embajadores',
+      color: 'hsl(var(--muted-foreground))',
     },
   };
 
-  const formatReachData = monthlyData.map(item => ({
-    ...item,
-    reachFormatted: item.reach > 1000 ? `${(item.reach / 1000).toFixed(1)}K` : item.reach.toString()
-  }));
-
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Eventos y Tareas por Mes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Actividad Mensual</CardTitle>
@@ -63,7 +65,6 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
         </CardContent>
       </Card>
 
-      {/* Alcance y Embajadores Activos */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Crecimiento y Alcance</CardTitle>
@@ -76,7 +77,7 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
                 <XAxis dataKey="month" />
                 <YAxis yAxisId="left" />
                 <YAxis yAxisId="right" orientation="right" />
-                <ChartTooltip 
+                <ChartTooltip
                   content={<ChartTooltipContent />}
                   formatter={(value, name) => {
                     if (name === 'Alcance') {
@@ -86,19 +87,19 @@ export function OrganizationPerformanceChart({ monthlyData }: OrganizationPerfor
                     return value;
                   }}
                 />
-                <Line 
+                <Line
                   yAxisId="left"
-                  type="monotone" 
-                  dataKey="reach" 
-                  stroke="var(--color-reach)" 
+                  type="monotone"
+                  dataKey="reach"
+                  stroke="var(--color-reach)"
                   name="Alcance"
                   strokeWidth={2}
                 />
-                <Line 
+                <Line
                   yAxisId="right"
-                  type="monotone" 
-                  dataKey="ambassadors" 
-                  stroke="var(--color-ambassadors)" 
+                  type="monotone"
+                  dataKey="ambassadors"
+                  stroke="var(--color-ambassadors)"
                   name="Embajadores Activos"
                   strokeWidth={2}
                 />

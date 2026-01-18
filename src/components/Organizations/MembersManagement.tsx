@@ -6,22 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -71,25 +71,22 @@ export const MembersManagement = () => {
 
       if (error) throw error;
 
-      // Get user details from auth.users for each member
       const membersWithUsers = await Promise.all(
         (data || []).map(async (member) => {
-          // Use the service to get user info
           const { data: authUser } = await supabase.auth.admin.getUserById(member.user_id);
-          
+
           return {
             ...member,
             user: {
               email: authUser?.user?.email || '',
-              name: authUser?.user?.user_metadata?.name || authUser?.user?.email || 'Usuario'
-            }
+              name: authUser?.user?.user_metadata?.name || authUser?.user?.email || 'Usuario',
+            },
           };
         })
       );
 
       setMembers(membersWithUsers);
-    } catch (error) {
-      console.error('Error fetching members:', error);
+    } catch {
       toast.error('Error al cargar miembros');
     } finally {
       setLoading(false);
@@ -100,13 +97,12 @@ export const MembersManagement = () => {
     if (!currentOrganization?.organization_id || !inviteEmail.trim()) return;
 
     try {
-      // Check if user exists
       const { data: userQuery, error: userError } = await supabase
         .from('users')
         .select('auth_user_id')
         .eq('email', inviteEmail)
         .single();
-      
+
       if (userError || !userQuery) {
         toast.error('Usuario no encontrado. El usuario debe registrarse primero.');
         return;
@@ -114,7 +110,6 @@ export const MembersManagement = () => {
 
       const existingUserId = userQuery.auth_user_id;
 
-      // Check if already a member
       const { data: existingMember } = await supabase
         .from('organization_members')
         .select('id')
@@ -127,22 +122,19 @@ export const MembersManagement = () => {
         return;
       }
 
-      // Add member
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: currentOrganization.organization_id,
-          user_id: existingUserId,
-          role: inviteRole,
-          status: 'active',
-          permissions: {
-            manage_ambassadors: true,
-            manage_events: true,
-            manage_instagram: inviteRole === 'owner',
-            view_analytics: true,
-            manage_members: inviteRole === 'owner'
-          }
-        });
+      const { error: memberError } = await supabase.from('organization_members').insert({
+        organization_id: currentOrganization.organization_id,
+        user_id: existingUserId,
+        role: inviteRole,
+        status: 'active',
+        permissions: {
+          manage_ambassadors: true,
+          manage_events: true,
+          manage_instagram: inviteRole === 'owner',
+          view_analytics: true,
+          manage_members: inviteRole === 'owner',
+        },
+      });
 
       if (memberError) throw memberError;
 
@@ -151,25 +143,20 @@ export const MembersManagement = () => {
       setInviteRole('member');
       setInviteDialogOpen(false);
       fetchMembers();
-    } catch (error) {
-      console.error('Error inviting member:', error);
+    } catch {
       toast.error('Error al invitar miembro');
     }
   };
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', memberId);
+      const { error } = await supabase.from('organization_members').delete().eq('id', memberId);
 
       if (error) throw error;
 
       toast.success('Miembro removido exitosamente');
       fetchMembers();
-    } catch (error) {
-      console.error('Error removing member:', error);
+    } catch {
       toast.error('Error al remover miembro');
     }
   };
@@ -197,7 +184,7 @@ export const MembersManagement = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle>Miembros de la Organización</CardTitle>
-        
+
         <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -239,7 +226,7 @@ export const MembersManagement = () => {
           </DialogContent>
         </Dialog>
       </CardHeader>
-      
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -257,20 +244,19 @@ export const MembersManagement = () => {
                 <TableCell>
                   <div>
                     <div className="font-medium">{member.user?.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {member.user?.email}
-                    </div>
+                    <div className="text-sm text-muted-foreground">{member.user?.email}</div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
-                    {member.role === 'owner' ? 'Propietario' : 
-                     member.role === 'admin' ? 'Administrador' : 'Miembro'}
+                    {member.role === 'owner'
+                      ? 'Propietario'
+                      : member.role === 'admin'
+                        ? 'Administrador'
+                        : 'Miembro'}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {new Date(member.joined_at).toLocaleDateString()}
-                </TableCell>
+                <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Badge variant="outline">
                     {member.status === 'active' ? 'Activo' : member.status}
@@ -300,7 +286,7 @@ export const MembersManagement = () => {
             ))}
           </TableBody>
         </Table>
-        
+
         {members.length === 0 && !loading && (
           <div className="text-center py-8 text-muted-foreground">
             No hay miembros en esta organización

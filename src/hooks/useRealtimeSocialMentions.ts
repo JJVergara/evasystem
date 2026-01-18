@@ -2,24 +2,42 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentOrganization } from './useCurrentOrganization';
 import { toast } from 'sonner';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-interface RealtimeSocialMentionsProps {
-  onNewMention?: (mention: any) => void;
-  onMentionUpdated?: (mention: any) => void;
-  onNewAmbassadorRequest?: (request: any) => void;
+interface SocialMentionRecord {
+  id: string;
+  organization_id: string;
+  instagram_username: string;
+  mention_type: 'story' | 'comment' | 'mention' | 'hashtag';
+  matched_ambassador_id: string | null;
+  processed: boolean;
+  [key: string]: unknown;
 }
 
-export function useRealtimeSocialMentions({ 
-  onNewMention, 
-  onMentionUpdated, 
-  onNewAmbassadorRequest 
-}: RealtimeSocialMentionsProps = {}) {
+interface AmbassadorRequestRecord {
+  id: string;
+  organization_id: string;
+  instagram_username: string;
+  status: 'pending' | 'approved' | 'rejected';
+  [key: string]: unknown;
+}
+
+interface RealtimeSocialMentionsProps {
+  onNewMention?: (mention: SocialMentionRecord) => void;
+  onMentionUpdated?: (mention: SocialMentionRecord) => void;
+  onNewAmbassadorRequest?: (request: AmbassadorRequestRecord) => void;
+}
+
+export function useRealtimeSocialMentions({
+  onNewMention,
+  onMentionUpdated,
+  onNewAmbassadorRequest,
+}: RealtimeSocialMentionsProps = {}): null {
   const { organization } = useCurrentOrganization();
 
   useEffect(() => {
     if (!organization) return;
 
-    // Subscribe to social mentions changes
     const socialMentionsChannel = supabase
       .channel(`social_mentions_${organization.id}`)
       .on(
@@ -28,15 +46,14 @@ export function useRealtimeSocialMentions({
           event: 'INSERT',
           schema: 'public',
           table: 'social_mentions',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
-        (payload) => {
-          console.log('New social mention:', payload);
-          
-          // Show notification based on mention type
-          const mentionType = payload.new.mention_type;
-          const username = payload.new.instagram_username;
-          
+        (payload: RealtimePostgresChangesPayload<SocialMentionRecord>) => {
+          const newRecord = payload.new as SocialMentionRecord;
+
+          const mentionType = newRecord.mention_type;
+          const username = newRecord.instagram_username;
+
           let message = '';
           switch (mentionType) {
             case 'story':
@@ -55,17 +72,17 @@ export function useRealtimeSocialMentions({
               message = `📣 Nueva actividad de @${username}`;
           }
 
-          if (payload.new.matched_ambassador_id) {
+          if (newRecord.matched_ambassador_id) {
             toast.success(message, {
-              description: 'Mención asignada a embajador'
+              description: 'Mención asignada a embajador',
             });
           } else {
             toast.info(message, {
-              description: 'Mención sin asignar - revisar solicitudes'
+              description: 'Mención sin asignar - revisar solicitudes',
             });
           }
 
-          onNewMention?.(payload.new);
+          onNewMention?.(newRecord);
         }
       )
       .on(
@@ -74,24 +91,23 @@ export function useRealtimeSocialMentions({
           event: 'UPDATE',
           schema: 'public',
           table: 'social_mentions',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
-        (payload) => {
-          console.log('Social mention updated:', payload);
-          
-          // Show notification when mention is processed/assigned
-          if (payload.new.processed && !payload.old.processed) {
+        (payload: RealtimePostgresChangesPayload<SocialMentionRecord>) => {
+          const newRecord = payload.new as SocialMentionRecord;
+          const oldRecord = payload.old as SocialMentionRecord;
+
+          if (newRecord.processed && !oldRecord.processed) {
             toast.success('Mención procesada', {
-              description: `Asignada a embajador`
+              description: 'Asignada a embajador',
             });
           }
 
-          onMentionUpdated?.(payload.new);
+          onMentionUpdated?.(newRecord);
         }
       )
       .subscribe();
 
-    // Subscribe to ambassador requests changes
     const ambassadorRequestsChannel = supabase
       .channel(`ambassador_requests_${organization.id}`)
       .on(
@@ -100,23 +116,22 @@ export function useRealtimeSocialMentions({
           event: 'INSERT',
           schema: 'public',
           table: 'ambassador_requests',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
-        (payload) => {
-          console.log('New ambassador request:', payload);
-          
-          toast.info('🙋‍♂️ Nueva solicitud de embajador', {
-            description: `@${payload.new.instagram_username} quiere ser embajador`,
+        (payload: RealtimePostgresChangesPayload<AmbassadorRequestRecord>) => {
+          const newRecord = payload.new as AmbassadorRequestRecord;
+
+          toast.info('Nueva solicitud de embajador', {
+            description: `@${newRecord.instagram_username} quiere ser embajador`,
             action: {
               label: 'Ver solicitudes',
               onClick: () => {
-                // This could navigate to ambassador requests tab
                 window.location.hash = '#ambassadors-requests';
-              }
-            }
+              },
+            },
           });
 
-          onNewAmbassadorRequest?.(payload.new);
+          onNewAmbassadorRequest?.(newRecord);
         }
       )
       .on(
@@ -125,20 +140,20 @@ export function useRealtimeSocialMentions({
           event: 'UPDATE',
           schema: 'public',
           table: 'ambassador_requests',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${organization.id}`,
         },
-        (payload) => {
-          console.log('Ambassador request updated:', payload);
-          
-          // Show notification when request is approved/rejected
-          if (payload.new.status !== payload.old.status) {
-            if (payload.new.status === 'approved') {
-              toast.success('✅ Embajador aprobado', {
-                description: `@${payload.new.instagram_username} es ahora embajador`
+        (payload: RealtimePostgresChangesPayload<AmbassadorRequestRecord>) => {
+          const newRecord = payload.new as AmbassadorRequestRecord;
+          const oldRecord = payload.old as AmbassadorRequestRecord;
+
+          if (newRecord.status !== oldRecord.status) {
+            if (newRecord.status === 'approved') {
+              toast.success('Embajador aprobado', {
+                description: `@${newRecord.instagram_username} es ahora embajador`,
               });
-            } else if (payload.new.status === 'rejected') {
-              toast.error('❌ Solicitud rechazada', {
-                description: `@${payload.new.instagram_username}`
+            } else if (newRecord.status === 'rejected') {
+              toast.error('Solicitud rechazada', {
+                description: `@${newRecord.instagram_username}`,
               });
             }
           }
@@ -146,12 +161,11 @@ export function useRealtimeSocialMentions({
       )
       .subscribe();
 
-    // Cleanup subscriptions
     return () => {
       supabase.removeChannel(socialMentionsChannel);
       supabase.removeChannel(ambassadorRequestsChannel);
     };
   }, [organization, onNewMention, onMentionUpdated, onNewAmbassadorRequest]);
 
-  return null; // This hook doesn't return any value, just manages subscriptions
+  return null;
 }
