@@ -14,7 +14,6 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { EnhancedInstagramSettings } from '@/components/Settings/EnhancedInstagramSettings';
-import { N8nConfigurationSection } from '@/components/Settings/N8nConfigurationSection';
 import { useCurrentOrganization } from '@/hooks/useCurrentOrganization';
 import { EMOJIS } from '@/constants';
 
@@ -30,7 +29,6 @@ export default function SettingsContent() {
     updateNotificationSettings,
     updatePermissionSettings,
     updateAppearanceSettings,
-    updateIntegrationSettings,
   } = useOrganizationSettings();
 
   const [orgName, setOrgName] = useState<string>(organization?.name || '');
@@ -99,7 +97,7 @@ export default function SettingsContent() {
 
       <Tabs defaultValue="general" className="space-y-6">
         <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="inline-flex min-w-full sm:grid sm:grid-cols-6 sm:w-full">
+          <TabsList className="inline-flex min-w-full sm:grid sm:grid-cols-5 sm:w-full">
             <TabsTrigger value="general" className="flex items-center gap-2 shrink-0">
               <span>{EMOJIS.entities.organization}</span>
               <span className="hidden sm:inline">General</span>
@@ -119,10 +117,6 @@ export default function SettingsContent() {
             <TabsTrigger value="appearance" className="flex items-center gap-2 shrink-0">
               <span>🎨</span>
               <span className="hidden sm:inline">Apariencia</span>
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="flex items-center gap-2 shrink-0">
-              <span>{EMOJIS.feedback.lightning}</span>
-              <span className="hidden sm:inline">Integraciones</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -204,10 +198,6 @@ export default function SettingsContent() {
                 <img src="/instagram-icon.webp" alt="Instagram" className="w-5 h-5" />
                 Conexión de Instagram
               </CardTitle>
-              <CardDescription>
-                Gestiona la conexión con Instagram para sincronizar historias y embajadores
-                automáticamente.
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <EnhancedInstagramSettings />
@@ -419,58 +409,6 @@ export default function SettingsContent() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="integrations">
-          <div className="space-y-6">
-            <N8nConfigurationSection />
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>{EMOJIS.feedback.lightning}</span>
-                  Otras Integraciones
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Google Drive</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Conectar con Google Drive para importar/exportar
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.integration_settings.google_drive_enabled}
-                      onCheckedChange={(checked) =>
-                        updateIntegrationSettings({ google_drive_enabled: checked })
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Zapier</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Habilitar webhooks para Zapier
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.integration_settings.zapier_enabled}
-                      onCheckedChange={(checked) =>
-                        updateIntegrationSettings({ zapier_enabled: checked })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={() => updateIntegrationSettings({})} disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar Integraciones'}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>

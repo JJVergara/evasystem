@@ -253,7 +253,7 @@ export default function BackupCenter() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportOrganizationData('csv')}>
             <span className="mr-2">{EMOJIS.actions.download}</span>
-            Export CSV
+            Exportar CSV
           </Button>
           <Button onClick={createFullBackup} disabled={isProcessing}>
             <span className="mr-2">{EMOJIS.entities.database}</span>

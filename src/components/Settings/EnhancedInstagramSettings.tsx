@@ -152,13 +152,9 @@ export function EnhancedInstagramSettings() {
     <div className="space-y-6">
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <img src="/instagram-icon.webp" alt="Instagram" className="h-5 w-5" />
-            Conexión de Instagram
-          </CardTitle>
           <CardDescription>
-            Conecta tu cuenta de Instagram Business para sincronizar historias y gestionar
-            embajadores automáticamente.
+            Gestiona la conexión con Instagram para sincronizar historias y embajadores
+            automáticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

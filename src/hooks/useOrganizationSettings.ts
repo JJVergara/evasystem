@@ -32,11 +32,6 @@ interface OrganizationSettings {
     theme: string;
     compact_mode: boolean;
   };
-  integration_settings: {
-    google_drive_enabled: boolean;
-    zapier_enabled: boolean;
-    n8n_webhook_url?: string;
-  };
 }
 
 const defaultSettings: OrganizationSettings = {
@@ -67,11 +62,6 @@ const defaultSettings: OrganizationSettings = {
     theme: 'system',
     compact_mode: false,
   },
-  integration_settings: {
-    google_drive_enabled: false,
-    zapier_enabled: false,
-    n8n_webhook_url: undefined,
-  },
 };
 
 async function fetchOrganizationSettingsData(
@@ -80,7 +70,7 @@ async function fetchOrganizationSettingsData(
   const { data, error } = await supabase
     .from('organization_settings')
     .select(
-      'id, organization_id, general_settings, appearance_settings, notification_settings, instagram_settings, integration_settings, permission_settings, created_at, updated_at'
+      'id, organization_id, general_settings, appearance_settings, notification_settings, instagram_settings, permission_settings, created_at, updated_at'
     )
     .eq('organization_id', organizationId)
     .maybeSingle();
@@ -93,7 +83,6 @@ async function fetchOrganizationSettingsData(
     const notificationSettings = (data.notification_settings as Record<string, unknown>) || {};
     const permissionSettings = (data.permission_settings as Record<string, unknown>) || {};
     const appearanceSettings = (data.appearance_settings as Record<string, unknown>) || {};
-    const integrationSettings = (data.integration_settings as Record<string, unknown>) || {};
 
     return {
       general_settings: {
@@ -116,10 +105,6 @@ async function fetchOrganizationSettingsData(
         ...defaultSettings.appearance_settings,
         ...appearanceSettings,
       } as OrganizationSettings['appearance_settings'],
-      integration_settings: {
-        ...defaultSettings.integration_settings,
-        ...integrationSettings,
-      } as OrganizationSettings['integration_settings'],
     };
   }
 
@@ -130,7 +115,6 @@ async function fetchOrganizationSettingsData(
     notification_settings: defaultSettings.notification_settings,
     permission_settings: defaultSettings.permission_settings,
     appearance_settings: defaultSettings.appearance_settings,
-    integration_settings: defaultSettings.integration_settings,
   });
 
   return defaultSettings;
@@ -233,13 +217,6 @@ export function useOrganizationSettings() {
     [updateSettings]
   );
 
-  const updateIntegrationSettings = useCallback(
-    (newSettings: Partial<OrganizationSettings['integration_settings']>) => {
-      return updateSettings('integration_settings', newSettings as Record<string, unknown>);
-    },
-    [updateSettings]
-  );
-
   const refreshSettings = useCallback(() => {
     return queryClient.invalidateQueries({ queryKey });
   }, [queryClient, queryKey]);
@@ -255,7 +232,6 @@ export function useOrganizationSettings() {
     updateNotificationSettings,
     updatePermissionSettings,
     updateAppearanceSettings,
-    updateIntegrationSettings,
     refreshSettings,
   };
 }

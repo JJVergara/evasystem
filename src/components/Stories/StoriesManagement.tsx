@@ -84,10 +84,6 @@ export default function StoriesManagement() {
             }))}
             events={events}
           />
-          <Button variant="outline" onClick={exportTasks}>
-            <span className="mr-2">{EMOJIS.actions.download}</span>
-            Exportar
-          </Button>
         </div>
       </PageHeader>
 

@@ -6,13 +6,7 @@ import {
 } from '../shared/responses.ts';
 import { authenticateRequest, getUserOrganization } from '../shared/auth.ts';
 
-const ALLOWED_DOMAINS = [
-  'hooks.zapier.com',
-  'webhook.site',
-  'n8n.cloud',
-  'pipedream.com',
-  'rquevedos.app.n8n.cloud',
-];
+const ALLOWED_DOMAINS = ['webhook.site', 'pipedream.com'];
 
 const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024;
 const WEBHOOK_TIMEOUT_MS = 10000;

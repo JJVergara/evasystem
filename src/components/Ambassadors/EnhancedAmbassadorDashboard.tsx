@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,7 @@ export function EnhancedAmbassadorDashboard({
   ambassadors,
   onRefresh,
 }: EnhancedAmbassadorDashboardProps) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAmbassadorId, setSelectedAmbassadorId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -107,12 +109,20 @@ export function EnhancedAmbassadorDashboard({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Dashboard de Embajadores</h1>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none">
-            <span className="mr-2">{EMOJIS.actions.upload}</span>
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none"
+            onClick={() => navigate('/import-export')}
+          >
+            <span className="mr-2">{EMOJIS.navigation.import}</span>
             Importar
           </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none">
-            <span className="mr-2">{EMOJIS.actions.download}</span>
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none"
+            onClick={() => navigate('/import-export')}
+          >
+            <span className="mr-2">{EMOJIS.navigation.export}</span>
             Exportar
           </Button>
           <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">

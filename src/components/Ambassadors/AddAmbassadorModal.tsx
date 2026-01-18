@@ -10,9 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { User, Mail, Instagram, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { EMOJIS } from '@/constants';
 
 interface AddAmbassadorModalProps {
   isOpen: boolean;
@@ -158,7 +158,7 @@ export default function AddAmbassadorModal({
           {/* Selección de Organización */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
+              <span>{EMOJIS.entities.organization}</span>
               Organización
             </h3>
 
@@ -191,7 +191,9 @@ export default function AddAmbassadorModal({
               <div>
                 <Label htmlFor="first_name">Nombre *</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
+                    {EMOJIS.entities.user}
+                  </span>
                   <Input
                     id="first_name"
                     value={formData.first_name}
@@ -217,7 +219,9 @@ export default function AddAmbassadorModal({
             <div>
               <Label htmlFor="email">Email *</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <span className="absolute left-3 top-2.5 text-muted-foreground">
+                  {EMOJIS.ui.email}
+                </span>
                 <Input
                   id="email"
                   type="email"
@@ -233,8 +237,12 @@ export default function AddAmbassadorModal({
             <div>
               <Label htmlFor="instagram_user">Usuario de Instagram *</Label>
               <div className="relative">
-                <Instagram className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <div className="absolute left-8 top-3 text-muted-foreground">@</div>
+                <img
+                  src="/instagram-icon.webp"
+                  alt="Instagram"
+                  className="absolute left-3 top-2.5 w-4 h-4"
+                />
+                <div className="absolute left-8 top-2.5 text-muted-foreground">@</div>
                 <Input
                   id="instagram_user"
                   value={formData.instagram_user}
