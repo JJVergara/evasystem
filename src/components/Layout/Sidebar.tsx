@@ -78,8 +78,8 @@ function SidebarContent({
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {showHeader && (
-        <div className="flex h-16 items-center justify-center px-4 border-b shrink-0">
-          <ModernLogo size={collapsed ? 'sm' : 'md'} />
+        <div className="flex h-14 items-center justify-center px-4 border-b shrink-0">
+          <ModernLogo size="sm" />
         </div>
       )}
 
@@ -231,18 +231,18 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        'hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0',
+        'hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0 z-20',
         collapsed ? 'w-20' : 'w-64',
         className
       )}
     >
       <div
         className={cn(
-          'flex h-16 items-center border-b shrink-0',
-          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+          'flex h-14 items-center border-b shrink-0',
+          collapsed ? 'justify-center px-3' : 'justify-between px-6'
         )}
       >
-        <ModernLogo size={collapsed ? 'sm' : 'md'} />
+        <ModernLogo size="sm" />
         {!collapsed && (
           <Button
             variant="ghost"
@@ -260,7 +260,7 @@ export function Sidebar({ className }: SidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-12 h-6 w-6 rounded-full border bg-background shadow-sm z-10"
+          className="absolute -right-3 top-11 h-6 w-6 rounded-full border bg-background z-30"
         >
           <ChevronRight className="h-3 w-3" />
         </Button>
