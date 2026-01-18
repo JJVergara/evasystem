@@ -20,6 +20,8 @@ interface OnboardingData {
 interface OrganizationData {
   id: string;
   name: string;
+  description?: string;
+  logo_url?: string;
   instagram_business_account_id?: string;
 }
 
@@ -63,7 +65,10 @@ async function fetchOnboardingData(organization: OrganizationData | null): Promi
     };
   }
 
-  const orgCompleted = organization.name !== 'Mi Organización';
+  const hasCustomName = organization.name !== 'Mi Organización';
+  const hasDescription = !!organization.description && organization.description.trim().length > 0;
+  const hasLogo = !!organization.logo_url && organization.logo_url.trim().length > 0;
+  const orgCompleted = hasCustomName || hasDescription || hasLogo;
 
   let instagramCompleted = false;
   try {

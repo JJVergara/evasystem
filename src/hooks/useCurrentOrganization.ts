@@ -193,6 +193,35 @@ export const useCurrentOrganization = () => {
     return refetch();
   }, [refetch]);
 
+  const updateOrganization = useCallback(
+    async (updates: { name?: string; description?: string; logo_url?: string }) => {
+      if (!organization?.id) {
+        toast.error('No se encontró la organización');
+        return false;
+      }
+
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update(updates)
+          .eq('id', organization.id);
+
+        if (error) {
+          toast.error('Error al actualizar la organización');
+          return false;
+        }
+
+        toast.success('Organización actualizada correctamente');
+        await queryClient.invalidateQueries({ queryKey });
+        return true;
+      } catch {
+        toast.error('Error al actualizar la organización');
+        return false;
+      }
+    },
+    [organization?.id, queryClient, queryKey]
+  );
+
   return {
     currentOrganization,
     userOrganizations,
@@ -201,5 +230,6 @@ export const useCurrentOrganization = () => {
     switchOrganization,
     organization,
     refreshOrganization: fetchOrganizations,
+    updateOrganization,
   };
 };
