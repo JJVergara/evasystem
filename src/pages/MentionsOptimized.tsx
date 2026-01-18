@@ -141,7 +141,7 @@ export default function MentionsOptimized() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-primary/20 rounded-full shrink-0">
                   <span className="text-xl">{EMOJIS.navigation.mentions}</span>
                 </div>
                 <div>
@@ -153,7 +153,7 @@ export default function MentionsOptimized() {
 
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-success/20 rounded-lg">
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-success/20 rounded-full shrink-0">
                   <span className="text-xl">{EMOJIS.social.reach}</span>
                 </div>
                 <div>
@@ -169,7 +169,7 @@ export default function MentionsOptimized() {
 
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-warning/20 rounded-lg">
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-warning/20 rounded-full shrink-0">
                   <span className="text-xl">{EMOJIS.entities.message}</span>
                 </div>
                 <div>
@@ -181,7 +181,7 @@ export default function MentionsOptimized() {
 
             <div className="p-4 bg-card/30 rounded-lg backdrop-blur-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-info/20 rounded-lg">
+                <div className="flex items-center justify-center w-10 h-10 min-w-10 min-h-10 aspect-square bg-info/20 rounded-full shrink-0">
                   <span className="text-xl">{EMOJIS.status.pending}</span>
                 </div>
                 <div>

@@ -232,7 +232,7 @@ export default function ImportExportReal() {
               )}
             </div>
 
-            <div className="bg-info/10 border border-info/20 rounded-lg p-4">
+            <div className="bg-info/10 border border-info/20 rounded-lg p-4 mt-4">
               <div className="flex items-start gap-2">
                 <span className="mt-0.5">{EMOJIS.status.info}</span>
                 <div>

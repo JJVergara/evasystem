@@ -67,7 +67,7 @@ export function AuthForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-3xl animate-fade-in">
               <div className="group p-4 rounded-2xl bg-card border border-border hover:shadow-card transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <Instagram className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Integración Instagram</h3>
@@ -75,7 +75,7 @@ export function AuthForm() {
               </div>
 
               <div className="group p-4 rounded-2xl bg-card border border-border hover:shadow-card transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-info flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-info flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <BarChart3 className="w-6 h-6 text-info-foreground" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Analíticas IA</h3>
@@ -83,7 +83,7 @@ export function AuthForm() {
               </div>
 
               <div className="group p-4 rounded-2xl bg-card border border-border hover:shadow-card transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-success flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <Users className="w-6 h-6 text-success-foreground" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">Gestión Inteligente</h3>
@@ -155,7 +155,7 @@ export function AuthForm() {
                       <Button type="submit" className="w-full h-12 rounded-lg" disabled={isLoading}>
                         {isLoading ? (
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Iniciando sesión...
                           </div>
                         ) : (
@@ -208,7 +208,7 @@ export function AuthForm() {
                       <Button type="submit" className="w-full h-12 rounded-lg" disabled={isLoading}>
                         {isLoading ? (
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="w-4 h-4 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Creando cuenta...
                           </div>
                         ) : (

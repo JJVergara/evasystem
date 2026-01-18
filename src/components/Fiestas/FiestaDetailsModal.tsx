@@ -41,7 +41,7 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
             <div className="grid gap-4">
               {fiesta.event_date && (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-info flex items-center justify-center">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-info flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-info-foreground" />
                   </div>
                   <div>
@@ -60,7 +60,7 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
 
               {fiesta.location && (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-success flex items-center justify-center">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-success flex items-center justify-center">
                     <MapPin className="w-5 h-5 text-success-foreground" />
                   </div>
                   <div>
@@ -78,7 +78,7 @@ export function FiestaDetailsModal({ fiesta, isOpen, onClose }: FiestaDetailsMod
               <div className="space-y-3">
                 {fiesta.main_hashtag && (
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-                    <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center">
                       <Hash className="w-5 h-5 text-primary-foreground" />
                     </div>
                     <div>

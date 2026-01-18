@@ -67,7 +67,7 @@ export function UserProfileDropdown() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 p-2">
-        <Skeleton className="w-8 h-8 rounded-full" />
+        <Skeleton className="w-8 h-8 shrink-0 rounded-full" />
         <div className="flex flex-col gap-1">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-16" />

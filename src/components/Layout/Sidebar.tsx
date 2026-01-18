@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ModernLogo } from '@/components/Logo/ModernLogo';
 import { UserProfileDropdown } from './UserProfileDropdown';
 import { OrganizationSwitcher } from '@/components/Organizations/OrganizationSwitcher';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { EMOJIS } from '@/constants';
 
 interface NavItem {
@@ -70,11 +68,9 @@ interface SidebarProps {
 
 function SidebarContent({
   collapsed,
-  onNavigate,
   showHeader = true,
 }: {
   collapsed?: boolean;
-  onNavigate?: () => void;
   showHeader?: boolean;
 }) {
   const location = useLocation();
@@ -102,29 +98,28 @@ function SidebarContent({
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={onNavigate}
                 className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  'group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200',
+                  collapsed && 'justify-center px-0',
                   isActive
-                    ? 'sidebar-item-active'
-                    : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
+                    ? 'bg-primary/10 text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                 )}
               >
-                {item.isInstagram ? (
-                  <img
-                    src="/instagram-icon.webp"
-                    alt="Instagram"
-                    className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'mr-3 w-5 h-5')}
-                  />
-                ) : (
-                  <span
-                    className={cn('flex-shrink-0 text-lg', collapsed ? 'w-5 h-5' : 'mr-3')}
-                    role="img"
-                    aria-label={item.label}
-                  >
-                    {item.emoji}
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    'flex items-center justify-center w-10 h-10 min-w-10 min-h-10 shrink-0 aspect-square rounded-full transition-all duration-200',
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 group-hover:bg-muted'
+                  )}
+                >
+                  {item.isInstagram ? (
+                    <img src="/instagram-icon.webp" alt="Instagram" className="w-4 h-4" />
+                  ) : (
+                    <span className="text-base leading-none">{item.emoji}</span>
+                  )}
+                </span>
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -143,20 +138,23 @@ function SidebarContent({
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={onNavigate}
                 className={cn(
-                  'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  'group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200',
+                  collapsed && 'justify-center px-0',
                   isActive
-                    ? 'sidebar-item-active'
-                    : 'text-muted-foreground hover:text-foreground sidebar-item-hover'
+                    ? 'bg-primary/10 text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                 )}
               >
                 <span
-                  className={cn('flex-shrink-0 text-lg', collapsed ? 'w-5 h-5' : 'mr-3')}
-                  role="img"
-                  aria-label={item.label}
+                  className={cn(
+                    'flex items-center justify-center w-10 h-10 min-w-10 min-h-10 shrink-0 aspect-square rounded-full transition-all duration-200',
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted/50 group-hover:bg-muted'
+                  )}
                 >
-                  {item.emoji}
+                  <span className="text-base leading-none">{item.emoji}</span>
                 </span>
                 {!collapsed && <span>{item.label}</span>}
               </Link>
@@ -189,29 +187,18 @@ export function Sidebar({ className }: SidebarProps) {
     const saved = localStorage.getItem('eva-sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     localStorage.setItem('eva-sidebar-collapsed', JSON.stringify(collapsed));
   }, [collapsed]);
 
-  const pathname = location.pathname;
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   useEffect(() => {
     const handleToggle = () => {
-      if (isMobile) {
-        setMobileMenuOpen((prev: boolean) => !prev);
-      } else {
-        setCollapsed((prev: boolean) => {
-          const newValue = !prev;
-          localStorage.setItem('eva-sidebar-collapsed', JSON.stringify(newValue));
-          return newValue;
-        });
-      }
+      setCollapsed((prev: boolean) => {
+        const newValue = !prev;
+        localStorage.setItem('eva-sidebar-collapsed', JSON.stringify(newValue));
+        return newValue;
+      });
     };
 
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -221,18 +208,14 @@ export function Sidebar({ className }: SidebarProps) {
       }
     };
 
-    const handleCustomToggle = () => {
-      handleToggle();
-    };
-
     document.addEventListener('keydown', handleKeyboard);
-    window.addEventListener('eva:sidebar-toggle', handleCustomToggle);
+    window.addEventListener('eva:sidebar-toggle', handleToggle);
 
     return () => {
       document.removeEventListener('keydown', handleKeyboard);
-      window.removeEventListener('eva:sidebar-toggle', handleCustomToggle);
+      window.removeEventListener('eva:sidebar-toggle', handleToggle);
     };
-  }, [collapsed, isMobile]);
+  }, []);
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -245,45 +228,43 @@ export function Sidebar({ className }: SidebarProps) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  if (isMobile) {
-    return (
-      <>
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetContent side="left" className="p-0 w-64">
-            <SidebarContent
-              collapsed={false}
-              onNavigate={() => setMobileMenuOpen(false)}
-              showHeader={true}
-            />
-          </SheetContent>
-        </Sheet>
-      </>
-    );
-  }
-
   return (
     <div
       className={cn(
         'hidden lg:flex lg:flex-col border-r bg-background transition-all duration-300 h-screen sticky top-0',
-        collapsed ? 'w-16' : 'w-64',
+        collapsed ? 'w-20' : 'w-64',
         className
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 border-b shrink-0">
-        <div className="flex items-center justify-center w-full">
-          <ModernLogo size={collapsed ? 'sm' : 'md'} />
-        </div>
-        <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          'flex h-16 items-center border-b shrink-0',
+          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+        )}
+      >
+        <ModernLogo size={collapsed ? 'sm' : 'md'} />
+        {!collapsed && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8"
+            className="h-8 w-8 shrink-0"
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-        </div>
+        )}
       </div>
+
+      {collapsed && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-12 h-6 w-6 rounded-full border bg-background shadow-sm z-10"
+        >
+          <ChevronRight className="h-3 w-3" />
+        </Button>
+      )}
 
       <SidebarContent collapsed={collapsed} showHeader={false} />
     </div>

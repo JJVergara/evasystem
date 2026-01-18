@@ -653,7 +653,7 @@ export function StoryInsightsDashboard() {
                   {Array.from({ length: Math.min(max_stories_per_hour, 8) }, (_, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <div
-                        className="w-3 h-3 rounded-sm"
+                        className="w-3 h-3 shrink-0 rounded-sm"
                         style={{ backgroundColor: storyColors[i % storyColors.length] }}
                       />
                       <span className="text-muted-foreground">
@@ -710,7 +710,7 @@ export function StoryInsightsDashboard() {
                                   className="flex items-center gap-2 text-muted-foreground text-xs"
                                 >
                                   <div
-                                    className="w-2 h-2 rounded-sm"
+                                    className="w-2 h-2 shrink-0 rounded-sm"
                                     style={{
                                       backgroundColor: storyColors[idx % storyColors.length],
                                     }}

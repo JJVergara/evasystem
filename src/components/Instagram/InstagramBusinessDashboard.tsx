@@ -100,7 +100,7 @@ export function InstagramBusinessDashboard() {
                 <img
                   src={profile.profile_picture_url}
                   alt={profile.username}
-                  className="w-16 h-16 rounded-full"
+                  className="w-16 h-16 shrink-0 rounded-full"
                 />
                 <div>
                   <CardTitle className="flex items-center gap-2">

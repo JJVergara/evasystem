@@ -57,7 +57,7 @@ export function OrganizationAmbassadorsList({ ambassadors }: OrganizationAmbassa
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 text-lg">
+                    <div className="flex items-center justify-center w-8 h-8 shrink-0 text-lg">
                       {getRankIcon(index)}
                     </div>
 
